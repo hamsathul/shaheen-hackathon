@@ -13,12 +13,13 @@ scan goes on to a verdict.
 from __future__ import annotations
 
 import secrets
+import time
 from collections.abc import Callable
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import Future, ThreadPoolExecutor
 from datetime import datetime, timezone
 from typing import Any
 
-from baaz import brands, intel, page, reasons, score, signals
+from baaz import brands, intel, page, reasons, score, signals, storefront
 from baaz.config import Settings, load_settings
 from baaz.domains import host_of, normalize_url, registrable_domain
 from baaz.evidence import write_pack
@@ -52,7 +53,9 @@ class Scanner:
     def __exit__(self, *exc: object) -> None:
         self.close()
 
-    def scan(self, url: str, options: ScanOptions | None = None) -> ScanResult:
+    def scan(self, url: str, options: ScanOptions | None = None, *, fetch: bool = True) -> ScanResult:
+        """Scan one link. With `fetch=False` nothing is requested from the site:
+        the link is scored from its URL and domain alone, as `timeout`."""
         now = datetime.now(timezone.utc)
         ctx = ScanContext(
             id=new_scan_id(now),
@@ -61,24 +64,42 @@ class Scanner:
             options=options or ScanOptions(),
         )
         ctx.final_url, ctx.redirect_chain = ctx.url, [ctx.url]
-        ctx.features["final_domain"] = registrable_domain(ctx.url)
-        ctx.features["rendered"] = False
-        self._stage(ctx, "resolve", self._resolve)
-        self._stage(ctx, "render", self._render)
-        if not self._stage(ctx, "allowlist", self._allowlist):
-            self._stage(ctx, "url_signals", lambda c: signals.url_signals(c, self._intel(c)))
-        self._stage(ctx, "page", self._page)
+        ctx.features.update(final_domain=registrable_domain(ctx.url), fetched=fetch, rendered=False,
+                            stage_seconds={})
+        with ThreadPoolExecutor(max_workers=len(PROFILES) + 1) as side:
+            profiles: list[Future[dict[str, Any]]] = []
+            early: dict[str, Future[dict[str, Any]]] = {}
+            if fetch:
+                self._stage(ctx, "resolve", self._resolve)
+            else:
+                ctx.fetch_status = "timeout"
+            if brands.allowlist(ctx.redirect_chain) is None:
+                # intel and the visitor profiles are fetched while the browser renders
+                domain = ctx.features["final_domain"]
+                if domain not in SHORTENERS:
+                    early[domain] = side.submit(intel.gather, domain, self.store, host_of(ctx.final_url))
+                if ctx.fetch_status == "ok":
+                    profiles = [side.submit(self._profile, ctx.url, key) for key in PROFILES]
+            if fetch:
+                self._stage(ctx, "render", self._render)
+            if not self._stage(ctx, "allowlist", self._allowlist):
+                self._stage(ctx, "url_signals", lambda c: signals.url_signals(c, self._intel(c, early)))
+            self._stage(ctx, "page", lambda c: self._page(c, profiles))
+        self._stage(ctx, "storefront", self._storefront)
         return self._finish(ctx)
 
     @staticmethod
     def _stage(ctx: ScanContext, name: str, step: Callable[[ScanContext], Any]) -> Any:
         """Run one stage; an unexpected error is recorded and the scan goes on."""
+        start = time.monotonic()
         try:
             return step(ctx)
         except Exception as exc:  # always return a verdict
             ctx.features.setdefault("stage_errors", []).append(
                 {"stage": name, "error": f"{type(exc).__name__}: {exc}"[:300]})
             return None
+        finally:
+            ctx.features["stage_seconds"][name] = round(time.monotonic() - start, 1)
 
     def _resolve(self, ctx: ScanContext) -> None:
         res = resolve(ctx.url, self.client, self.insecure_client)
@@ -103,12 +124,14 @@ class Scanner:
         ctx.add(allowed.code, "redirects.json#final_url", **allowed.params)
         return True
 
-    def _intel(self, ctx: ScanContext) -> dict[str, dict[str, Any]]:
-        """Intel on the landing domain, also written to the evidence pack."""
+    def _intel(self, ctx: ScanContext, early: dict[str, Future[dict[str, Any]]]) -> dict[str, dict[str, Any]]:
+        """Intel on the landing domain (gathered early unless the browser moved
+        on to another domain), also written to the evidence pack."""
         domain = ctx.features["final_domain"]
         if domain in SHORTENERS:
             return {}
-        facts = intel.gather(domain, self.store, host_of(ctx.final_url))
+        facts = early[domain].result() if domain in early else intel.gather(domain, self.store,
+                                                                              host_of(ctx.final_url))
         ctx.artifacts["whois.json"] = facts["whois"]
         ctx.artifacts["dns_hosting.json"] = facts["dns"]
         ctx.artifacts["cert.json"] = facts["cert"]
@@ -153,7 +176,7 @@ class Scanner:
         ctx.final_url = rendered.final_url
         ctx.features["final_domain"] = registrable_domain(rendered.final_url)
 
-    def _page(self, ctx: ScanContext) -> None:
+    def _page(self, ctx: ScanContext, profiles: list[Future[dict[str, Any]]]) -> None:
         """Page facts for the evidence pack; for a link that is not allowlisted,
         the page, doorway and cloaking signals too."""
         allowlisted = ctx.official_brand is not None
@@ -180,20 +203,23 @@ class Scanner:
         if allowlisted:
             return
         ctx.findings += signals.doorway_findings(ctx.artifacts.get("redirects.json", {}).get("chain", []))
-        if ctx.fetch_status == "ok":
-            profiles = self._profiles(ctx)
-            ctx.artifacts["profiles.json"] = profiles
-            ctx.findings += signals.cloaking_findings(profiles)
+        if profiles:
+            views = dict(zip(PROFILES, (f.result() for f in profiles), strict=True))
+            ctx.artifacts["profiles.json"] = views
+            ctx.findings += signals.cloaking_findings(views)
 
-    def _profiles(self, ctx: ScanContext) -> dict[str, dict[str, Any]]:
-        """Fetch the link as each visitor profile (phone in Arabic, desktop, crawler)."""
-        def view(headers: dict[str, str]) -> dict[str, Any]:
-            res = resolve(ctx.url, self.client, self.insecure_client, headers=headers)
-            return signals.profile_view(res, page.analyse(res.html, res.final_url))
+    def _storefront(self, ctx: ScanContext) -> None:
+        """Storefront checks on a reachable site. A site that blocks its pages
+        to Baaz (403, a bot or phishing interstitial) often still answers on
+        its public Store API, so blocked sites are checked too."""
+        if ctx.options.storefront and ctx.fetch_status in ("ok", "blocked") and ctx.official_brand is None:
+            client = self.client if ctx.features.get("tls_verified", True) else self.insecure_client
+            storefront.inspect(ctx, client, self.store)
 
-        with ThreadPoolExecutor(max_workers=len(PROFILES)) as pool:
-            views = {key: pool.submit(view, headers) for key, headers in PROFILES.items()}
-            return {key: future.result() for key, future in views.items()}
+    def _profile(self, url: str, key: str) -> dict[str, Any]:
+        """The link as one visitor profile sees it (phone in Arabic, desktop, crawler)."""
+        res = resolve(url, self.client, self.insecure_client, headers=PROFILES[key])
+        return signals.profile_view(res, page.analyse(res.html, res.final_url))
 
     def _finish(self, ctx: ScanContext) -> ScanResult:
         result = self._verdict(ctx)

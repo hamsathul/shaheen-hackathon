@@ -9,7 +9,7 @@ import logging
 import sys
 from pathlib import Path
 
-from baaz import __version__, evidence, watch
+from baaz import __version__, batch, evidence, watch
 from baaz.config import load_settings
 from baaz.domains import normalize_url, registrable_domain
 from baaz.models import ScanOptions, ScanResult
@@ -112,6 +112,48 @@ def cmd_enqueue(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_batch(args: argparse.Namespace) -> int:
+    targets = batch.read_targets(Path(args.file))
+    options = ScanOptions(render=not args.no_render, storefront=not args.no_storefront)
+    results = batch.run_batch(targets, args.workers, options, args.timeout)
+    batch.write_results(Path(args.out), targets, results)
+    flagged = sum(batch.call(r) == "fraud" for r in results)
+    print(f"scanned {len(results)}, flagged {flagged}; wrote {args.out}")
+    return 0
+
+
+def cmd_eval(args: argparse.Namespace) -> int:
+    options = ScanOptions(render=not args.no_render, storefront=not args.no_storefront)
+    rows = []
+    for name in args.files:
+        path = Path(name)
+        targets = batch.read_targets(path)
+        results = batch.run_batch(targets, args.workers, options, args.timeout)
+        batch.write_eval_rows(Path(args.out_dir) / f"{path.stem}.csv", targets, results)
+        print(batch.file_report(name, targets, results), end="\n\n", flush=True)
+        rows.append((path.name, targets, results))
+    if len(rows) > 1:
+        print(batch.combined_table(rows))
+    return 0
+
+
+def add_batch_commands(sub: argparse._SubParsersAction) -> None:
+    for name, func, about in (("batch", cmd_batch, "scan a list of links and write a results CSV"),
+                              ("eval", cmd_eval, "scan labelled lists and print accuracy metrics")):
+        p = sub.add_parser(name, help=about)
+        if name == "batch":
+            p.add_argument("file", help="text file (one link per line) or CSV with a url column")
+            p.add_argument("--out", required=True, help="results CSV: url,label,risk_score,verdict,top_reason")
+        else:
+            p.add_argument("files", nargs="+", help="labelled text or CSV files")
+            p.add_argument("--out-dir", default="eval/results", help="per-URL rows, one CSV per input file")
+        p.add_argument("--workers", type=int, default=8)
+        p.add_argument("--timeout", type=float, default=90.0, help="seconds before a link is scored from its URL alone")
+        p.add_argument("--no-render", action="store_true", help="skip the headless browser")
+        p.add_argument("--no-storefront", action="store_true", help="skip WooCommerce storefront checks")
+        p.set_defaults(func=func)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="baaz", description=__doc__)
     parser.add_argument("--version", action="version", version=f"baaz {__version__}")
@@ -123,6 +165,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--no-render", action="store_true", help="skip the headless browser")
     p.add_argument("--no-storefront", action="store_true", help="skip WooCommerce storefront checks")
     p.set_defaults(func=cmd_scan)
+    add_batch_commands(sub)
 
     p = sub.add_parser("verify", help="recompute an evidence pack's hashes against its manifest")
     p.add_argument("case", help="scan ID or evidence folder path")

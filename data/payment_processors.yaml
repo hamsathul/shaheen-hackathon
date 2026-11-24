@@ -1,0 +1,61 @@
+# Recognised payment processors (CARD_FORM_NO_PROCESSOR). A checkout counts as using a
+# processor when it loads a script or frame from one of the `hosts`, or names one in an inline
+# script (a host matches itself and its subdomains; an entry with a path also needs that
+# path), or when the store's Store API lists one of the `slugs` (a slug also matches as a
+# prefix before "_" or "-": stripe -> stripe_sepa).
+# Hosts marked "unverified" come from vendors' integration guides as remembered, not re-checked.
+processors:
+  - name: Stripe
+    hosts: [js.stripe.com, hooks.stripe.com, m.stripe.network]
+    slugs: [stripe, stripe_cc, woocommerce_payments]
+  - name: PayPal
+    hosts: [www.paypal.com/sdk, paypal.com/sdk, paypalobjects.com]
+    slugs: [paypal, ppcp, ppcp-gateway, ppec_paypal]
+  - name: Adyen
+    hosts: [adyen.com, adyenpayments.com]  # checkoutshopper-live.adyen.com
+    slugs: [adyen, woosa_adyen]  # woosa_adyen unverified
+  - name: Checkout.com
+    hosts: [checkout.com]  # cdn.checkout.com hosts Frames
+    slugs: [wc_checkout_com, checkoutcom, frames]
+  - name: Telr
+    hosts: [telr.com]  # secure.telr.com, unverified
+    slugs: [telr, wctelr]  # unverified
+  - name: PayTabs
+    hosts: [paytabs.com, paytabs.sa]  # secure.paytabs.com and regional hosts, unverified
+    slugs: [paytabs]
+  - name: N-Genius (Network International)
+    hosts: [network.ae, ngenius-payments.com]
+    slugs: [ngenius, network_international]  # network_international unverified
+  - name: Amazon Payment Services (PayFort)
+    hosts: [payfort.com]  # checkout.payfort.com
+    slugs: [aps, payfort]
+  - name: Tabby
+    hosts: [tabby.ai]  # checkout.tabby.ai, unverified
+    slugs: [tabby]
+  - name: Tamara
+    hosts: [tamara.co]  # cdn.tamara.co, unverified
+    slugs: [tamara]
+  - name: Apple Pay
+    hosts: [applepay.cdn-apple.com]
+    slugs: [apple_pay, applepay]
+  - name: Google Pay
+    hosts: [pay.google.com]
+    slugs: [google_pay, googlepay]
+  - name: Braintree
+    hosts: [braintreegateway.com, braintree-api.com]
+    slugs: [braintree]
+  - name: Square
+    hosts: [squarecdn.com, squareup.com]
+    slugs: [square]
+  - name: Authorize.Net
+    hosts: [authorize.net]  # js.authorize.net Accept.js
+    slugs: [authorize_net]
+  - name: HyperPay
+    hosts: [oppwa.com]  # unverified
+    slugs: [hyperpay]
+  - name: CCAvenue
+    hosts: [ccavenue.com, ccavenue.ae]  # unverified
+    slugs: [ccavenue]
+  - name: Mastercard Payment Gateway Services
+    hosts: [ap-gateway.mastercard.com, eu-gateway.mastercard.com, na-gateway.mastercard.com, gateway.mastercard.com]
+    slugs: [mpgs, mastercard_hosted]  # unverified

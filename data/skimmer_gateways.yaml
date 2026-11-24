@@ -1,0 +1,18 @@
+# WooCommerce payment gateway slugs, as listed in `payment_methods` by the public
+# Store API cart endpoint (/wp-json/wc/store/v1/cart).
+#
+# strong: a private card-collecting gateway seen only on fake storefronts; one hit means fraud.
+# weak:   a generic-sounding gateway seen next to a strong one; never enough on its own.
+strong:
+  # Private plugin "woo-sankee-gateway": takes card number, expiry and CVV in the store's own
+  # checkout form. Exposed by the fake-storefront network (prior manual research, Sep-Nov 2026);
+  # not found in any public plugin directory checked.
+  - sankee
+  # Same role in a newer kit used by the network's European stores (prior manual research, Nov 2026).
+  - yhp
+weak:
+  # Listed next to sankee on most of the network's stores (prior manual research, Sep-Nov 2026).
+  - public-payment
+  # Listed next to yhp on the European stores (prior manual research, Nov 2026); a short,
+  # generic slug that other plugins could also use.
+  - mp

@@ -58,3 +58,7 @@ urgency:
     - شحنتك معلقة
     - رسوم جمركية
     - رسوم إعادة التوصيل
+
+# Brand keywords that are also everyday words (a messenger bag); on a page they
+# never count as the brand. Matching in domain names is unaffected.
+ordinary_words: [messenger]

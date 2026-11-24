@@ -263,11 +263,19 @@ def _name_parts(brand: brands.Brand) -> list[str]:
     """Display names of a brand worth finding on a page: `Abu Dhabi Commercial
     Bank (ADCB)` gives both names, `Meta / Facebook` both halves. A name that is
     an ordinary word (one of the brand's common tokens: Emirates, Visa, noon)
-    is left out, since it turns up in ordinary text."""
+    or a place (the UAE in `Ministry of Interior (UAE)`) is left out, since it
+    turns up in ordinary text."""
     inner = [p for group in _PAREN.findall(brand.name_en) for p in group.split(",")]
     outer = _PAREN.sub("", brand.name_en).split("/")
     parts = [p.strip() for p in outer + inner]
-    return [p for p in parts if len(p) >= 3 and p.lower() not in brand.common_tokens]
+    return [p for p in parts if len(p) >= 3 and p.lower() not in brand.common_tokens
+            and p.lower().replace(" ", "") not in _place_names()]
+
+
+@lru_cache(maxsize=1)
+def _place_names() -> frozenset[str]:
+    data = yaml.safe_load((DATA_DIR / "countries.yaml").read_text(encoding="utf-8"))
+    return frozenset({n for country in data["countries"] for n in country["names"]} | set(data["cities"]))
 
 
 def _term_pattern(term: str) -> re.Pattern[str]:
@@ -278,11 +286,17 @@ def _term_pattern(term: str) -> re.Pattern[str]:
 
 
 @lru_cache(maxsize=1)
+def _wording() -> dict[str, Any]:
+    return yaml.safe_load((DATA_DIR / "wording.yaml").read_text(encoding="utf-8"))
+
+
+@lru_cache(maxsize=1)
 def _page_terms() -> tuple[tuple[brands.Brand, tuple[tuple[str, re.Pattern[str]], ...]], ...]:
+    ordinary = set(_wording()["ordinary_words"])
     out = []
     for brand in brands.load_brands():
         terms = _name_parts(brand) + [brand.name_ar] + list(brand.keywords) + list(brand.tokens)
-        terms = [t for t in dict.fromkeys(terms) if len(t) >= 3]
+        terms = [t for t in dict.fromkeys(terms) if len(t) >= 3 and t.lower() not in ordinary]
         out.append((brand, tuple((t, _term_pattern(t)) for t in terms)))
     return tuple(out)
 
@@ -343,7 +357,7 @@ def _form_index(facts: PageFacts, fields: set[str]) -> int:
 
 @lru_cache(maxsize=1)
 def _urgency_patterns() -> tuple[re.Pattern[str], ...]:
-    data = yaml.safe_load((DATA_DIR / "wording.yaml").read_text(encoding="utf-8"))["urgency"]
+    data = _wording()["urgency"]
     return tuple(_term_pattern(p) for p in data["en"] + data["ar"])
 
 

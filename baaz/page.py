@@ -15,6 +15,7 @@ from urllib.parse import urljoin, urlsplit
 
 MAX_TEXT = 20_000
 LEAD_CHARS = 1_500
+MAX_LOGOS = 2
 MAX_INLINE_SCRIPT = 200_000
 
 _SKIP_TEXT = frozenset({"script", "style", "noscript", "template", "head", "title", "svg"})
@@ -72,18 +73,20 @@ class Input:
             return set()
         found: set[str] = set()
         auto = self.autocomplete.lower()
-        if self.type == "password" or auto in ("current-password", "new-password"):
+        if self.type == "password":  # autocomplete="new-password" also just turns autofill off
             found.add("password")
         if auto in _CARD_AUTOCOMPLETE:
             found.add(_CARD_AUTOCOMPLETE[auto])
         if auto == "one-time-code":
             found.add("otp")
-        if _CARD_PLACEHOLDER.match(self.placeholder.replace(" ", "")):
+        if _CARD_PLACEHOLDER.match(self.placeholder.replace(" ", "").lower()):
             found.add("number")
         text = " | ".join(_words(v) for v in (self.name, self.id, self.placeholder, self.aria_label, self.label))
         for kind, pattern in _FIELD_PATTERNS.items():
             if pattern.search(text):
                 found.add(kind)
+        if "gift" in text or "coupon" in text:
+            found.discard("number")  # a gift-card or voucher code is not a payment card
         if "otp" in found or "number" in found or "cvv" in found:
             found.discard("password")  # "OTP password", "card PIN/password" are not account passwords
         return found
@@ -162,6 +165,7 @@ class _Parser(HTMLParser):
         self.lead: list[str] = []
         self.title: list[str] | None = None  # the page's own <title>, not an SVG one
         self.title_seen = False
+        self.logo_images = 0
         self.h1: list[str] | None = None
         self.script: list[str] | None = None
         self.inline: list[str] = []
@@ -183,6 +187,8 @@ class _Parser(HTMLParser):
             self.base = urljoin(self.base, a["href"])
         elif tag == "meta" and a.get("property", "").lower() == "og:site_name":
             self.facts.site_name = a.get("content", "").strip()
+        elif tag == "body" and "head" in self.stack:  # </head> left out
+            self.stack = [t for t in self.stack if t != "head"]
         elif tag == "title" and not self.title_seen and "svg" not in self.stack:
             self.title, self.title_seen = [], True
         elif tag == "h1":
@@ -208,8 +214,12 @@ class _Parser(HTMLParser):
             self.stack.append(tag)
 
     def _img(self, a: dict[str, str]) -> None:
-        marks = " ".join(a.get(k, "") for k in ("class", "id", "alt")).lower()
-        if "logo" in marks:
+        """The site's own logo: one of the first MAX_LOGOS images marked as a logo
+        by class, id or file name. Partner, sponsor and payment-method logos
+        further down the page ("Visa logo") are not the site's identity."""
+        marks = " ".join(a.get(k, "") for k in ("class", "id", "src")).lower()
+        if "logo" in marks and self.logo_images < MAX_LOGOS:
+            self.logo_images += 1
             text = (a.get("alt") or a.get("title") or "").strip()
             if text:
                 self.facts.logos.append(text)
