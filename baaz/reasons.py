@@ -54,10 +54,6 @@ TEMPLATES: dict[str, tuple[str, str]] = {
         "Shares a {kind} with confirmed fraud cluster {cluster}.",
         "يشترك في {kind} مع شبكة احتيال مؤكدة {cluster}.",
     ),
-    "VISUAL_MATCH": (
-        "The page looks like the official {brand} site, but the domain is not official.",
-        "الصفحة تشبه موقع {brand} الرسمي، لكن النطاق ليس رسميًا.",
-    ),
     "BRAND_GEO_DOMAIN": (
         "{domain} combines the brand {brand} with the place name '{place}', a pattern used by fake local stores.",
         "النطاق {domain} يجمع العلامة {brand} مع اسم المكان '{place}'، وهو نمط تستخدمه المتاجر المحلية الوهمية.",
