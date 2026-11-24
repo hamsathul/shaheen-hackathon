@@ -16,13 +16,19 @@ Both are recorded as leads (store table `maps_leads`) with the listing's name,
 address, phone and Google Maps link. Every place ID seen is kept, so a listing
 is checked once.
 
-Each run sends at most `QUERIES_PER_RUN` searches, one request each for the
-first page of up to 20 listings (no further pages), rotating through
-victim-style queries built from the brand data after a few fixed
-government-service searches. The watcher runs it every
-`BAAZ_MAPS_INTERVAL_HOURS` (6 by default). The request asks for the fields
-used here only; the website and phone fields put it in Google's Text Search
-Enterprise SKU.
+Each round sends at most `QUERIES_PER_RUN` searches, `PACE_S` seconds apart,
+one request each for the first page of up to 20 listings (no further pages),
+rotating through victim-style queries built from the brand data after a few
+fixed government-service searches. The watcher runs a round every
+`BAAZ_MAPS_INTERVAL_HOURS` (6 by default), and the dashboard's "Search Maps
+now" button can start one sooner. The request asks for the fields used here
+only; the website and phone fields put it in Google's Text Search Enterprise
+SKU.
+
+The searches of the last round and the one under way, with every listing's
+name, location and outcome, are kept in memory only (`live`), for the
+dashboard's live panel: Google's terms allow storing place IDs, and
+coordinates for up to 30 days, but no other listing content.
 
 It needs `GOOGLE_MAPS_API_KEY`; without one the watcher leaves it out.
 `GOOGLE_MAPS_API_BASE` points it at another server speaking the same API,
@@ -33,7 +39,10 @@ from __future__ import annotations
 
 import logging
 import re
-from dataclasses import dataclass
+import threading
+from collections import deque
+from dataclasses import dataclass, replace
+from datetime import datetime
 from functools import lru_cache
 from typing import Any
 
@@ -45,16 +54,18 @@ from baaz.brands import Brand
 from baaz.collectors import WATCHED_SCOPES, Limits, Throttle, rotation, watched_brands
 from baaz.config import DATA_DIR, load_settings
 from baaz.domains import normalize_url, registrable_domain
-from baaz.evidence import defang_text
-from baaz.store import Store
+from baaz.evidence import GST, defang_text
+from baaz.store import Store, utcnow
 
 SOURCE = "maps"
 CURSOR = "maps:cursor"
+CALLS = "maps:calls"  # meta: "<GST date> <searches sent that day>"
 QUERIES_PER_RUN = 6
+PACE_S = 6.0  # seconds between the searches of a round, so a viewer can follow them one by one
 SEARCH_PATH = "/v1/places:searchText"
 FIELD_MASK = ",".join(f"places.{field}" for field in (
-    "id", "displayName", "formattedAddress", "websiteUri", "nationalPhoneNumber", "internationalPhoneNumber",
-    "googleMapsUri", "businessStatus",
+    "id", "displayName", "formattedAddress", "location", "websiteUri", "nationalPhoneNumber",
+    "internationalPhoneNumber", "googleMapsUri", "businessStatus",
 ))
 PAGE_SIZE = 20
 # The UAE's bounding box, south-west and north-east corners. A bias: Text Search
@@ -166,11 +177,15 @@ def queries() -> tuple[Query, ...]:
     )
 
 
+def _name(place: dict[str, Any]) -> str:
+    display = place.get("displayName")
+    return str(display.get("text") or "") if isinstance(display, dict) else ""
+
+
 def classify(place: dict[str, Any]) -> Lead | None:
     """The lead in one Text Search listing; None when it names no watched brand,
     is permanently closed, or gives only the brand's own website and numbers."""
-    display = place.get("displayName")
-    name = str(display.get("text") or "") if isinstance(display, dict) else ""
+    name = _name(place)
     named = named_brands(name)
     if not named or place.get("businessStatus") == "CLOSED_PERMANENTLY":
         return None
@@ -188,6 +203,102 @@ def classify(place: dict[str, Any]) -> Lead | None:
     brand = with_phones[0] if "helpline" in reasons else named[0]
     return Lead(str(place["id"]), brand.name_en, tuple(reasons), name, str(place.get("formattedAddress") or ""),
                 phone, official, website, str(place.get("googleMapsUri") or ""))
+
+
+@dataclass(frozen=True)
+class Listing:
+    """A listing as the live panel shows it. In memory only, never stored."""
+    name: str
+    lat: float | None
+    lng: float | None
+    outcome: str  # lead, brand_ok or other
+    lead: Lead | None
+
+    @classmethod
+    def of(cls, place: dict[str, Any], lead: Lead | None) -> Listing:
+        """`lead` is `classify(place)`. A listing that names a watched brand and is no
+        lead (its website and number check out) is `brand_ok`."""
+        name = _name(place)
+        location = place.get("location")
+        lat, lng = (location.get("latitude"), location.get("longitude")) if isinstance(location, dict) else (None, None)
+        located = all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in (lat, lng))
+        return cls(name, float(lat) if located else None, float(lng) if located else None,
+                   "lead" if lead else "brand_ok" if named_brands(name) else "other", lead)
+
+
+@dataclass(frozen=True)
+class Search:
+    query: Query
+    sent_at: str  # ISO-8601 UTC
+    listings: tuple[Listing, ...] | None = None  # None while the request is in flight
+    failed: bool = False  # the API gave no usable answer
+
+
+class LiveSearches:
+    """The searches of the last round and the one under way, for the dashboard of
+    the same process (`baaz up`). Held in memory only: Google's terms do not let
+    Baaz store listing names. One round runs at a time, whoever starts it."""
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._round = threading.Lock()  # held while a round runs
+        self._searches: deque[Search] = deque(maxlen=QUERIES_PER_RUN + 1)
+        self.stop: threading.Event | None = None  # the watcher's, when it runs Maps in this process
+        self.ended_at: str | None = None  # when the last round in this process ended, ISO-8601 UTC
+
+    def attach(self, stop: threading.Event) -> None:
+        """Called by the watcher that runs the Maps collector in this process."""
+        self.stop = stop
+
+    @property
+    def attached(self) -> bool:
+        return self.stop is not None and not self.stop.is_set()
+
+    def begin(self) -> bool:
+        """Claim the round; False when one is under way."""
+        return self._round.acquire(blocking=False)
+
+    def end(self) -> None:
+        """Release the round when it has run."""
+        self.ended_at = utcnow()
+        self._round.release()
+
+    def cancel(self) -> None:
+        """Release a round claimed but not run."""
+        self._round.release()
+
+    def sent(self, query: Query) -> None:
+        with self._lock:
+            self._searches.append(Search(query, utcnow()))
+
+    def answered(self, listings: tuple[Listing, ...] | None) -> None:
+        """The answer to the search in flight, if any; None when there was no usable one."""
+        with self._lock:
+            if self._searches and self._searches[-1].listings is None:
+                last = self._searches.pop()
+                self._searches.append(replace(last, listings=listings or (), failed=listings is None))
+
+    def snapshot(self) -> tuple[bool, list[Search]]:
+        """Whether a round is under way, and the searches kept, oldest first."""
+        with self._lock:
+            return self._round.locked(), list(self._searches)
+
+
+live = LiveSearches()
+
+
+def _today() -> str:
+    return datetime.now(GST).date().isoformat()
+
+
+def calls_today(store: Store) -> int:
+    """Searches sent today (GST), by every process using this store."""
+    day, _, count = (store.get_meta(CALLS) or "").partition(" ")
+    return int(count) if day == _today() and count.isdigit() else 0
+
+
+def _count_call(store: Store) -> None:
+    store.set_meta(CALLS, f"{_today()} {calls_today(store) + 1}")
 
 
 def _error_message(data: Any) -> str:
@@ -228,6 +339,19 @@ def _log_lead(lead: Lead) -> None:
 
 
 def collect(store: Store, limits: Limits) -> int:
+    """The watcher's Maps round; skipped while a round started from the dashboard runs."""
+    if not live.begin():
+        log.info("maps: a round started from the dashboard is under way; this one is skipped")
+        return 0
+    try:
+        return run_round(store, limits)
+    finally:
+        live.end()
+
+
+def run_round(store: Store, limits: Limits) -> int:
+    """One round of searches, for a caller holding `live.begin()`; returns the
+    number of lead websites queued for the scorer."""
     settings = load_settings()
     added = 0
     try:
@@ -238,13 +362,19 @@ def collect(store: Store, limits: Limits) -> int:
         with httpx.Client(base_url=settings.google_maps_api_base, timeout=TIMEOUT, headers=headers) as client:
             for query in rotation(store, CURSOR, queries(), searches):
                 throttle.wait()
+                live.sent(query)
+                _count_call(store)
                 places = search(client, query)
                 if places is None:
+                    live.answered(None)
                     break
-                new = [p for p in places if not store.maps_place_seen(str(p["id"]))]
-                leads = 0
-                for place in new:
+                listings, new, leads = [], 0, 0
+                for place in places:
                     lead = classify(place)
+                    listings.append(Listing.of(place, lead))
+                    if store.maps_place_seen(str(place["id"])):
+                        continue
+                    new += 1
                     if lead and store.add_maps_lead(lead.row(query)):
                         leads += 1
                         _log_lead(lead)
@@ -253,7 +383,9 @@ def collect(store: Store, limits: Limits) -> int:
                                 f"Google Maps listing: {lead.name}"):
                             added += 1
                     store.mark_maps_place(str(place["id"]))
-                log.info("maps: %r: %d listings, %d new, %d leads", query.text, len(places), len(new), leads)
+                live.answered(tuple(listings))
+                log.info("maps: %r: %d listings, %d new, %d leads", query.text, len(places), new, leads)
     except Exception:  # noqa: BLE001 - a collector fails soft
         log.exception("maps: run failed")
+        live.answered(None)
     return added

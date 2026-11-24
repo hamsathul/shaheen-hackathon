@@ -10,6 +10,10 @@ queue is empty or the round's time slice has ended; the round then logs the
 counters and sleeps until the next collector is due. A failing collector or
 scan is logged and the loop goes on. Ctrl-C (or SIGTERM where the platform
 has it) lets the in-flight scans finish, then exits.
+
+The dashboard of the same process (`baaz up`) can start a Maps round sooner
+(`search_maps_now`), at most one every `MAPS_COOLDOWN_S`; the websites it
+queues end the loop's idle sleep, so they are scanned straight away.
 """
 
 from __future__ import annotations
@@ -21,7 +25,7 @@ import time
 from collections.abc import Callable
 from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 from dataclasses import dataclass, replace
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from baaz.collectors import Limits, ctlogs, lookalikes, maps, newdomains, storefronts
@@ -36,6 +40,9 @@ log = logging.getLogger("baaz.watch")
 
 COUNTERS_EVERY = 60.0  # seconds between counter lines while draining
 POLL = 1.0  # seconds; short waits keep Ctrl-C responsive on Windows
+MAPS_COOLDOWN_S = 600.0  # the shortest time between the end of a Maps round and one started from the dashboard
+
+_queued = threading.Event()  # a round started from the dashboard queued candidates: end the idle sleep
 
 
 @dataclass(frozen=True)
@@ -52,7 +59,7 @@ COLLECTORS: dict[str, Collector] = {
     "storefronts": Collector(storefronts.collect, 0, 300, 10.0),
     "ctlogs": Collector(ctlogs.collect, 3600, 3, 0.2),
     "newdomains": Collector(newdomains.collect, 24 * 3600, 500, 1.0),
-    "maps": Collector(maps.collect, 6 * 3600, maps.QUERIES_PER_RUN, 1.0),
+    "maps": Collector(maps.collect, 6 * 3600, maps.QUERIES_PER_RUN, 1 / maps.PACE_S),
     "lookalikes": Collector(lookalikes.collect, 6 * 3600, 3000, 20.0),
 }
 
@@ -78,6 +85,51 @@ def _seconds_until_due(store: Store, name: str, interval: float, now: datetime) 
         return 0.0
     elapsed = (now - datetime.fromisoformat(last)).total_seconds()
     return max(0.0, interval - elapsed)
+
+
+def maps_last_round(store: Store) -> datetime | None:
+    """When the last Maps round ended: the collector's last run, or a round
+    started from the dashboard that ended since."""
+    ends = [datetime.fromisoformat(t) for t in (store.get_meta(last_run_key("maps")), maps.live.ended_at) if t]
+    return max(ends, default=None)
+
+
+def maps_allowed_at(store: Store) -> datetime | None:
+    """When the dashboard may next start a Maps round; None when it may now."""
+    last = maps_last_round(store)
+    allowed = last + timedelta(seconds=MAPS_COOLDOWN_S) if last else None
+    return allowed if allowed and allowed > datetime.now(timezone.utc) else None
+
+
+def search_maps_now(store: Store) -> str:
+    """Start one Maps round in a thread of its own, for the dashboard's button.
+    Returns `started`, or why not: `off` (the watcher in this process does not
+    run Maps), `busy` (a round is under way) or `cooldown`. The round continues
+    the rotation and counts as the collector's last run."""
+    stop = maps.live.stop
+    if stop is None or not maps.live.attached:
+        return "off"
+    if not maps.live.begin():
+        return "busy"
+    if maps_allowed_at(store):
+        maps.live.cancel()
+        return "cooldown"
+    spec = COLLECTORS["maps"]
+
+    def round_now() -> None:
+        started = time.monotonic()
+        try:
+            added = maps.run_round(store, Limits(spec.max_per_run, spec.rate, stop))
+            store.set_meta(last_run_key("maps"), utcnow())
+            log.info("collector maps (from the dashboard): %d new candidates in %.0fs",
+                     added, time.monotonic() - started)
+            if added:
+                _queued.set()
+        finally:
+            maps.live.end()
+
+    threading.Thread(target=round_now, name="maps-now", daemon=True).start()
+    return "started"
 
 
 def run_collectors(store: Store, specs: dict[str, Collector], names: list[str], max_per_run: int | None,
@@ -169,9 +221,12 @@ def log_counters(store: Store) -> None:
 
 
 def _sleep(seconds: float, stop: threading.Event) -> None:
+    """Sleep until `seconds` have passed, `stop` is set, or a round started from
+    the dashboard has queued candidates (`_queued`)."""
     end = time.monotonic() + seconds
-    while not stop.is_set() and (left := end - time.monotonic()) > 0:
+    while not stop.is_set() and not _queued.is_set() and (left := end - time.monotonic()) > 0:
         time.sleep(min(POLL, left))
+    _queued.clear()
 
 
 def _idle_seconds(store: Store, specs: dict[str, Collector], names: list[str], interval: float) -> float:
@@ -199,6 +254,8 @@ def run(*, settings: Settings | None = None, once: bool = False, workers: int = 
     store = Store(settings.db_path)
     stop = stop or threading.Event()
     options = ScanOptions(render=render)
+    if "maps" in names:
+        maps.live.attach(stop)
 
     if requeued := store.requeue_stale():
         log.info("requeued %d candidates left mid-scan by an earlier run", requeued)
