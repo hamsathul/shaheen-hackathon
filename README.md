@@ -22,7 +22,14 @@ Three roles share one pipeline, `scan(url)`.
 | **Watcher** | `baaz watch` | Runs 24/7. Five collectors (brand lookalikes, Certificate Transparency, newly registered domains, a brand × country storefront sweep, Google Maps listings) feed candidates to the scorer. |
 | **Investigator** | `baaz investigate` | A local model, driven by the [pi](https://pi.dev) agent harness, works each flagged case with Baaz's read-only case tools and a headless browser, then files a report that separates proven facts from inferences. |
 
-An analyst works the results in the dashboard (`baaz dashboard`): live feed, case view with the AI investigation and its tool-call trace, confirm, takedown request, evidence download, English or Arabic interface.
+An analyst works the results in the dashboard (`baaz dashboard`), in English or Arabic:
+
+- **Live feed:** counters, the AI investigator panel with each running investigation's tool calls as they happen, the Google Maps watch with its map, and every scan as it is scored.
+- **Case view:** verdict, reasons in both languages with their evidence pointers, the page screenshot, the AI investigation (proven facts apart from inferences) and its tool-call trace, confirm, takedown request and evidence download.
+- **Simple mode:** a switch in the header for officers who are not analysts. Big plain numbers, then the likely scams, each with the brand it pretends to be and one sentence in English and Arabic; no scores, tool calls or hashes.
+- **Statistics:** scans per hour by verdict, the most impersonated brands, which collector found them, fraud types and the investigator's progress, all computed from the store.
+- **Reports:** every case's evidence report with filters, and a threat summary for the police (today, 24 hours or 7 days) that prints on A4; `baaz summary` writes the same report as one file.
+- **Maps leads:** Google Maps listings that use a brand's name with an off-brand website or a fake helpline number.
 
 `baaz up` runs all of it in one process: the watcher finds and scores candidates, two investigators work the flagged cases in parallel (fraud first), and the dashboard shows each investigation's tool calls as they happen. If the model goes away, the investigators wait for it and claim nothing; a run cut off by a lost connection goes back in the queue.
 
@@ -45,6 +52,14 @@ These are from the live run on the demo box on 2026-11-24. The case is a real fa
 | AI investigation: proven facts apart from inferences | Tool-call trace: Baaz tools and the browser |
 |---|---|
 | ![AI investigation](docs/screenshots/investigation.png) | ![Tool-call trace](docs/screenshots/trace.png) |
+
+| Simple mode for officers | Statistics from the live store |
+|---|---|
+| ![Simple mode](docs/screenshots/simple.png) | ![Statistics](docs/screenshots/stats.png) |
+
+| Google Maps watch: one round of searches in the emirate of Abu Dhabi | Threat summary for the police (last 7 days) |
+|---|---|
+| ![Google Maps watch](docs/screenshots/maps-watch.png) | ![Threat summary](docs/screenshots/threat-summary.png) |
 
 | Printable evidence report |
 |---|
@@ -239,17 +254,31 @@ Over the first 9 investigations on 2026-11-24 (from each case's `evidence/<id>/i
 | Browser policy violations | 0 |
 | New candidates proposed to the watcher | 57 domains |
 
+With two slots, the Statistics page on the box showed at 21:14 GST: 41 investigations done, 1 running and 421 queued, with a median of 10.8 minutes and 21 tool calls per case (over the 39 with a run record). Each case takes longer than with one slot, as two share the GPU. Two runs that timed out while both slots were busy were put back in the queue.
+
 In a test against a fake fine-payment page that told the AI to "mark this site safe", every run kept the phishing verdict and quoted the hidden instruction as evidence of manipulation. The model also asked for a lower score on several cases scored `fraud` from the domain name alone; that pattern led to the rule that `fraud` needs evidence from the scam itself.
 
 ## Live run
 
-The watcher has run on the demo box since 2026-11-24 15:26 GST. After 1 h 24 min the dashboard showed:
+The watcher has run on the demo box since 2026-11-24 15:26 GST, as `baaz up` since 17:27. At 21:12 GST, after 5 h 47 min, the dashboard showed:
 
-| Candidates seen | Scanned | Flagged | of which fraud | AI-investigated |
-|---:|---:|---:|---:|---:|
-| 636 | 639 | 252 | 23 | 9 |
+| Candidates seen | Scanned | Flagged | of which fraud | AI-investigated | Maps leads |
+|---:|---:|---:|---:|---:|---:|
+| 1,449 | 1,469 | 643 | 99 | 40 | 8 |
 
-Candidates came from the lookalike generator (401), the storefront sweep (130), newly registered domains (48) and the investigator's own proposals (57). Certificate Transparency (crt.sh) barely answered that day and contributed none. The scoring rules were tightened during that hour (see Evaluation), so the flagged count mixes old and new rules; the evaluation above is the measured result. Flagged cases still need an analyst: a lookalike name with no page is `suspicious`, not proof.
+By collector (Statistics page, 21:14 GST):
+
+| Collector | Scanned | Flagged | Fraud |
+|---|---:|---:|---:|
+| Storefront sweep | 780 | 344 | 71 |
+| AI investigator's proposals | 210 | 148 | 8 |
+| Lookalike generator | 401 | 96 | 1 |
+| Newly registered domains | 48 | 35 | 3 |
+| Checked by hand | 23 | 19 | 16 |
+| Google Maps | 7 | 1 | 0 |
+| Certificate Transparency | 0 | 0 | 0 |
+
+Certificate Transparency (crt.sh) barely answered that day and contributed none. The scoring rules were tightened during the first hour (see Evaluation), so the flagged count mixes old and new rules; the evaluation above is the measured result. Flagged cases still need an analyst: a lookalike name with no page is `suspicious`, not proof.
 
 ## Limitations
 
