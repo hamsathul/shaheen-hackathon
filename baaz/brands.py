@@ -71,6 +71,7 @@ class Brand:
     keywords: tuple[str, ...]
     tokens: tuple[str, ...]
     common_tokens: tuple[str, ...]
+    phones: tuple[str, ...] = ()  # verified contact numbers, as the brand publishes them
 
 
 @dataclass(frozen=True)
@@ -116,6 +117,7 @@ def load_brands() -> tuple[Brand, ...]:
                 keywords=tuple(k.lower() for k in b.get("keywords") or ()),
                 tokens=tuple(t.lower() for t in b.get("tokens") or ()),
                 common_tokens=tuple(t.lower() for t in b.get("common_tokens") or ()),
+                phones=tuple(str(p) for p in b.get("phones") or ()),
             ))
     return tuple(brands)
 

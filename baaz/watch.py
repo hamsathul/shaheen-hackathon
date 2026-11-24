@@ -20,11 +20,11 @@ import threading
 import time
 from collections.abc import Callable
 from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from typing import Any
 
-from baaz.collectors import Limits, ctlogs, lookalikes, newdomains, storefronts
+from baaz.collectors import Limits, ctlogs, lookalikes, maps, newdomains, storefronts
 from baaz.config import Settings, load_settings
 from baaz.domains import host_of
 from baaz.evidence import defang_text
@@ -47,11 +47,12 @@ class Collector:
 
 
 # Run in this order: the storefront sweep takes about a minute and finds skimmers,
-# the lookalike sweep takes about ten minutes on a fresh store.
+# the Maps searches take seconds, the lookalike sweep takes about ten minutes on a fresh store.
 COLLECTORS: dict[str, Collector] = {
     "storefronts": Collector(storefronts.collect, 0, 300, 10.0),
     "ctlogs": Collector(ctlogs.collect, 3600, 3, 0.2),
     "newdomains": Collector(newdomains.collect, 24 * 3600, 500, 1.0),
+    "maps": Collector(maps.collect, 6 * 3600, maps.QUERIES_PER_RUN, 1.0),
     "lookalikes": Collector(lookalikes.collect, 6 * 3600, 3000, 20.0),
 }
 
@@ -62,34 +63,40 @@ def check_collectors(names: list[str]) -> None:
         raise ValueError(f"unknown collector(s): {', '.join(sorted(unknown))}; choose from {', '.join(COLLECTORS)}")
 
 
-def _last_run_key(name: str) -> str:
+def collectors_for(settings: Settings) -> dict[str, Collector]:
+    """The collectors, with the Maps interval from the settings (BAAZ_MAPS_INTERVAL_HOURS)."""
+    return {**COLLECTORS, "maps": replace(COLLECTORS["maps"], interval=settings.maps_interval_hours * 3600)}
+
+
+def last_run_key(name: str) -> str:
     return f"collector:{name}:last_run"
 
 
-def _seconds_until_due(store: Store, name: str, now: datetime) -> float:
-    last = store.get_meta(_last_run_key(name))
+def _seconds_until_due(store: Store, name: str, interval: float, now: datetime) -> float:
+    last = store.get_meta(last_run_key(name))
     if last is None:
         return 0.0
     elapsed = (now - datetime.fromisoformat(last)).total_seconds()
-    return max(0.0, COLLECTORS[name].interval - elapsed)
+    return max(0.0, interval - elapsed)
 
 
-def run_collectors(store: Store, names: list[str], max_per_run: int | None, stop: threading.Event) -> int:
+def run_collectors(store: Store, specs: dict[str, Collector], names: list[str], max_per_run: int | None,
+                   stop: threading.Event) -> int:
     """Run every collector that is due; returns the number of new candidates."""
     total = 0
     for name in names:
         if stop.is_set():
             break
-        if _seconds_until_due(store, name, datetime.now(timezone.utc)) > 0:
+        spec = specs[name]
+        if _seconds_until_due(store, name, spec.interval, datetime.now(timezone.utc)) > 0:
             continue
-        spec = COLLECTORS[name]
         started = time.monotonic()
         try:
             added = spec.collect(store, Limits(max_per_run or spec.max_per_run, spec.rate, stop))
         except Exception:  # noqa: BLE001 - one collector never stops the loop
             log.exception("collector %s failed", name)
             added = 0
-        store.set_meta(_last_run_key(name), utcnow())
+        store.set_meta(last_run_key(name), utcnow())
         log.info("collector %s: %d new candidates in %.0fs", name, added, time.monotonic() - started)
         total += added
     return total
@@ -167,12 +174,12 @@ def _sleep(seconds: float, stop: threading.Event) -> None:
         time.sleep(min(POLL, left))
 
 
-def _idle_seconds(store: Store, names: list[str], interval: float) -> float:
+def _idle_seconds(store: Store, specs: dict[str, Collector], names: list[str], interval: float) -> float:
     if store.counters()["queued"]:
         return 0.0
     now = datetime.now(timezone.utc)
-    return min([interval, *(_seconds_until_due(store, n, now) for n in names
-                            if COLLECTORS[n].interval > 0)])
+    return min([interval, *(_seconds_until_due(store, n, specs[n].interval, now) for n in names
+                            if specs[n].interval > 0)])
 
 
 def run(*, settings: Settings | None = None, once: bool = False, workers: int = 4,
@@ -185,6 +192,10 @@ def run(*, settings: Settings | None = None, once: bool = False, workers: int = 
     settings = settings or load_settings()
     names = collectors or list(COLLECTORS)
     check_collectors(names)
+    if "maps" in names and not settings.google_maps_api_key:
+        log.info("maps: GOOGLE_MAPS_API_KEY is not set (.env), so the Google Maps collector is skipped")
+        names = [n for n in names if n != "maps"]
+    specs = collectors_for(settings)
     store = Store(settings.db_path)
     stop = stop or threading.Event()
     options = ScanOptions(render=render)
@@ -194,14 +205,14 @@ def run(*, settings: Settings | None = None, once: bool = False, workers: int = 
     if reset_clock or store.get_meta("watch_started_at") is None:
         store.set_meta("watch_started_at", utcnow())
     log.info("watching since %s: collectors %s, %d workers, render %s",
-             store.get_meta("watch_started_at"), ",".join(names), workers, "on" if render else "off")
+             store.get_meta("watch_started_at"), ",".join(names) or "none", workers, "on" if render else "off")
 
     previous = _on_sigterm_raise_interrupt()
     try:
         while not stop.is_set():
             deadline = float("inf") if once else time.monotonic() + interval
             with ThreadPoolExecutor(max_workers=1, thread_name_prefix="baaz-collect") as pool:
-                collected = pool.submit(run_collectors, store, names, max_per_run, stop)
+                collected = pool.submit(run_collectors, store, specs, names, max_per_run, stop)
                 scanned = drain(settings, store, options, workers, deadline, stop,
                                 lambda job=collected: not job.done())
             added = collected.result()
@@ -209,7 +220,7 @@ def run(*, settings: Settings | None = None, once: bool = False, workers: int = 
             log_counters(store)
             if once:
                 break
-            _sleep(_idle_seconds(store, names, interval), stop)
+            _sleep(_idle_seconds(store, specs, names, interval), stop)
     except KeyboardInterrupt:
         stop.set()
         log.info("stopped")

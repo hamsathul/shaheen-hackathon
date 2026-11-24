@@ -1,5 +1,6 @@
 """SQLite storage: scan results, the candidate queue, investigations,
-fingerprints for linking cases, and an intel cache."""
+fingerprints for linking cases, an intel cache, and the Google Maps listings
+seen with the leads among them."""
 
 from __future__ import annotations
 
@@ -71,6 +72,26 @@ CREATE TABLE IF NOT EXISTS intel_cache (
     data_json TEXT NOT NULL,
     PRIMARY KEY (domain, kind)
 );
+
+CREATE TABLE IF NOT EXISTS maps_places (
+    place_id TEXT PRIMARY KEY,
+    seen_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS maps_leads (
+    place_id TEXT PRIMARY KEY,
+    found_at TEXT NOT NULL,
+    query TEXT NOT NULL,
+    brand TEXT NOT NULL,
+    reasons TEXT NOT NULL,
+    name TEXT NOT NULL,
+    address TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    official_phones TEXT NOT NULL,
+    website TEXT NOT NULL,
+    maps_url TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS maps_leads_website ON maps_leads(website);
 
 CREATE TABLE IF NOT EXISTS meta (
     key TEXT PRIMARY KEY,
@@ -391,6 +412,55 @@ class Store:
         data["report"] = json.loads(data.pop("report_json")) if data.get("report_json") else None
         return data
 
+    # Google Maps listings: the place IDs seen, and the leads among them
+
+    def maps_place_seen(self, place_id: str) -> bool:
+        with self._conn() as db:
+            row = db.execute("SELECT 1 FROM maps_places WHERE place_id = ?", (place_id,)).fetchone()
+        return row is not None
+
+    def mark_maps_place(self, place_id: str) -> None:
+        with self._conn() as db:
+            db.execute("INSERT OR IGNORE INTO maps_places VALUES (?, ?)", (place_id, utcnow()))
+
+    def add_maps_lead(self, lead: dict[str, str]) -> bool:
+        """Record a lead once per listing; returns False when the listing already has one."""
+        with self._conn() as db:
+            cur = db.execute(
+                "INSERT OR IGNORE INTO maps_leads (place_id, found_at, query, brand, reasons, name, address, phone,"
+                " official_phones, website, maps_url) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                (lead["place_id"], utcnow(), lead["query"], lead["brand"], lead["reasons"], lead["name"],
+                 lead["address"], lead["phone"], lead["official_phones"], lead["website"], lead["maps_url"]),
+            )
+        return cur.rowcount == 1
+
+    def maps_leads(self) -> list[dict[str, Any]]:
+        """Every lead (one per listing, so they stay few), newest first, each with
+        its website's place in the queue and its scan."""
+        with self._conn() as db:
+            rows = db.execute(
+                """SELECT l.*, c.status AS candidate_status, s.id AS scan_id, s.verdict, s.risk_score
+                   FROM maps_leads l LEFT JOIN candidates c ON c.url = l.website
+                   LEFT JOIN scans s ON s.id = c.scan_id
+                   ORDER BY l.found_at DESC, l.rowid DESC"""
+            ).fetchall()
+        return [dict(r) for r in rows]
+
+    def maps_leads_for_scans(self, scan_ids: list[str]) -> dict[str, list[dict[str, Any]]]:
+        """The Maps leads whose website became each of these scans, oldest first."""
+        if not scan_ids:
+            return {}
+        with self._conn() as db:
+            rows = db.execute(
+                f"""SELECT c.scan_id, l.* FROM maps_leads l JOIN candidates c ON c.url = l.website
+                    WHERE c.scan_id IN ({','.join('?' * len(scan_ids))}) ORDER BY l.found_at, l.rowid""",
+                scan_ids,
+            ).fetchall()
+        found: dict[str, list[dict[str, Any]]] = {}
+        for row in rows:
+            found.setdefault(row["scan_id"], []).append(dict(row))
+        return found
+
     # counters and metadata
 
     def counters(self) -> dict[str, int]:
@@ -404,6 +474,7 @@ class Store:
                 "fraud": one("SELECT COUNT(*) FROM scans WHERE verdict = 'fraud'"),
                 "investigated": one("SELECT COUNT(*) FROM investigations WHERE status = 'done'"),
                 "confirmed": one("SELECT COUNT(*) FROM scans WHERE analyst_confirmed = 1"),
+                "maps_leads": one("SELECT COUNT(*) FROM maps_leads"),
             }
 
     def get_meta(self, key: str) -> str | None:

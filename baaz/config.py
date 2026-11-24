@@ -16,6 +16,7 @@ DESKTOP_UA = (
 )
 # Top-level domains the watcher's storefront sweep tries, in order.
 STOREFRONT_TLDS = ("com", "shop", "store", "online", "net", "co")
+GOOGLE_MAPS_API_BASE = "https://places.googleapis.com"
 
 
 def _load_dotenv(path: Path) -> None:
@@ -42,6 +43,9 @@ class Settings:
     reporter_email: str = ""
     storefront_tlds: tuple[str, ...] = STOREFRONT_TLDS
     investigators: int = 2  # parallel investigations (one pi process each)
+    google_maps_api_key: str = ""  # Places API (New); empty turns the Maps collector off
+    google_maps_api_base: str = GOOGLE_MAPS_API_BASE
+    maps_interval_hours: float = 6.0  # hours between Maps collector runs
 
     @property
     def llm_enabled(self) -> bool:
@@ -65,4 +69,7 @@ def load_settings() -> Settings:
             for t in os.environ.get("BAAZ_STOREFRONT_TLDS", ",".join(STOREFRONT_TLDS)).split(",") if t.strip()
         ),
         investigators=max(1, int(os.environ.get("BAAZ_INVESTIGATORS") or 2)),
+        google_maps_api_key=os.environ.get("GOOGLE_MAPS_API_KEY", "").strip(),
+        google_maps_api_base=(os.environ.get("GOOGLE_MAPS_API_BASE") or GOOGLE_MAPS_API_BASE).rstrip("/"),
+        maps_interval_hours=float(os.environ.get("BAAZ_MAPS_INTERVAL_HOURS") or 6),
     )

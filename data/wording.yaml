@@ -62,3 +62,42 @@ urgency:
 # Brand keywords that are also everyday words (a messenger bag); on a page they
 # never count as the brand. Matching in domain names is unaffected.
 ordinary_words: [messenger]
+
+# Words with which a Google Maps listing presents itself as a brand's helpline
+# (the Maps collector's fake-helpline check). Branches and service centres keep
+# local numbers, so "service" alone is not a claim; "customer service" is.
+# Arabic is matched after folding أ/إ/آ to ا, ة to ه and ى to ي.
+helpline_claims:
+  en:
+    - customer care
+    - customer service
+    - customer services
+    - customer support
+    - customer helpline
+    - customer hotline
+    - support
+    - helpline
+    - help line
+    - helpdesk
+    - help desk
+    - hotline
+    - hot line
+    - call centre
+    - call center
+    - contact centre
+    - contact center
+    - toll free
+    - toll-free
+  ar:
+    - خدمة العملاء
+    - خدمة عملاء
+    - خدمة الزبائن
+    - رعاية العملاء
+    - دعم العملاء
+    - الدعم الفني
+    - دعم فني
+    - مركز الاتصال
+    - مركز اتصال
+    - خط المساعدة
+    - الخط الساخن
+    - الرقم المجاني
