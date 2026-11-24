@@ -286,15 +286,85 @@ class Store:
             ).fetchone()
         return row is not None
 
-    def next_investigation(self) -> str | None:
-        """Fraud before suspicious, oldest first."""
+    def claim_investigation(self) -> str | None:
+        """Take the next queued case, fraud before suspicious, oldest first, and mark
+        it running. One UPDATE takes the write lock for the pick and the change, so
+        parallel investigators never take the same case."""
         with self._conn() as db:
-            row = db.execute(
-                """SELECT i.scan_id FROM investigations i JOIN scans s ON s.id = i.scan_id
-                   WHERE i.status = 'queued'
-                   ORDER BY CASE s.verdict WHEN 'fraud' THEN 0 ELSE 1 END, i.queued_at LIMIT 1"""
-            ).fetchone()
-        return row["scan_id"] if row else None
+            rows = db.execute(
+                """UPDATE investigations SET status = 'running', started_at = ?, finished_at = NULL, error = NULL
+                   WHERE scan_id = (SELECT i.scan_id FROM investigations i JOIN scans s ON s.id = i.scan_id
+                                    WHERE i.status = 'queued'
+                                    ORDER BY CASE s.verdict WHEN 'fraud' THEN 0 ELSE 1 END, i.queued_at
+                                    LIMIT 1)
+                   RETURNING scan_id""",
+                (utcnow(),),
+            ).fetchall()
+        return rows[0]["scan_id"] if rows else None
+
+    def requeue_running_investigations(self) -> int:
+        """Return investigations left 'running' by a stopped or crashed run to the queue."""
+        with self._conn() as db:
+            cur = db.execute("UPDATE investigations SET status = 'queued' WHERE status = 'running'")
+        return cur.rowcount
+
+    def requeue_failed_investigations(self, error_prefixes: tuple[str, ...]) -> int:
+        """Return failed investigations whose error starts with one of these prefixes to the queue."""
+        matches = " OR ".join("substr(error, 1, ?) = ?" for _ in error_prefixes)
+        args = [x for prefix in error_prefixes for x in (len(prefix), prefix)]
+        with self._conn() as db:
+            cur = db.execute(
+                f"UPDATE investigations SET status = 'queued', error = NULL WHERE status = 'failed' AND ({matches})",
+                args,
+            )
+        return cur.rowcount
+
+    def running_investigations(self) -> list[dict[str, Any]]:
+        """The investigations under way, oldest first, with their case's address, verdict and score."""
+        with self._conn() as db:
+            rows = db.execute(
+                """SELECT i.scan_id, i.mode, i.started_at, s.url, s.final_url, s.verdict, s.risk_score
+                   FROM investigations i JOIN scans s ON s.id = i.scan_id
+                   WHERE i.status = 'running' ORDER BY i.started_at, i.scan_id"""
+            ).fetchall()
+        return [dict(r) for r in rows]
+
+    def investigation_queue(self) -> dict[str, int]:
+        """Queued investigations by verdict."""
+        with self._conn() as db:
+            rows = db.execute(
+                """SELECT s.verdict, COUNT(*) AS n FROM investigations i JOIN scans s ON s.id = i.scan_id
+                   WHERE i.status = 'queued' GROUP BY s.verdict"""
+            ).fetchall()
+        return {r["verdict"]: r["n"] for r in rows}
+
+    def finished_investigations(self, limit: int) -> list[dict[str, Any]]:
+        """The latest finished investigations, newest first, with their report."""
+        with self._conn() as db:
+            rows = db.execute(
+                """SELECT i.scan_id, i.finished_at, i.report_json, s.url, s.final_url, s.verdict, s.risk_score,
+                          s.fraud_type
+                   FROM investigations i JOIN scans s ON s.id = i.scan_id
+                   WHERE i.status = 'done' ORDER BY i.finished_at DESC, i.rowid DESC LIMIT ?""",
+                (limit,),
+            ).fetchall()
+        found = []
+        for row in rows:
+            data = dict(row)
+            data["report"] = json.loads(data.pop("report_json")) if data.get("report_json") else {}
+            found.append(data)
+        return found
+
+    def investigation_states(self, scan_ids: list[str]) -> dict[str, str]:
+        """The investigation status of each of these cases that has one."""
+        if not scan_ids:
+            return {}
+        with self._conn() as db:
+            rows = db.execute(
+                f"SELECT scan_id, status FROM investigations WHERE scan_id IN ({','.join('?' * len(scan_ids))})",
+                scan_ids,
+            ).fetchall()
+        return {r["scan_id"]: r["status"] for r in rows}
 
     def set_investigation(self, scan_id: str, status: str, **fields: Any) -> None:
         cols = {"status": status, **fields}

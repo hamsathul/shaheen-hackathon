@@ -5,14 +5,17 @@ After the deterministic scorer flags a case (`fraud` or `suspicious`), the pipel
 ```sh
 uv run baaz investigate <case-id>                 # auto: pi if available, else one-shot
 uv run baaz investigate <case-id> --mode oneshot  # no tool calling
-uv run baaz investigate --queue [--loop]          # work the queue, fraud before suspicious
+uv run baaz investigate --queue [--loop] [--workers N]  # work the queue, fraud before suspicious
 uv run baaz investigate --bench                   # tokens per second of the endpoint
+uv run baaz up                                    # autonomous mode: watcher, investigator queue and dashboard
 ```
+
+**The queue.** `--queue` (and `baaz up`) runs `--workers` investigations in parallel (default `BAAZ_INVESTIGATORS`, else 2), each with its own pi process, `baaz mcp` server, browser, pi config directory and evidence folder; give `llama-server` as many slots (`-np`). A worker takes a case with one SQLite `UPDATE … RETURNING`, so two workers never take the same case. Before taking a case, a worker checks that the model answers `GET {LLM_BASE_URL}/models`; while it does not, no case is taken (waits of 10 s doubling to 60 s, one log line when the endpoint goes down and one when it is back, and the dashboard says "Waiting for the model"). A run that fails with a connection error (`ConnectError`, `ConnectTimeout`, `ReadError`, `RemoteProtocolError`) goes back to the queue instead of staying failed. When the queue starts, it re-queues investigations left `running` by a stopped process and those that failed with a connection error. Ctrl-C (or stopping `baaz up`) kills the pi runs in flight with everything they started and puts their cases back in the queue. While it runs, the queue writes a heartbeat to the store's meta table; the dashboard's live panel shows the investigator as off when the heartbeat is more than a minute old.
 
 Each run writes into `evidence/<id>/`:
 
 - `investigation.json`: the report, `declared_tools` (every tool declared to the model), `browser_actions` (each browser tool call with its target and the page URL after it), `policy_violation` and `policy_violations`, and the run record (`run`);
-- `agent_trace.jsonl`: pi's JSON event stream, or the one-shot request and response;
+- `agent_trace.jsonl`: pi's JSON event stream, or the one-shot request and response. pi writes it straight into the file while it runs, so the dashboard follows the run live (the feed's investigator panel and the case page's trace refresh every 5 seconds);
 - `agent_stderr.log`: pi's stderr;
 - `browser/`: the Playwright session (`session-*/session.md`, every tool call with its arguments and result), page snapshots (`page-*.yml`) and console logs.
 
@@ -76,7 +79,7 @@ pi -ne -e builtin:mcp --mode json --offline --no-session -ns -nc -np \
    --model local/<LLM_MODEL> --system-prompt <repo>/agent/investigator.md "Investigate case <id>"
 ```
 
-`--system-prompt` is given the file path; pi reads a path that exists. On Windows, `pi` is a batch wrapper (`pi.cmd`), and cmd.exe mangles complex arguments, so Baaz runs the wrapper's node script (`pi-launcher.js`) with node directly. A run is killed after `--timeout` seconds, with every process it started: pi starts each MCP server in a session of its own, so Baaz kills the process group of each descendant (`taskkill /T` on Windows). If pi ends without a submitted report, Baaz falls back to one-shot mode once and records why in `run.fallback_reason`.
+`--system-prompt` is given the file path; pi reads a path that exists. On Windows, `pi` is a batch wrapper (`pi.cmd`), and cmd.exe mangles complex arguments, so Baaz runs the wrapper's node script (`pi-launcher.js`) with node directly. pi runs in a session (POSIX) or process group (Windows) of its own, so Ctrl-C in the console reaches only Baaz, which then ends the run itself. A run is killed after `--timeout` seconds, with every process it started: pi starts each MCP server in a session of its own, so Baaz kills the process group of each descendant (`taskkill /T` on Windows). If pi ends without a submitted report, Baaz falls back to one-shot mode once and records why in `run.fallback_reason`.
 
 ### Thinking in pi mode
 

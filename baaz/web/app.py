@@ -1,7 +1,9 @@
-"""The dashboard: a live feed of scans with counters, one page per case
-(reasons in English and Arabic, screenshot, AI investigation and its
-tool-call trace, analyst confirmation, evidence download and verification)
-and a box to scan a pasted link.
+"""The dashboard: a live feed of scans with counters and the AI
+investigator's live panel (the runs under way with their tool calls so far,
+the queue, the latest reports), one page per case (reasons in English and
+Arabic, screenshot, AI investigation and its tool-call trace, followed live
+while the model works, analyst confirmation, evidence download and
+verification) and a box to scan a pasted link.
 
 Everything is served from this package: no CDN, no web fonts, so it works
 with the network unplugged. Suspect addresses are always defanged and never
@@ -26,7 +28,7 @@ from fastapi.templating import Jinja2Templates
 from jinja2 import Environment, FileSystemLoader
 from starlette.concurrency import run_in_threadpool
 
-from baaz import evidence
+from baaz import evidence, investigator
 from baaz.config import PACKAGE_DIR, Settings, load_settings
 from baaz.domains import host_of
 from baaz.evidence import GST, defang_text
@@ -39,6 +41,10 @@ from baaz.web.trace import read_trace
 WEB_DIR = PACKAGE_DIR / "web"
 CASE_ID = re.compile(r"[0-9A-Za-z][0-9A-Za-z_-]{0,63}")
 FEED_LIMIT = 60
+TRACE = "agent_trace.jsonl"
+LIVE_TOOLS = 12  # tool calls shown per running investigation, newest last
+RECENT = 5  # finished investigations shown in the live panel
+ALIVE_S = 4 * investigator.HEARTBEAT_S  # an older queue heartbeat means the investigator is off
 FILTERS = ("fraud", "suspicious", "legitimate")
 SIGNAL_KEYS = (
     "final_domain", "title", "domain_age_days", "registrar", "hosting_country", "asn", "cert_age_days",
@@ -88,6 +94,32 @@ def _uptime(iso: str | None) -> str:
     days, rest = divmod(minutes, 24 * 60)
     hours, minutes = divmod(rest, 60)
     return f"{days}d {hours}h" if days else f"{hours}h {minutes}m" if hours else f"{minutes}m"
+
+
+def _age_s(iso: str | None) -> int | None:
+    """Whole seconds since an ISO-8601 time, or None when it is missing or unreadable."""
+    try:
+        moment = datetime.fromisoformat(str(iso).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    moment = moment if moment.tzinfo else moment.replace(tzinfo=timezone.utc)
+    return max(int((datetime.now(timezone.utc) - moment).total_seconds()), 0)
+
+
+def _run_file(problem: str) -> bool:
+    """Whether an `evidence.verify` line ("<problem>: <file>") is about a file that a
+    running investigation is still writing (its report, trace or browser session)."""
+    name = problem.split(": ", 1)[-1]
+    return name in investigator.OWN_FILES or name.startswith("browser/")
+
+
+def _live_step(step: dict[str, Any]) -> dict[str, Any]:
+    """A trace step for the case page's live view, defanged like the rendered page."""
+    if step["kind"] == "model":
+        return {"kind": "model", "text": _defang(step["text"])}
+    return {"kind": "tool", "server": step["server"], "tool": step["tool"], "args": _defang(step["args"]),
+            "result": _defang(step["result"]) if step["result"] else "", "error": step["error"],
+            "ms": round(step["ms"]) if step["ms"] is not None else None, "done": step["done"]}
 
 
 def _read_json(path: Path) -> Any | None:
@@ -183,6 +215,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         lang = lang_of(request)
         return templates.TemplateResponse(request, name, {
             "t": i18n.STRINGS[lang], "lang": lang, "dir": "rtl" if lang == "ar" else "ltr",
+            "js_strings": {k: i18n.STRINGS[lang][k] for k in i18n.JS_KEYS},
             "verdicts": i18n.VERDICTS[lang], "fraud_types": i18n.FRAUD_TYPES[lang], "here": request.url.path,
             **context,
         })
@@ -205,6 +238,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def feed(lang: str, verdict: str | None) -> dict[str, Any]:
         scans = store.list_scans((verdict,) if verdict in FILTERS else (), FEED_LIMIT)
         sources = store.scan_sources([r.id for r in scans])
+        ai = store.investigation_states([r.id for r in scans])
         started = store.get_meta("watch_started_at")
         rows = []
         for r in scans:
@@ -220,9 +254,52 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 "brand": r.impersonated_brand or "",
                 "source": i18n.label(i18n.SOURCES, lang, source),
                 "confirmed": r.analyst_confirmed,
+                "ai": ai.get(r.id, ""),
             })
         return {"counters": store.counters(), "running_since": _gst(started), "uptime": _uptime(started),
-                "rows": rows}
+                "rows": rows, "activity": activity(lang)}
+
+    def case_row(row: dict[str, Any], lang: str) -> dict[str, Any]:
+        return {"id": row["scan_id"], "domain": defang_text(host_of(row["final_url"] or row["url"])),
+                "verdict": row["verdict"], "verdict_label": i18n.label(i18n.VERDICTS, lang, row["verdict"]),
+                "score": row["risk_score"]}
+
+    def activity(lang: str) -> dict[str, Any]:
+        """The investigator for the live panel: each run under way with its tool calls so
+        far, the queue by verdict and the latest finished investigations. Runs count only
+        while the queue's heartbeat is fresh, so a killed investigator shows as off."""
+        beat = _age_s(store.get_meta(investigator.HEARTBEAT_KEY))
+        alive = beat is not None and beat <= ALIVE_S
+        model_down = alive and bool(store.get_meta(investigator.MODEL_DOWN_KEY))
+        running = []
+        for run in store.running_investigations() if alive else []:
+            tools = [s for s in read_trace(settings.evidence_dir / run["scan_id"] / TRACE) if s["kind"] == "tool"]
+            running.append({
+                **case_row(run, lang), "mode": run["mode"] or "", "elapsed_s": _age_s(run["started_at"]) or 0,
+                "tool_count": len(tools),
+                "tools": [{"server": s["server"], "tool": s["tool"], "target": _defang(s["target"]),
+                           "done": s["done"], "error": s["error"]} for s in tools[-LIVE_TOOLS:]],
+            })
+        queued = store.investigation_queue()
+        recent = []
+        for row in store.finished_investigations(RECENT):
+            report = row["report"] if isinstance(row["report"], dict) else {}
+            summary = (lang == "ar" and report.get("summary_ar")) or report.get("summary_en")
+            kind = report.get("fraud_type") if isinstance(report.get("fraud_type"), str) else row["fraud_type"]
+            recent.append({
+                **case_row(row, lang), "time": _gst(row["finished_at"]),
+                "type": i18n.label(i18n.FRAUD_TYPES, lang, kind) if kind else "",
+                "summary": _defang(investigator.first_sentence(str(summary or ""))),
+            })
+        return {
+            "state": "running" if running else "waiting" if model_down else "idle" if alive else "off",
+            "model_down": model_down,
+            "model": settings.llm_model,
+            "running": running,
+            "queue": [{"verdict": v, "label": i18n.label(i18n.VERDICTS, lang, v), "n": queued.get(v, 0)}
+                      for v in ("fraud", "suspicious")],
+            "recent": recent,
+        }
 
     def investigation(case_id: str, folder: Path) -> dict[str, Any] | None:
         row = store.get_investigation(case_id)
@@ -266,7 +343,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         result, folder = get_case(case_id)
         redirects = _read_json(folder / "redirects.json") or {}
         chain = redirects.get("chain") or [{"url": u, "status": None, "via": None} for u in result.redirect_chain]
+        inv = investigation(case_id, folder)
         problems = evidence.verify(folder)
+        running = inv is not None and inv["status"] == "running"
+        if running:  # a run adds its report, trace and browser session to the manifest when it ends
+            problems = [p for p in problems if not _run_file(p)]
         takedown = folder / evidence.TAKEDOWN
         return page(
             request, "case.html", r=result, host=host_of(result.final_url or result.url), chain=chain,
@@ -277,11 +358,26 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             manifest_sha=evidence.manifest_sha256(folder) if not problems else None,
             confirmation=_read_json(folder / evidence.CONFIRMATION),
             takedown=takedown.read_text(encoding="utf-8") if takedown.is_file() else None,
-            inv=investigation(case_id, folder),
-            trace=read_trace(folder / "agent_trace.jsonl"),
+            inv=inv,
+            run_files_pending=running,
+            trace=read_trace(folder / TRACE),
             notice=NOTICES.get(notice or ""),
             error=notice == "confirm_error",
         )
+
+    @app.get("/api/case/{case_id}/live")
+    def case_live(case_id: str) -> JSONResponse:
+        """The investigation's status and, while it runs, its trace so far. `filed` turns
+        true once the run's full record is saved (submit_report saves the report alone
+        a few seconds before pi ends)."""
+        _, folder = get_case(case_id)
+        row = store.get_investigation(case_id)
+        status = row["status"] if row else None
+        report = (row or {}).get("report")
+        filed = status == "failed" or (status == "done" and isinstance(report, dict) and "run" in report)
+        live = status == "running" or (status == "done" and not filed)
+        steps = [_live_step(s) for s in read_trace(folder / TRACE)] if live else []
+        return JSONResponse({"status": status, "filed": filed, "steps": steps})
 
     @app.get("/case/{case_id}/screenshot.png")
     def screenshot(case_id: str) -> FileResponse:
@@ -313,7 +409,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.post("/case/{case_id}/investigate")
     def reinvestigate(case_id: str) -> Response:
         get_case(case_id)
-        if not store.queue_investigation(case_id):
+        current = store.get_investigation(case_id)
+        if current is None:
+            store.queue_investigation(case_id)
+        elif current["status"] != "running":  # a running case is never queued twice
             store.set_investigation(case_id, "queued", queued_at=utcnow(), error=None)
         return RedirectResponse(f"/case/{case_id}?notice=queued", status_code=303)
 

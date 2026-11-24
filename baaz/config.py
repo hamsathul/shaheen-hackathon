@@ -41,6 +41,7 @@ class Settings:
     reporter_name: str = "Baaz analyst"
     reporter_email: str = ""
     storefront_tlds: tuple[str, ...] = STOREFRONT_TLDS
+    investigators: int = 2  # parallel investigations (one pi process each)
 
     @property
     def llm_enabled(self) -> bool:
@@ -63,4 +64,5 @@ def load_settings() -> Settings:
             t.strip().lstrip(".").lower()
             for t in os.environ.get("BAAZ_STOREFRONT_TLDS", ",".join(STOREFRONT_TLDS)).split(",") if t.strip()
         ),
+        investigators=max(1, int(os.environ.get("BAAZ_INVESTIGATORS") or 2)),
     )

@@ -11,7 +11,7 @@ from pathlib import Path
 
 import uvicorn
 
-from baaz import __version__, batch, demo, evidence, investigator, mcp_server, watch
+from baaz import __version__, batch, demo, evidence, investigator, mcp_server, up, watch
 from baaz.capture import CaptureError
 from baaz.config import load_settings
 from baaz.domains import normalize_url, registrable_domain
@@ -201,8 +201,11 @@ def cmd_investigate(args: argparse.Namespace) -> int:
             print(json.dumps(investigator.bench(), ensure_ascii=False))
             return 0
         if args.queue:
-            for record in investigator.investigate_queue(args.loop, args.timeout, args.mode):
-                _print_investigation(record)
+            logging.basicConfig(level=logging.INFO, format="%(asctime)s %(threadName)s %(message)s",
+                                datefmt="%Y-%m-%d %H:%M:%S", stream=sys.stdout)
+            logging.getLogger("httpx").setLevel(logging.WARNING)
+            investigator.work_queue(args.loop, args.timeout, args.mode,
+                                    args.workers or load_settings().investigators, on_record=_print_investigation)
             return 0
         if not args.id:
             print("baaz investigate: give a case id, --queue or --bench", file=sys.stderr)
@@ -211,6 +214,9 @@ def cmd_investigate(args: argparse.Namespace) -> int:
     except (LookupError, RuntimeError) as exc:
         print(f"baaz investigate: {exc}", file=sys.stderr)
         return 2
+    except KeyboardInterrupt:
+        print("baaz investigate: stopped; the runs in flight were ended", file=sys.stderr)
+        return 130
     _print_investigation(record)
     return 0 if record["run"]["status"] == "done" else 1
 
@@ -227,6 +233,8 @@ def _add_agent_commands(sub: argparse._SubParsersAction) -> None:
     p.add_argument("--timeout", type=float, default=900, help="seconds per case (default 900)")
     p.add_argument("--queue", action="store_true", help="work the investigation queue")
     p.add_argument("--loop", action="store_true", help="with --queue: keep waiting for new cases")
+    p.add_argument("--workers", type=int,
+                   help="with --queue: parallel investigations (default: BAAZ_INVESTIGATORS, else 2)")
     p.add_argument("--bench", action="store_true", help="measure the model's tokens per second")
     p.set_defaults(func=cmd_investigate)
 
@@ -257,7 +265,29 @@ def cmd_demo(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_up(args: argparse.Namespace) -> int:
+    collectors = [c.strip() for c in args.collectors.split(",") if c.strip()] if args.collectors else None
+    try:
+        up.run(args.host, args.port, args.workers, not args.no_render, not args.no_investigate, args.investigators,
+               collectors)
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    return 0
+
+
 def add_dashboard_commands(sub: argparse._SubParsersAction) -> None:
+    p = sub.add_parser("up", help="autonomous mode: watcher, investigator and dashboard in one process")
+    p.add_argument("--host", default="127.0.0.1", help="interface to listen on (0.0.0.0 for the LAN)")
+    p.add_argument("--port", type=int, default=8000)
+    p.add_argument("--workers", type=int, default=4, help="parallel scans (default 4)")
+    p.add_argument("--no-render", action="store_true", help="skip the headless browser in scans (faster)")
+    p.add_argument("--no-investigate", action="store_true", help="watch and serve only; no AI investigator")
+    p.add_argument("--investigators", type=int,
+                   help="parallel investigations (default: BAAZ_INVESTIGATORS, else 2)")
+    p.add_argument("--collectors", help=f"comma-separated subset of: {','.join(watch.COLLECTORS)}")
+    p.set_defaults(func=cmd_up)
+
     p = sub.add_parser("dashboard", help="serve the dashboard (live feed, cases, confirm, export)")
     p.add_argument("--host", default="127.0.0.1", help="interface to listen on (0.0.0.0 for the LAN)")
     p.add_argument("--port", type=int, default=8000)

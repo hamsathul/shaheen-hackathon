@@ -23,6 +23,7 @@
 {% block main %}{% endblock %}
 </main>
 <footer class="bottom">{{ t.defanged }}</footer>
+<script type="application/json" id="strings">{{ js_strings | tojson }}</script>
 {% block scripts %}{% endblock %}
 </body>
 </html>
