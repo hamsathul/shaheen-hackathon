@@ -12,7 +12,8 @@ from baaz.store import Store
 
 def listing(place_id, name, phone="", website="", status="OPERATIONAL", national=False):
     place = {"id": place_id, "displayName": {"text": name, "languageCode": "en"}, "businessStatus": status,
-             "formattedAddress": "Invented Street, Dubai", "googleMapsUri": f"https://maps.google.com/?cid={place_id}"}
+             "formattedAddress": "Invented Street, Abu Dhabi", "googleMapsUri": f"https://maps.google.com/?cid={place_id}",
+             "addressComponents": [{"longText": "Abu Dhabi", "types": ["administrative_area_level_1", "political"]}]}
     if phone:
         place["nationalPhoneNumber" if national else "internationalPhoneNumber"] = phone
     if website:
@@ -90,15 +91,17 @@ def test_search_sends_the_documented_request_and_reads_the_listings():
 
     def answer(request):
         seen["headers"], seen["body"] = request.headers, json.loads(request.content)
-        return httpx.Response(200, json={"places": [listing("a", "ADCB Card Services"), {"displayName": {}}]})
+        elsewhere = listing("b", "ADCB Card Services")
+        elsewhere["addressComponents"] = [{"longText": "Dubai", "types": ["administrative_area_level_1", "political"]}]
+        return httpx.Response(200, json={"places": [listing("a", "ADCB Card Services"), elsewhere, {"displayName": {}}]})
 
     client = httpx.Client(base_url="https://places.test", transport=httpx.MockTransport(answer),
                           headers={"X-Goog-Api-Key": "k", "X-Goog-FieldMask": maps.FIELD_MASK})
     places = maps.search(client, maps.Query("ADCB customer service", "en"))
-    assert [p["id"] for p in places] == ["a"]  # a listing without an id is dropped
+    assert [p["id"] for p in places] == ["a"]  # one outside Abu Dhabi emirate, or without an id, is dropped
     assert seen["headers"]["X-Goog-FieldMask"] == maps.FIELD_MASK and "places.websiteUri" in maps.FIELD_MASK
     assert seen["body"]["textQuery"] == "ADCB customer service" and seen["body"]["regionCode"] == "AE"
-    assert set(seen["body"]["locationBias"]["rectangle"]) == {"low", "high"}
+    assert set(seen["body"]["locationRestriction"]["rectangle"]) == {"low", "high"}
 
 
 def test_search_gives_up_on_an_error_answer():

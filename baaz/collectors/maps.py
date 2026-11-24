@@ -16,7 +16,8 @@ Both are recorded as leads (store table `maps_leads`) with the listing's name,
 address, phone and Google Maps link. Every place ID seen is kept, so a listing
 is checked once.
 
-Each round sends at most `QUERIES_PER_RUN` searches, `PACE_S` seconds apart,
+Searches are restricted to the emirate of Abu Dhabi (Abu Dhabi city, Al Ain and
+Al Dhafra). Each round sends at most `QUERIES_PER_RUN` searches, `PACE_S` seconds apart,
 one request each for the first page of up to 20 listings (no further pages),
 rotating through victim-style queries built from the brand data after a few
 fixed government-service searches. The watcher runs a round every
@@ -64,13 +65,16 @@ QUERIES_PER_RUN = 6
 PACE_S = 6.0  # seconds between the searches of a round, so a viewer can follow them one by one
 SEARCH_PATH = "/v1/places:searchText"
 FIELD_MASK = ",".join(f"places.{field}" for field in (
-    "id", "displayName", "formattedAddress", "location", "websiteUri", "nationalPhoneNumber",
-    "internationalPhoneNumber", "googleMapsUri", "businessStatus",
+    "id", "displayName", "formattedAddress", "addressComponents", "location", "websiteUri",
+    "nationalPhoneNumber", "internationalPhoneNumber", "googleMapsUri", "businessStatus",
 ))
 PAGE_SIZE = 20
-# The UAE's bounding box, south-west and north-east corners. A bias: Text Search
-# restricts results to an area only for categorical queries, and these name a business.
-UAE_VIEWPORT = {"low": {"latitude": 22.6, "longitude": 51.5}, "high": {"latitude": 26.1, "longitude": 56.4}}
+# The emirate of Abu Dhabi (Abu Dhabi city, Al Ain and Al Dhafra), the area Abu Dhabi
+# Police covers: south-west and north-east corners of the rectangle the search is
+# restricted to. It also reaches into southern Dubai and Al Buraimi (Oman), so a listing
+# counts only when Google gives Abu Dhabi as its emirate, in English or Arabic.
+ABU_DHABI_VIEWPORT = {"low": {"latitude": 22.6, "longitude": 51.5}, "high": {"latitude": 25.25, "longitude": 56.05}}
+ABU_DHABI_NAMES = frozenset({"Abu Dhabi", "أبو ظبي", "أبوظبي"})
 TIMEOUT = 30.0
 UAE_CODE = "971"
 _PAREN = re.compile(r"\s*\(([^)]*)\)")
@@ -89,8 +93,10 @@ class Query:
 GOVERNMENT_QUERIES = (
     Query("pay traffic fine Abu Dhabi", "en"),
     Query("دفع المخالفات المرورية أبوظبي", "ar"),
-    Query("pay traffic fine Dubai", "en"),
-    Query("دفع المخالفات المرورية دبي", "ar"),
+    Query("pay traffic fine Al Ain", "en"),
+    Query("دفع المخالفات المرورية العين", "ar"),
+    Query("pay traffic fine Al Dhafra", "en"),
+    Query("دفع المخالفات المرورية الظفرة", "ar"),
 )
 
 
@@ -309,7 +315,7 @@ def _error_message(data: Any) -> str:
 def search(client: httpx.Client, query: Query) -> list[dict[str, Any]] | None:
     """The listings on the first result page; None when the API gave no usable answer."""
     body = {"textQuery": query.text, "languageCode": query.language, "regionCode": "AE",
-            "pageSize": PAGE_SIZE, "locationBias": {"rectangle": UAE_VIEWPORT}}
+            "pageSize": PAGE_SIZE, "locationRestriction": {"rectangle": ABU_DHABI_VIEWPORT}}
     try:
         resp = client.post(SEARCH_PATH, json=body)
     except httpx.HTTPError as exc:
@@ -325,7 +331,14 @@ def search(client: httpx.Client, query: Query) -> list[dict[str, Any]] | None:
                  resp.status_code, query.text, _error_message(data) or "no error message")
         return None
     places = data.get("places")
-    return [p for p in places if isinstance(p, dict) and p.get("id")] if isinstance(places, list) else []
+    return [p for p in places if isinstance(p, dict) and p.get("id") and in_abu_dhabi(p)] \
+        if isinstance(places, list) else []
+
+
+def in_abu_dhabi(place: dict[str, Any]) -> bool:
+    """Whether Google gives the emirate of Abu Dhabi as the listing's first-level area."""
+    return any(isinstance(part, dict) and "administrative_area_level_1" in (part.get("types") or [])
+               and part.get("longText") in ABU_DHABI_NAMES for part in place.get("addressComponents") or [])
 
 
 def _log_lead(lead: Lead) -> None:
