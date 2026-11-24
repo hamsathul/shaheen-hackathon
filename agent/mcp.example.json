@@ -1,13 +1,13 @@
 {
   "autoEnableCodemode": false,
   "mcpServers": {
-    "baaz": {
+    "shaheen": {
       "command": "uv",
-      "args": ["run", "baaz", "mcp"],
+      "args": ["run", "shaheen", "mcp"],
       "env": {
-        "BAAZ_CASE_ID": "${BAAZ_CASE_ID}",
-        "BAAZ_DB": "var/baaz.db",
-        "BAAZ_EVIDENCE_DIR": "evidence"
+        "SHAHEEN_CASE_ID": "${SHAHEEN_CASE_ID}",
+        "SHAHEEN_DB": "var/shaheen.db",
+        "SHAHEEN_EVIDENCE_DIR": "evidence"
       },
       "exposure": "direct",
       "timeout": 180

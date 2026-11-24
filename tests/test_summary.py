@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from baaz.summary import period_start
+from shaheen.summary import period_start
 
 # 01:30 on 24 November in the UAE (GST, UTC+4) is still 23 November in UTC.
 NOW = datetime(2026, 11, 23, 21, 30, tzinfo=timezone.utc)

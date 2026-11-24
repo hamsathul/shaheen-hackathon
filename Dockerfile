@@ -12,12 +12,12 @@ COPY --from=ghcr.io/astral-sh/uv:0.9 /uv /usr/local/bin/uv
 WORKDIR /app
 COPY pyproject.toml uv.lock README.md ./
 RUN uv sync --frozen --no-dev --no-install-project
-COPY baaz ./baaz
+COPY shaheen ./shaheen
 COPY data ./data
 RUN uv sync --frozen --no-dev && playwright install chromium
 
 RUN mkdir -p /app/evidence /app/var && chmod 1777 /app/evidence /app/var
 ENV HOME=/tmp
 
-ENTRYPOINT ["baaz"]
+ENTRYPOINT ["shaheen"]
 CMD ["--help"]

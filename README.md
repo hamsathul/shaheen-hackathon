@@ -1,8 +1,8 @@
-# Baaz باز
+# Shaheen شاهين
 
-**Baaz is a 24/7 scam-site hunter for UAE brands. It scores any link with reasons in English and Arabic, watches for new fake sites around the clock, and has a local AI model investigate what it flags, so no case data leaves the building.**
+**Shaheen is a 24/7 scam-site hunter for UAE brands. It scores any link with reasons in English and Arabic, watches for new fake sites around the clock, and has a local AI model investigate what it flags, so no case data leaves the building.**
 
-Built by team **Baaz** for the ScamShield AI Hackathon (42 Abu Dhabi with Abu Dhabi Police). Baaz (باز) is Arabic for falcon.
+Built by team **Baaz** for the ScamShield AI Hackathon (42 Abu Dhabi with Abu Dhabi Police). Shaheen (شاهين) is Arabic for the peregrine falcon.
 
 ![Live feed](docs/screenshots/feed.png)
 
@@ -10,35 +10,35 @@ Built by team **Baaz** for the ScamShield AI Hackathon (42 Abu Dhabi with Abu Dh
 
 Scam sites reach UAE residents through the same channels as real brands: search results, sponsored ads and SMS links. A victim searches "pay traffic fine abu dhabi" or "bose uae", clicks a top result and types card details into a page that looks right. These sites are registered in bulk, live for days, hide from crawlers and move to new domains when reported. By the time an analyst sees one, ten more exist.
 
-Baaz grew out of a real case. A number-one Google result for "bose uae" led to a fake store that took card numbers in its own checkout form. Manual work traced it to a network of 93 fake storefronts across 11 brands, 14 of them aimed at the UAE and the Gulf ([case study](docs/case-study.md)). Baaz automates that hunt, and those 93 stores are its first benchmark.
+Shaheen grew out of a real case. A number-one Google result for "bose uae" led to a fake store that took card numbers in its own checkout form. Manual work traced it to a network of 93 fake storefronts across 11 brands, 14 of them aimed at the UAE and the Gulf ([case study](docs/case-study.md)). Shaheen automates that hunt, and those 93 stores are its first benchmark.
 
-## What Baaz does
+## What Shaheen does
 
 Three roles share one pipeline, `scan(url)`.
 
 | Role | Command | What it does |
 |---|---|---|
-| **Scorer** | `baaz scan <url>` | Scores a link 0 to 100 with reasons in English and Arabic and writes a hashed evidence pack. Deterministic; no AI involved. |
-| **Watcher** | `baaz watch` | Runs 24/7. Five collectors (brand lookalikes, Certificate Transparency, newly registered domains, a brand × country storefront sweep, Google Maps listings) feed candidates to the scorer. |
-| **Investigator** | `baaz investigate` | A local model, driven by the [pi](https://pi.dev) agent harness, works each flagged case with Baaz's read-only case tools and a headless browser, then files a report that separates proven facts from inferences. |
+| **Scorer** | `shaheen scan <url>` | Scores a link 0 to 100 with reasons in English and Arabic and writes a hashed evidence pack. Deterministic; no AI involved. |
+| **Watcher** | `shaheen watch` | Runs 24/7. Five collectors (brand lookalikes, Certificate Transparency, newly registered domains, a brand × country storefront sweep, Google Maps listings) feed candidates to the scorer. |
+| **Investigator** | `shaheen investigate` | A local model, driven by the [pi](https://pi.dev) agent harness, works each flagged case with Shaheen's read-only case tools and a headless browser, then files a report that separates proven facts from inferences. |
 
-An analyst works the results in the dashboard (`baaz dashboard`), in English or Arabic:
+An analyst works the results in the dashboard (`shaheen dashboard`), in English or Arabic:
 
 - **Live feed:** counters, the AI investigator panel with each running investigation's tool calls as they happen, the Google Maps watch with its map, and every scan as it is scored.
 - **Case view:** verdict, reasons in both languages with their evidence pointers, the page screenshot, the AI investigation (proven facts apart from inferences) and its tool-call trace, confirm, takedown request and evidence download.
 - **Simple mode:** a switch in the header for officers who are not analysts. Big plain numbers, then the likely scams, each with the brand it pretends to be and one sentence in English and Arabic; no scores, tool calls or hashes.
 - **Statistics:** scans per hour by verdict, the most impersonated brands, which collector found them, fraud types and the investigator's progress, all computed from the store.
-- **Reports:** every case's evidence report with filters, and a threat summary for the police (today, 24 hours or 7 days) that prints on A4; `baaz summary` writes the same report as one file.
+- **Reports:** every case's evidence report with filters, and a threat summary for the police (today, 24 hours or 7 days) that prints on A4; `shaheen summary` writes the same report as one file.
 - **Maps leads:** Google Maps listings that use a brand's name with an off-brand website or a fake helpline number.
 
-`baaz up` runs all of it in one process: the watcher finds and scores candidates, two investigators work the flagged cases in parallel (fraud first), and the dashboard shows each investigation's tool calls as they happen. If the model goes away, the investigators wait for it and claim nothing; a run cut off by a lost connection goes back in the queue.
+`shaheen up` runs all of it in one process: the watcher finds and scores candidates, two investigators work the flagged cases in parallel (fraud first), and the dashboard shows each investigation's tool calls as they happen. If the model goes away, the investigators wait for it and claim nothing; a run cut off by a lost connection goes back in the queue.
 
 ### Design rules
 
 - **Deterministic first, AI second.** Weighted signals decide the verdict. The model explains, links cases and proposes new candidates. It may move a `suspicious` score by at most 20 points; it never changes a `fraud` or `legitimate` verdict and never overrides the official-domain allowlist.
-- **Always a verdict.** When a page cannot be fetched, Baaz scores from the URL and domain alone and says so (`fetch_status`).
+- **Always a verdict.** When a page cannot be fetched, Shaheen scores from the URL and domain alone and says so (`fetch_status`).
 - **Web content is untrusted.** Page text reaches the model only inside delimiters, as data. The model has no shell and no file access.
-- **Non-intrusive.** Baaz reads public pages and endpoints with unauthenticated GET requests. It never submits a form, enters a credential or probes for weaknesses.
+- **Non-intrusive.** Shaheen reads public pages and endpoints with unauthenticated GET requests. It never submits a form, enters a credential or probes for weaknesses.
 - **A human confirms.** Only an analyst-confirmed case gets a takedown request.
 
 ## Screenshots
@@ -49,7 +49,7 @@ These are from the live run on the demo box on 2026-11-24. The case is a real fa
 |---|---|
 | ![Case view](docs/screenshots/case.png) | ![Arabic interface](docs/screenshots/case-arabic.png) |
 
-| AI investigation: proven facts apart from inferences | Tool-call trace: Baaz tools and the browser |
+| AI investigation: proven facts apart from inferences | Tool-call trace: Shaheen tools and the browser |
 |---|---|
 | ![AI investigation](docs/screenshots/investigation.png) | ![Tool-call trace](docs/screenshots/trace.png) |
 
@@ -70,13 +70,13 @@ Every suspect address is defanged (`hxxps://example[.]com`) and none is clickabl
 ## How it works
 
 ```text
-collectors: lookalikes | CT logs | new domains | storefront sweep        baaz enqueue <url|file>
+collectors: lookalikes | CT logs | new domains | storefront sweep        shaheen enqueue <url|file>
                  \                                                      /
                   -> candidate queue (SQLite) <------------------------
                   -> scan(url): resolve -> allowlist -> intel -> render -> page + storefront signals
                                 -> score -> reasons (EN/AR) -> evidence pack (SHA-256 manifest)
                   -> fraud / suspicious -> investigation queue (fraud first)
-                  -> pi + local model: Baaz MCP tools + headless browser -> report, new candidates
+                  -> pi + local model: Shaheen MCP tools + headless browser -> report, new candidates
                   -> dashboard (FastAPI) | CLI JSON | CSV | evidence zip
 ```
 
@@ -109,21 +109,21 @@ collectors: lookalikes | CT logs | new domains | storefront sweep        baaz en
 | −15 | Domain registered for years |
 | −25 | Among the most visited sites on the web (Tranco top 100k) |
 
-Weights and the EN/AR reason text are in `baaz/score.py` and `baaz/reasons.py`. Every reason points at the evidence file and field it comes from, such as `storefront.json#payment_methods`.
+Weights and the EN/AR reason text are in `shaheen/score.py` and `shaheen/reasons.py`. Every reason points at the evidence file and field it comes from, such as `storefront.json#payment_methods`.
 
-**Evidence pack.** Each scan writes `evidence/<id>/`: the redirect chain, WHOIS, DNS, certificate, page HTML and text, screenshot, storefront facts, a printable `report.html` and a `manifest.json` with the SHA-256 of every file. `baaz verify` recomputes the hashes, and `baaz confirm` refuses a pack that fails.
+**Evidence pack.** Each scan writes `evidence/<id>/`: the redirect chain, WHOIS, DNS, certificate, page HTML and text, screenshot, storefront facts, a printable `report.html` and a `manifest.json` with the SHA-256 of every file. `shaheen verify` recomputes the hashes, and `shaheen confirm` refuses a pack that fails.
 
-**Reports.** The dashboard's Reports page lists every case's evidence report, newest first, filtered by verdict, brand, scan date and domain, with links to the case, its `report.html` and its zip. It also opens the threat summary for the police, for today, the last 24 hours or the last 7 days (UAE days), in English or Arabic, printable on A4. The summary covers the links checked and flagged, the new fraud sites with the AI investigator's one-line summary, the brands hit, and the sites that share an administrator account, a product catalogue or a skimmer gateway. It also lists suggested takedowns grouped by registrar, and the Google Maps leads. `baaz summary` writes the same report as one self-contained HTML file to email.
+**Reports.** The dashboard's Reports page lists every case's evidence report, newest first, filtered by verdict, brand, scan date and domain, with links to the case, its `report.html` and its zip. It also opens the threat summary for the police, for today, the last 24 hours or the last 7 days (UAE days), in English or Arabic, printable on A4. The summary covers the links checked and flagged, the new fraud sites with the AI investigator's one-line summary, the brands hit, and the sites that share an administrator account, a product catalogue or a skimmer gateway. It also lists suggested takedowns grouped by registrar, and the Google Maps leads. `shaheen summary` writes the same report as one self-contained HTML file to email.
 
-**Investigator.** For each flagged case, Baaz writes a private pi configuration that declares only two MCP servers: Baaz's own case tools (`get_case`, `get_page_text`, `domain_intel`, `find_related`, `scan_url`, `propose_candidates`, `submit_report`) and a headless Playwright browser in a throwaway profile. After the run Baaz checks the tool list pi actually sent the model, audits every browser action, and adds the trace and browser session to the evidence pack. Details: [docs/agent.md](docs/agent.md).
+**Investigator.** For each flagged case, Shaheen writes a private pi configuration that declares only two MCP servers: Shaheen's own case tools (`get_case`, `get_page_text`, `domain_intel`, `find_related`, `scan_url`, `propose_candidates`, `submit_report`) and a headless Playwright browser in a throwaway profile. After the run Shaheen checks the tool list pi actually sent the model, audits every browser action, and adds the trace and browser session to the evidence pack. Details: [docs/agent.md](docs/agent.md).
 
 ## Run it
 
-Baaz runs natively on Windows 11, macOS and Linux with Python 3.11+ and [uv](https://docs.astral.sh/uv/). The demo box is Windows 11 with no Docker.
+Shaheen runs natively on Windows 11, macOS and Linux with Python 3.11+ and [uv](https://docs.astral.sh/uv/). The demo box is Windows 11 with no Docker.
 
 ```sh
-git clone <this repo> baaz
-cd baaz
+git clone <this repo> shaheen
+cd shaheen
 uv sync
 uv run playwright install chromium
 copy .env.example .env          # cp on macOS/Linux
@@ -145,39 +145,39 @@ Without pi, the investigator falls back to a one-shot report from the same model
 
 ```sh
 # Everything at once: watcher, 2 investigators and the dashboard (http://127.0.0.1:8000/)
-uv run baaz up
-uv run baaz up --investigators 1 --no-render   # lighter machine
+uv run shaheen up
+uv run shaheen up --investigators 1 --no-render   # lighter machine
 
 # Score one link (add --json for one machine-readable object, --no-render to skip the browser)
-uv run baaz scan https://example.com/
+uv run shaheen scan https://example.com/
 
 # Re-run the scoring on a saved evidence folder with no network at all
-uv run baaz scan --from-capture demo/cases/storefront-skimmer
+uv run shaheen scan --from-capture demo/cases/storefront-skimmer
 
 # Score a list (text, one link per line, or CSV with a url column)
-uv run baaz batch links.txt --out results.csv
+uv run shaheen batch links.txt --out results.csv
 
 # Hunt 24/7: collectors plus 4 scanning workers; --once for one round
-uv run baaz watch
-uv run baaz enqueue suspects.txt --source tip-line
+uv run shaheen watch
+uv run shaheen enqueue suspects.txt --source tip-line
 
 # Investigate flagged cases with the local model
-uv run baaz investigate <case-id>
-uv run baaz investigate --queue --loop --workers 2
-uv run baaz investigate --bench          # tokens per second of the model endpoint
+uv run shaheen investigate <case-id>
+uv run shaheen investigate --queue --loop --workers 2
+uv run shaheen investigate --bench          # tokens per second of the model endpoint
 
 # Analyst workflow
-uv run baaz dashboard                    # http://127.0.0.1:8000/
-uv run baaz confirm <case-id> --analyst "Name" --note "..."
-uv run baaz export <case-id>             # evidence zip
-uv run baaz verify <case-id>             # recompute every SHA-256
-uv run baaz summary --period 7d --lang ar   # threat summary as one HTML file in evidence/reports/
+uv run shaheen dashboard                    # http://127.0.0.1:8000/
+uv run shaheen confirm <case-id> --analyst "Name" --note "..."
+uv run shaheen export <case-id>             # evidence zip
+uv run shaheen verify <case-id>             # recompute every SHA-256
+uv run shaheen summary --period 7d --lang ar   # threat summary as one HTML file in evidence/reports/
 
 # Fixed demo cases plus dashboard (and the watcher with --watch)
-uv run baaz demo
+uv run shaheen demo
 ```
 
-`baaz scan --json` prints one object with the URL, final URL, redirect chain, fetch status, verdict, score, confidence, fraud type, impersonated brand, reasons (code, weight, English, Arabic, evidence pointer), key signals and the evidence path.
+`shaheen scan --json` prints one object with the URL, final URL, redirect chain, fetch status, verdict, score, confidence, fraud type, impersonated brand, reasons (code, weight, English, Arabic, evidence pointer), key signals and the evidence path.
 
 On Linux, `docker compose up` runs the watcher and the dashboard (localhost:8000) in containers.
 
@@ -192,13 +192,13 @@ It needs a key for Google's Places API (New):
 3. Under APIs & Services > Credentials, create an API key and restrict it to Places API (New).
 4. Put the key in `.env` as `GOOGLE_MAPS_API_KEY=...`.
 
-Without a key the watcher logs one line and runs the other collectors. `uv run baaz watch --once --collectors maps` runs one Maps round and logs each lead.
+Without a key the watcher logs one line and runs the other collectors. `uv run shaheen watch --once --collectors maps` runs one Maps round and logs each lead.
 
-Each round sends 6 searches, one request each, about 6 seconds apart, and a round runs every 6 hours (`BAAZ_MAPS_INTERVAL_HOURS` in `.env`). The searches ask for each listing's website, phone and location, so Google bills them under its "Places API Text Search Enterprise" SKU. That SKU's free usage cap is 1,000 calls a month, then $35.00 per 1,000 calls ([Google Maps Platform pricing](https://developers.google.com/maps/billing-and-pricing/pricing), checked 2026-11-24). The default interval makes at most 24 searches a day, 744 in a 31-day month, which stays inside the free cap. A shorter interval costs more, and so does each press of "Search Maps now" (6 searches).
+Each round sends 6 searches, one request each, about 6 seconds apart, and a round runs every 6 hours (`SHAHEEN_MAPS_INTERVAL_HOURS` in `.env`). The searches ask for each listing's website, phone and location, so Google bills them under its "Places API Text Search Enterprise" SKU. That SKU's free usage cap is 1,000 calls a month, then $35.00 per 1,000 calls ([Google Maps Platform pricing](https://developers.google.com/maps/billing-and-pricing/pricing), checked 2026-11-24). The default interval makes at most 24 searches a day, 744 in a 31-day month, which stays inside the free cap. A shorter interval costs more, and so does each press of "Search Maps now" (6 searches).
 
-**The live Maps watch.** Under the AI investigator, the feed shows the Maps searches as they happen: each search's time, query, listing count and lead count, the search under way highlighted, and the lead listings linked to the Maps leads page (their websites defanged, never links). The header shows the last and next round and the searches sent today. "Search Maps now" starts a round at once, at most one every 10 minutes counted from the end of the last round. It continues the rotation, so each press runs new searches, and the watcher scans the websites it queues straight away. The panel is fed by the watcher in the same process, so it is live in `baaz up` (and `baaz demo --watch`). A dashboard started on its own with `baaz dashboard` says so and shows only the last round and today's count. Listing names and locations stay in the memory of the `baaz up` process and are never written to the database: Google's terms let Baaz keep place IDs, and coordinates for up to 30 days, but no other listing content. The panel keeps the last round and the search under way.
+**The live Maps watch.** Under the AI investigator, the feed shows the Maps searches as they happen: each search's time, query, listing count and lead count, the search under way highlighted, and the lead listings linked to the Maps leads page (their websites defanged, never links). The header shows the last and next round and the searches sent today. "Search Maps now" starts a round at once, at most one every 10 minutes counted from the end of the last round. It continues the rotation, so each press runs new searches, and the watcher scans the websites it queues straight away. The panel is fed by the watcher in the same process, so it is live in `shaheen up` (and `shaheen demo --watch`). A dashboard started on its own with `shaheen dashboard` says so and shows only the last round and today's count. Listing names and locations stay in the memory of the `shaheen up` process and are never written to the database: Google's terms let Shaheen keep place IDs, and coordinates for up to 30 days, but no other listing content. The panel keeps the last round and the search under way.
 
-With a second key the panel draws each search on a Google map: a solid red square for a lead, a green outline for a listing that names the brand with nothing flagged, a small grey square for any other business. The map moves to each search as its answer arrives. Google's terms do not allow Places content on a non-Google map ([Service Specific Terms](https://cloud.google.com/maps-platform/terms/maps-service-terms), section 15.2), so this uses the Maps JavaScript API, the only script Baaz loads from outside. To create the key:
+With a second key the panel draws each search on a Google map: a solid red square for a lead, a green outline for a listing that names the brand with nothing flagged, a small grey square for any other business. The map moves to each search as its answer arrives. Google's terms do not allow Places content on a non-Google map ([Service Specific Terms](https://cloud.google.com/maps-platform/terms/maps-service-terms), section 15.2), so this uses the Maps JavaScript API, the only script Shaheen loads from outside. To create the key:
 
 1. In the same Google Cloud project, enable **Maps JavaScript API**.
 2. Under Google Maps Platform > Keys & Credentials, create an API key.
@@ -213,12 +213,12 @@ This key is sent to the browser, which is why it is separate from `GOOGLE_MAPS_A
 All numbers come from one command, run on the demo box on 2026-11-24 with the scoring code in this commit:
 
 ```sh
-uv run baaz eval eval/phish_openphish.txt eval/ground_truth_skimmers.txt eval/legit_woocommerce.txt eval/legit_top_sites.txt eval/legit_uae_official.txt --workers 12
+uv run shaheen eval eval/phish_openphish.txt eval/ground_truth_skimmers.txt eval/legit_woocommerce.txt eval/legit_top_sites.txt eval/legit_uae_official.txt --workers 12
 ```
 
 It scans every link with the full pipeline (browser and storefront checks on) and writes one CSV per set to `eval/results/`. `eval/build_sets.py` rebuilds the sets.
 
-A link counts as flagged when Baaz calls it `fraud` or `suspicious`. "Reachable" means Baaz fetched the page.
+A link counts as flagged when Shaheen calls it `fraud` or `suspicious`. "Reachable" means Shaheen fetched the page.
 
 | Set | Links | Reachable | Fraud | Suspicious | Legitimate | Result |
 |---|---:|---:|---:|---:|---:|---|
@@ -232,16 +232,16 @@ Across the 483 legitimate sites there is no false positive, and all 109 flagged 
 
 What the numbers mean:
 
-- **Skimmer stores.** These are the 93 storefronts traced by hand in the [case study](docs/case-study.md). 28 sit behind a Cloudflare bot challenge, yet Baaz still scores them: the WooCommerce Store API answers outside the challenge and exposes the skimmer gateway. 20 links hit the 90-second limit per link, because the box was also running the watcher and the investigator. Those 20 are scored from their URL and registration alone, and Baaz never calls `fraud` without evidence from the page, so 19 of them are `suspicious`. The one miss, `harmankardonnz[.]com`, is the 20th: its name joins a brand to a two-letter country code, which Baaz does not read as a place on purpose (too many false alarms), and from the URL alone it scores 0. A full scan of the same store afterwards scored `fraud` 90 (skimmer gateway, shared administrator).
-- **Legitimate stores.** The list is every store in the Tranco top million whose name matches shop, store, mall, boutique, market or `.ae` and whose site answers the WooCommerce Store API. Baaz is aimed at exactly these sites, so this is the false-positive test that matters. The first run on this list flagged 3 of the 250 stores. Two were real false alarms: shops whose own login form sat next to a WhatsApp or Instagram button, so the page looked like a brand asking for a password. Baaz now counts a brand named only in the page text when the page names no site of its own. The third, `costoresuae[.]com`, called itself "COS UAE Online", checked out only through the skimmer gateway and shared a site administrator with a case-study cluster. It is a skimmer that the Tranco filter let in, so it was removed from the list (the file says so).
+- **Skimmer stores.** These are the 93 storefronts traced by hand in the [case study](docs/case-study.md). 28 sit behind a Cloudflare bot challenge, yet Shaheen still scores them: the WooCommerce Store API answers outside the challenge and exposes the skimmer gateway. 20 links hit the 90-second limit per link, because the box was also running the watcher and the investigator. Those 20 are scored from their URL and registration alone, and Shaheen never calls `fraud` without evidence from the page, so 19 of them are `suspicious`. The one miss, `harmankardonnz[.]com`, is the 20th: its name joins a brand to a two-letter country code, which Shaheen does not read as a place on purpose (too many false alarms), and from the URL alone it scores 0. A full scan of the same store afterwards scored `fraud` 90 (skimmer gateway, shared administrator).
+- **Legitimate stores.** The list is every store in the Tranco top million whose name matches shop, store, mall, boutique, market or `.ae` and whose site answers the WooCommerce Store API. Shaheen is aimed at exactly these sites, so this is the false-positive test that matters. The first run on this list flagged 3 of the 250 stores. Two were real false alarms: shops whose own login form sat next to a WhatsApp or Instagram button, so the page looked like a brand asking for a password. Shaheen now counts a brand named only in the page text when the page names no site of its own. The third, `costoresuae[.]com`, called itself "COS UAE Online", checked out only through the skimmer gateway and shared a site administrator with a case-study cluster. It is a skimmer that the Tranco filter let in, so it was removed from the list (the file says so).
 - **Top sites and UAE official domains.** Top sites get a popularity credit (Tranco top 100k), so this set mainly checks that nothing popular is flagged by accident. The UAE set checks the allowlist itself: every official domain of the 27 UAE brands comes out `legitimate`.
-- **Generic phishing.** OpenPhish lists phishing against any brand worldwide, and pages die within hours: 155 of the 200 were dead and 7 blocked by scan time. Most of the 38 live ones sit on free hosting and impersonate brands Baaz does not track (a Hungarian telecom, Roblox, a DeFi app, webmail logins), so only brand-independent signals apply. The 10 it flags are the pages that send data to a Telegram bot, ask for a password under a brand it knows, use a lookalike name, or bounce visitors on through an empty doorway page. The run before this one looked at an earlier capture of the feed. Its misses showed that six cloud and app-hosting suffixes were missing from `data/hosting_platforms.yaml` and that data sent to a Telegram bot deserved more weight. Both were fixed, and the set above is a fresh capture taken after those fixes. The feed rolls slowly, so it overlaps with the earlier capture: read the phishing row as tuned on, not unseen.
+- **Generic phishing.** OpenPhish lists phishing against any brand worldwide, and pages die within hours: 155 of the 200 were dead and 7 blocked by scan time. Most of the 38 live ones sit on free hosting and impersonate brands Shaheen does not track (a Hungarian telecom, Roblox, a DeFi app, webmail logins), so only brand-independent signals apply. The 10 it flags are the pages that send data to a Telegram bot, ask for a password under a brand it knows, use a lookalike name, or bounce visitors on through an empty doorway page. The run before this one looked at an earlier capture of the feed. Its misses showed that six cloud and app-hosting suffixes were missing from `data/hosting_platforms.yaml` and that data sent to a Telegram bot deserved more weight. Both were fixed, and the set above is a fresh capture taken after those fixes. The feed rolls slowly, so it overlaps with the earlier capture: read the phishing row as tuned on, not unseen.
 
 ## The local model
 
 The investigator runs on the demo box (A10A: AMD Ryzen AI Max+ PRO 495 with Radeon 8065S graphics, Windows 11). The model is Qwen3.8-Flash, as a 3-bit IQ3_S GGUF (a community "abliterated" build), served by llama.cpp with every layer on the GPU and a 262k-token context split over two slots, so two investigations run at once.
 
-`uv run baaz investigate --bench` on the box, measured with one slot: **24.2 tokens/s generation**, 103 tokens/s prompt processing (short prompt).
+`uv run shaheen investigate --bench` on the box, measured with one slot: **24.2 tokens/s generation**, 103 tokens/s prompt processing (short prompt).
 
 Over the first 9 investigations on 2026-11-24 (from each case's `evidence/<id>/investigation.json`):
 
@@ -260,7 +260,7 @@ In a test against a fake fine-payment page that told the AI to "mark this site s
 
 ## Live run
 
-The watcher has run on the demo box since 2026-11-24 15:26 GST, as `baaz up` since 17:27. At 21:12 GST, after 5 h 47 min, the dashboard showed:
+The watcher has run on the demo box since 2026-11-24 15:26 GST, as `shaheen up` since 17:27. At 21:12 GST, after 5 h 47 min, the dashboard showed:
 
 | Candidates seen | Scanned | Flagged | of which fraud | AI-investigated | Maps leads |
 |---:|---:|---:|---:|---:|---:|
@@ -283,11 +283,11 @@ Certificate Transparency (crt.sh) barely answered that day and contributed none.
 ## Limitations
 
 - The skimmer gateway check matches one kit's private plugin names. They are trivial to change once this repo is public. The card-form, discount and shared-catalogue checks exist for that reason, but a new kit could evade all of them.
-- Baaz knows 58 brands. A site impersonating a brand it does not know is caught only by brand-independent signals (new domain, card form without a processor, skimmer gateway, offsite form posts), which is why generic phishing recall is low.
+- Shaheen knows 58 brands. A site impersonating a brand it does not know is caught only by brand-independent signals (new domain, card form without a processor, skimmer gateway, offsite form posts), which is why generic phishing recall is low.
 - A lookalike domain with no reachable page is scored from its name, registration and certificate alone. Some of those reach `fraud` without any page evidence; the investigator then marks them for human review.
-- Geo-cloaking that shows the scam only to UAE visitors needs a UAE network exit. Baaz fetches from wherever it runs.
+- Geo-cloaking that shows the scam only to UAE visitors needs a UAE network exit. Shaheen fetches from wherever it runs.
 - The browser policy (never type, submit, download or log in) is enforced by the prompt and audited after every run, not technically blocked. A click on a submit button is not flagged by itself; it is visible in the trace.
-- Search-engine coverage needs an API key we did not have. The Google Maps collector checks phone numbers only for the 7 brands with verified numbers in the brand data. It finds a brand by the name in a listing, so brands named with an everyday word (noon, du, Marshall, Beats) go unmatched, and Emirates matches only by its Arabic name. Google's terms let Baaz keep a place ID indefinitely but other listing content only where expressly permitted; the leads table keeps the name, address and phone of flagged listings as evidence, so a police deployment needs Google's agreement for that, or a fresh Place Details lookup when an analyst opens a lead.
+- Search-engine coverage needs an API key we did not have. The Google Maps collector checks phone numbers only for the 7 brands with verified numbers in the brand data. It finds a brand by the name in a listing, so brands named with an everyday word (noon, du, Marshall, Beats) go unmatched, and Emirates matches only by its Arabic name. Google's terms let Shaheen keep a place ID indefinitely but other listing content only where expressly permitted; the leads table keeps the name, address and phone of flagged listings as evidence, so a police deployment needs Google's agreement for that, or a fresh Place Details lookup when an analyst opens a lead.
 - The evaluation sets are small and were collected on one day. Phishing pages die within hours, so most feed links were dead by scan time.
 
 ## Roadmap to a police pilot
@@ -302,10 +302,10 @@ Certificate Transparency (crt.sh) barely answered that day and contributed none.
 ## Repository
 
 ```text
-baaz/            pipeline: resolve, intel, render, page, storefront, signals, score, reasons, evidence, store
-baaz/web/        dashboard (FastAPI, server-rendered; no external assets but Google's map script, with its key)
-baaz/watch.py    collectors and the 24/7 loop
-baaz/investigator.py, baaz/mcp_server.py, agent/   the local-model investigator
+shaheen/            pipeline: resolve, intel, render, page, storefront, signals, score, reasons, evidence, store
+shaheen/web/        dashboard (FastAPI, server-rendered; no external assets but Google's map script, with its key)
+shaheen/watch.py    collectors and the 24/7 loop
+shaheen/investigator.py, shaheen/mcp_server.py, agent/   the local-model investigator
 data/            brand allowlists, gateways, TLDs, wording (EN/AR), Tranco top 100k
 eval/            labelled sets, set builder, results
 demo/cases/      fixed cases for the demo: one real official site plus synthetic captures of invented .test domains

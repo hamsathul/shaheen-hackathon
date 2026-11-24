@@ -3,12 +3,12 @@ from datetime import datetime, timezone
 
 import pytest
 
-from baaz.store import Store
-from baaz.web import charts, stats
+from shaheen.store import Store
+from shaheen.web import charts, stats
 
 
 def test_scans_per_hour_fall_in_whole_hours_of_the_last_day(tmp_path):
-    path = tmp_path / "baaz.db"
+    path = tmp_path / "shaheen.db"
     Store(path)
     scans = [
         ("a", "fraud", "2026-11-23T11:59:59Z"),  # before the window

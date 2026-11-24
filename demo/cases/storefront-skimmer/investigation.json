@@ -1,6 +1,6 @@
 {
-  "summary_en": "bose-uae-outlet.test is a fake Bose store built to steal card details. Its checkout lists the private gateway 'sankee', which Baaz has only seen on card-skimming stores, and collects the card number, expiry and CVV in the site's own form with no payment processor. The domain is 18 days old and every sampled product is 70 to 80 percent off.",
-  "summary_ar": "النطاق bose-uae-outlet.test متجر وهمي ينتحل علامة Bose لسرقة بيانات البطاقات. تعرض صفحة الدفع بوابة الدفع الخاصة 'sankee' التي لم يرصدها باز إلا في متاجر تسرق البطاقات، وتجمع رقم البطاقة وتاريخ الانتهاء ورمز CVV في نموذج الموقع نفسه دون أي مزوّد دفع. عمر النطاق 18 يومًا، وكل المنتجات التي فُحصت مخفّضة بنسبة تتراوح بين 70 و80 بالمئة.",
+  "summary_en": "bose-uae-outlet.test is a fake Bose store built to steal card details. Its checkout lists the private gateway 'sankee', which Shaheen has only seen on card-skimming stores, and collects the card number, expiry and CVV in the site's own form with no payment processor. The domain is 18 days old and every sampled product is 70 to 80 percent off.",
+  "summary_ar": "النطاق bose-uae-outlet.test متجر وهمي ينتحل علامة Bose لسرقة بيانات البطاقات. تعرض صفحة الدفع بوابة الدفع الخاصة 'sankee' التي لم يرصدها شاهين إلا في متاجر تسرق البطاقات، وتجمع رقم البطاقة وتاريخ الانتهاء ورمز CVV في نموذج الموقع نفسه دون أي مزوّد دفع. عمر النطاق 18 يومًا، وكل المنتجات التي فُحصت مخفّضة بنسبة تتراوح بين 70 و80 بالمئة.",
   "fraud_type": "fake_storefront_skimmer",
   "impersonated_brand": "Bose",
   "proven": [

@@ -1,6 +1,6 @@
 import pytest
 
-from baaz.brands import (
+from shaheen.brands import (
     allowlist,
     gov_namespace,
     hosting_platform,

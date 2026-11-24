@@ -3,8 +3,8 @@ import json
 import httpx
 import pytest
 
-from baaz.collectors import Limits, maps
-from baaz.store import Store
+from shaheen.collectors import Limits, maps
+from shaheen.store import Store
 
 # Invented listings: made-up names, numbers and .test websites around real brands
 # from the brand data. Emirates NBD and RAKBANK have verified numbers; ADCB has none.

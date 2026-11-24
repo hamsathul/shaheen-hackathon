@@ -1,5 +1,5 @@
-from baaz.models import Finding
-from baaz.score import WEIGHTS, adjust, score
+from shaheen.models import Finding
+from shaheen.score import WEIGHTS, adjust, score
 
 
 def f(code: str, weight: int | None = None) -> Finding:

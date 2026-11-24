@@ -2,8 +2,8 @@ from datetime import date, datetime, timedelta, timezone
 
 import pytest
 
-from baaz.models import ScanContext, ScanOptions
-from baaz.signals import (
+from shaheen.models import ScanContext, ScanOptions
+from shaheen.signals import (
     age_findings,
     cert_findings,
     deceptive_words,

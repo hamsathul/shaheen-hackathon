@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from baaz import intel
-from baaz.store import Store
+from shaheen import intel
+from shaheen.store import Store
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -57,7 +57,7 @@ def test_loose_date(text, iso):
 def test_unverified_certificate_is_decoded_from_der():
     der = ssl.PEM_cert_to_DER_cert((FIXTURES / "self_signed.pem").read_text(encoding="utf-8"))
     facts = intel.parse_cert(intel._decode_der(der))
-    assert facts["subject"] == "CN=lookalike.test, O=Baaz Test"
+    assert facts["subject"] == "CN=lookalike.test, O=Shaheen Test"
     assert facts["issuer"] == facts["subject"]
     assert facts["san"] == ["lookalike.test", "www.lookalike.test"]
     assert facts["not_before"].endswith("Z") and facts["not_before"] < facts["not_after"]

@@ -1,6 +1,6 @@
 {
   "tool": {
-    "name": "baaz",
+    "name": "shaheen",
     "version": "0.1.0"
   },
   "scan_id": "20261124-1c3ff1",
@@ -24,8 +24,8 @@
   "files": [
     {
       "name": "agent_trace.jsonl",
-      "size": 26877,
-      "sha256": "86c2f14d61b7b54d36f31647abc9adf0c1908c9925906adea4d257d7df41b11e"
+      "size": 26991,
+      "sha256": "dfd60625fa5afbdfbdadfd41784efad6d2a040201844290e38e6cb3c4662086e"
     },
     {
       "name": "cert.json",
@@ -39,8 +39,8 @@
     },
     {
       "name": "investigation.json",
-      "size": 2597,
-      "sha256": "bbc3b22801584dea6178471fcd449c6baa011da102edb0370c198b99e7fae679"
+      "size": 2604,
+      "sha256": "6d4a62863b644d77c3b132287a3c7c160a58ee7cdafcffbcb80e4f1900aa2733"
     },
     {
       "name": "page.html",
@@ -64,8 +64,8 @@
     },
     {
       "name": "report.html",
-      "size": 14301,
-      "sha256": "be715b8d1e01ba78121a0a3f82ee1e2463b81411961cbe1f1bf0cae08bb505d6"
+      "size": 14313,
+      "sha256": "a3ac340b368aaee1c1e39340ae954e943ff1b8768467cdee30c7817cb0455520"
     },
     {
       "name": "report.json",

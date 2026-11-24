@@ -1,17 +1,17 @@
 services:
-  baaz:
+  shaheen:
     build: .
-    user: "${BAAZ_UID:-1000}:${BAAZ_GID:-1000}"
+    user: "${SHAHEEN_UID:-1000}:${SHAHEEN_GID:-1000}"
     env_file:
       - path: .env
         required: false
     volumes:
       - ./evidence:/app/evidence
-      - baaz-var:/app/var
+      - shaheen-var:/app/var
 
   watch:
     build: .
-    user: "${BAAZ_UID:-1000}:${BAAZ_GID:-1000}"
+    user: "${SHAHEEN_UID:-1000}:${SHAHEEN_GID:-1000}"
     command: watch
     restart: unless-stopped
     env_file:
@@ -19,11 +19,11 @@ services:
         required: false
     volumes:
       - ./evidence:/app/evidence
-      - baaz-var:/app/var
+      - shaheen-var:/app/var
 
   dashboard:
     build: .
-    user: "${BAAZ_UID:-1000}:${BAAZ_GID:-1000}"
+    user: "${SHAHEEN_UID:-1000}:${SHAHEEN_GID:-1000}"
     command: ["dashboard", "--host", "0.0.0.0", "--port", "8000"]
     restart: unless-stopped
     ports:
@@ -33,7 +33,7 @@ services:
         required: false
     volumes:
       - ./evidence:/app/evidence
-      - baaz-var:/app/var
+      - shaheen-var:/app/var
 
 volumes:
-  baaz-var:
+  shaheen-var:

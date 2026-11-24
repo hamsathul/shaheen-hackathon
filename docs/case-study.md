@@ -1,6 +1,6 @@
 # Case Study: A Fake-Storefront Card-Skimming Network Targeting UAE and Gulf Shoppers
 
-**Status:** prior manual research that motivated Baaz. First found 30 September 2026; re-measured 24 November 2026.
+**Status:** prior manual research that motivated Shaheen. First found 30 September 2026; re-measured 24 November 2026.
 **Category:** brand impersonation, trademark infringement, payment-card theft, consumer fraud.
 
 All scam domains in this document are defanged (for example `boseuae[.]com`). Do not re-fuse them into working links. Official brand domains such as bose.com are left as written.
@@ -138,11 +138,11 @@ No card was submitted, so no transmission was observed. What follows is what can
 
 **What this does not show.** The saved files cannot show what the store's server does with the card data after submission, because that code runs server-side and was not accessed. The accurate statement is this: card data is entered into a form served by the scam domain itself, is submitted to that domain's server, and no processor script is present that would hand it to an accredited third party. That is consistent with card capture, but it is an inference from the page, not an observed transfer.
 
-## 6. Link to Baaz
+## 6. Link to Shaheen
 
-## What Baaz re-detects
+## What Shaheen re-detects
 
-Baaz automates the checks in section 3. The results of that automated re-detection, including how many of the domains above it finds and the false-positive rate, are reported in the README evaluation section: [../README.md#evaluation](../README.md#evaluation). No figures are repeated here.
+Shaheen automates the checks in section 3. The results of that automated re-detection, including how many of the domains above it finds and the false-positive rate, are reported in the README evaluation section: [../README.md#evaluation](../README.md#evaluation). No figures are repeated here.
 
 False positives are measured on a set of legitimate WooCommerce stores; see the README evaluation section.
 

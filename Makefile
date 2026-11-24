@@ -11,7 +11,7 @@ docker:
 	docker compose build
 
 demo:
-	uv run baaz demo
+	uv run shaheen demo
 
 watch:
-	uv run baaz watch
+	uv run shaheen watch

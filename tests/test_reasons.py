@@ -1,8 +1,8 @@
 import string
 
-from baaz.models import Finding
-from baaz.reasons import TEMPLATES, render
-from baaz.score import WEIGHTS
+from shaheen.models import Finding
+from shaheen.reasons import TEMPLATES, render
+from shaheen.score import WEIGHTS
 
 
 def test_every_weighted_code_has_english_and_arabic_text():

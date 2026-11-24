@@ -1,4 +1,4 @@
-from baaz.resolve import page_redirect
+from shaheen.resolve import page_redirect
 
 
 def test_meta_refresh_target_is_html_unescaped():

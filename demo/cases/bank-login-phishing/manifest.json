@@ -1,6 +1,6 @@
 {
   "tool": {
-    "name": "baaz",
+    "name": "shaheen",
     "version": "0.1.0"
   },
   "scan_id": "20261124-43e9e2",
@@ -54,8 +54,8 @@
     },
     {
       "name": "report.html",
-      "size": 14858,
-      "sha256": "8551ce1156cd915200a60f834a7b9529baf9958ea472409b4076dfe7163e5734"
+      "size": 14870,
+      "sha256": "3b39ab48983929cf8cf72c8d78c9d233a068cd1fd81c1566765d336f7bd6668f"
     },
     {
       "name": "report.json",

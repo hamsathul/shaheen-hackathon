@@ -1,5 +1,5 @@
 # Fake-storefront skimmer network: 93 domains confirmed live by prior manual research on 2026-11-24.
-# Defanged; Baaz refangs at load time. Every entry is labelled fraud.
+# Defanged; Shaheen refangs at load time. Every entry is labelled fraud.
 # label: fraud
 anker-gr[.]com
 ankerczech[.]com

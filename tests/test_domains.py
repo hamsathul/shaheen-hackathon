@@ -1,4 +1,4 @@
-from baaz.domains import defang, normalize_url, refang, registrable_domain
+from shaheen.domains import defang, normalize_url, refang, registrable_domain
 
 
 def test_refang_and_defang_round_trip():

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Shaheen | {{ t.rep_title }}{% endblock %}
+{% block main %}
+<div class="frame feed reports">
+  <aside class="side">
+    <dl class="tally">
+      <div class="tally-row"><dt>{{ t.rep_cases }}</dt><dd>{{ "{:,}".format(lib.cases) }}</dd></div>
+    </dl>
+    <p class="note rep-intro">{{ t.rep_intro }}</p>
+  </aside>
+
+  <div class="work">
+    <h1 class="leads-title">{{ t.rep_title }}</h1>
+    <section class="rep-summary">
+      <h2 class="label">{{ t.rep_summary }}</h2>
+      <p class="rep-periods">
+        {% for p in summary_links %}<a class="button" href="/reports/summary?period={{ p }}">{{ t["rep_period_" ~ p] }}</a>{% endfor %}
+      </p>
+      <p class="note">{{ t.rep_summary_note }}</p>
+    </section>
+
+    <form class="rep-filters" method="get" action="/reports">
+      <div class="rep-tabs">
+        <nav class="tabs" aria-label="{{ t.verdict }}">
+          {% for v, href in lib.verdicts %}
+          <a href="{{ href }}"{% if v == verdict %} class="on" aria-current="true"{% endif %}>{{ verdicts[v] if v else t.all }}</a>
+          {% endfor %}
+        </nav>
+        <nav class="tabs" aria-label="{{ t.rep_range }}">
+          {% for r, href in lib.ranges %}
+          <a href="{{ href }}"{% if r == scanned %} class="on" aria-current="true"{% endif %}>{{ t["rep_range_" ~ r] }}</a>
+          {% endfor %}
+        </nav>
+      </div>
+      <div class="rep-fields">
+        {% if verdict %}<input type="hidden" name="verdict" value="{{ verdict }}">{% endif %}
+        {% if scanned != "all" %}<input type="hidden" name="scanned" value="{{ scanned }}">{% endif %}
+        <label><span class="label">{{ t.brand }}</span>
+          <select name="brand">
+            <option value="">{{ t.rep_all_brands }}</option>
+            {% for b in lib.brands %}<option value="{{ b }}"{% if b == brand %} selected{% endif %}>{{ b }}</option>{% endfor %}
+          </select>
+        </label>
+        <label class="rep-q"><span class="label">{{ t.rep_search }}</span>
+          <input type="text" name="q" value="{{ q }}" dir="ltr" autocomplete="off" spellcheck="false" placeholder="{{ t.rep_search_placeholder }}">
+        </label>
+        <button type="submit">{{ t.rep_filter }}</button>
+        {% if lib.filtered %}<a class="rep-clear" href="/reports">{{ t.rep_clear }}</a>{% endif %}
+      </div>
+    </form>
+
+    <table class="ledger scans-table rep-table">
+      <thead>
+        <tr><th>{{ t.time }}</th><th>{{ t.domain }}</th><th>{{ t.verdict }}</th><th class="num">{{ t.score }}</th><th>{{ t.brand }}</th><th>{{ t.type }}</th><th>{{ t.rep_ai }}</th><th>{{ t.rep_analyst }}</th><th>{{ t.rep_evidence }}</th></tr>
+      </thead>
+      <tbody>
+        {% for row in lib.rows %}
+        <tr>
+          <td class="time" dir="ltr">{{ row.scanned_at | gst }}</td>
+          <td class="domain" dir="ltr"><a href="/case/{{ row.id }}">{{ row.domain }}</a></td>
+          <td><span class="mark {{ row.verdict }}">{{ verdicts[row.verdict] }}</span></td>
+          <td class="num score">{{ row.risk_score }}</td>
+          <td>{{ row.impersonated_brand or "" }}</td>
+          <td>{{ fraud_types[row.fraud_type] if row.fraud_type else "" }}</td>
+          <td>{% if row.ai == "done" %}<span class="ai-tag" title="{{ t.investigated }}">AI</span>{% elif row.ai == "running" %}<span class="ai-tag running" title="{{ t.ai_running }}">AI</span>{% endif %}</td>
+          <td>{% if row.analyst_confirmed %}<span class="stamp solid">{{ t.rep_confirmed }}</span>{% endif %}</td>
+          <td class="rep-links">{% if row.pack %}<a href="/case/{{ row.id }}/report.html" target="_blank" rel="noopener">{{ t.rep_report }}</a><a href="/case/{{ row.id }}/evidence.zip">{{ t.rep_zip }}</a>{% else %}<span class="muted">{{ t.rep_no_pack }}</span>{% endif %}</td>
+        </tr>
+        {% else %}
+        <tr class="empty"><td colspan="9">{{ t.rep_none }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <nav class="pager">
+      <span><bdi dir="ltr">{{ lib.first }}–{{ lib.last }}</bdi> {{ t.rep_of }} <bdi dir="ltr">{{ "{:,}".format(lib.total) }}</bdi></span>
+      {% if lib.newer %}<a href="{{ lib.newer }}">{{ t.rep_newer }}</a>{% endif %}
+      {% if lib.older %}<a href="{{ lib.older }}">{{ t.rep_older }}</a>{% endif %}
+    </nav>
+  </div>
+</div>
+{% endblock %}

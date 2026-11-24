@@ -3,14 +3,14 @@ import json
 import pytest
 import yaml
 
-from baaz import intel, pipeline
-from baaz.config import DATA_DIR, Settings
-from baaz.domains import registrable_domain
-from baaz.pipeline import Scanner
-from baaz.reasons import LABELS
-from baaz.resolve import SHORTENERS, Hop, Resolution
-from baaz.score import TLD_SWAP_WEIGHT
-from baaz.store import Store
+from shaheen import intel, pipeline
+from shaheen.config import DATA_DIR, Settings
+from shaheen.domains import registrable_domain
+from shaheen.pipeline import Scanner
+from shaheen.reasons import LABELS
+from shaheen.resolve import SHORTENERS, Hop, Resolution
+from shaheen.score import TLD_SWAP_WEIGHT
+from shaheen.store import Store
 
 # Scam-looking hosts here are made up, mostly under the reserved .test TLD.
 UAE_OFFICIAL = [d for b in yaml.safe_load((DATA_DIR / "brands_uae.yaml").read_text(encoding="utf-8"))["brands"]
@@ -21,7 +21,7 @@ UAE_OFFICIAL = [d for b in yaml.safe_load((DATA_DIR / "brands_uae.yaml").read_te
 def scanner(tmp_path, monkeypatch):
     """A Scanner whose fetch and intel are fakes. `scanner.routes` maps a start
     URL to its redirect chain; anything else is a dead link that goes nowhere."""
-    settings = Settings(db_path=tmp_path / "baaz.db", evidence_dir=tmp_path / "evidence", llm_base_url="",
+    settings = Settings(db_path=tmp_path / "shaheen.db", evidence_dir=tmp_path / "evidence", llm_base_url="",
                         llm_model="", llm_api_key="", http_timeout=5, user_agent="test")
     routes: dict[str, list[str]] = {}
     gathered: list[str] = []

@@ -21,8 +21,8 @@ from pathlib import Path
 import httpx
 import yaml
 
-from baaz.config import DATA_DIR, DESKTOP_UA
-from baaz.domains import defang, refang, registrable_domain
+from shaheen.config import DATA_DIR, DESKTOP_UA
+from shaheen.domains import defang, refang, registrable_domain
 
 EVAL_DIR = Path(__file__).resolve().parent
 OPENPHISH_FEED = "https://openphish.com/feed.txt"
