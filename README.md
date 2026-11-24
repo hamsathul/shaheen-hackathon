@@ -22,12 +22,12 @@ Three roles share one pipeline, `scan(url)`.
 | **Watcher** | `shaheen watch` | Runs 24/7. Five collectors (brand lookalikes, Certificate Transparency, newly registered domains, a brand × country storefront sweep, Google Maps listings) feed candidates to the scorer. |
 | **Investigator** | `shaheen investigate` | A local model, driven by the [pi](https://pi.dev) agent harness, works each flagged case with Shaheen's read-only case tools and a headless browser, then files a report that separates proven facts from inferences. |
 
-An analyst works the results in the dashboard (`shaheen dashboard`), in English or Arabic:
+Officers and analysts work the results in the dashboard (`shaheen dashboard`), in English or Arabic. It opens in Simple mode; "Analyst" in the header shows the full detail:
 
+- **Simple mode (the default):** for officers who are not analysts. Big plain numbers, then the likely scams, each with the brand it pretends to be and one sentence in English and Arabic; no scores, tool calls or hashes.
 - **Live feed:** counters, the AI investigator panel with each running investigation's tool calls as they happen, the Google Maps watch with its map, and every scan as it is scored.
 - **Case view:** verdict, reasons in both languages with their evidence pointers, the page screenshot, the AI investigation (proven facts apart from inferences) and its tool-call trace, confirm, takedown request and evidence download.
-- **Simple mode:** a switch in the header for officers who are not analysts. Big plain numbers, then the likely scams, each with the brand it pretends to be and one sentence in English and Arabic; no scores, tool calls or hashes.
-- **Statistics:** scans per hour by verdict, the most impersonated brands, which collector found them, fraud types and the investigator's progress, all computed from the store.
+- **Statistics:** a top row of headline figures (links checked, distinct domains, each verdict, brands targeted, scans and fraud in the last hour and day, operator links between sites, the AI investigator's queue and median run, Google Maps searches and leads), then scans per hour by verdict, the most impersonated brands, which collector found them and fraud types, all computed from the store.
 - **Reports:** every case's evidence report with filters, and a threat summary for the police (today, 24 hours or 7 days) that prints on A4; `shaheen summary` writes the same report as one file.
 - **Maps leads:** Google Maps listings that use a brand's name with an off-brand website or a fake helpline number.
 
@@ -43,7 +43,7 @@ An analyst works the results in the dashboard (`shaheen dashboard`), in English 
 
 ## Screenshots
 
-These are from the live run on the demo box on 2026-11-24. The case is a real fake JBL store aimed at the UAE, and the investigation is the local model working a real Abu Dhabi Police lookalike.
+These are from the live run on the demo box on 2026-11-24. The case and the evidence report are a real fake JBL store aimed at the UAE, and the investigation is the local model working a fake Bose store aimed at Italy.
 
 | Case view: verdict, reasons in English and Arabic, page screenshot | Arabic interface (right to left) |
 |---|---|
