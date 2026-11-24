@@ -9,6 +9,7 @@ from baaz.domains import registrable_domain
 from baaz.pipeline import Scanner
 from baaz.reasons import LABELS
 from baaz.resolve import SHORTENERS, Hop, Resolution
+from baaz.score import TLD_SWAP_WEIGHT
 from baaz.store import Store
 
 # Scam-looking hosts here are made up, mostly under the reserved .test TLD.
@@ -105,8 +106,6 @@ def test_user_content_on_an_official_domain_is_not_allowlisted(scanner, url, pla
     ("et1had.test", "homoglyph", "Etihad Airways"),
     ("xn--dcb-5cd.test", "punycode", "Abu Dhabi Commercial Bank (ADCB)"),
     ("xn--slik-53d.test", "punycode", "Salik"),  # Cyrillic а in salik
-    ("rakbank.test", "tld_swap", "RAKBANK"),
-    ("tamm.example", "tld_swap", "TAMM"),
     ("adcb-secure-login.test", "combo", "Abu Dhabi Commercial Bank (ADCB)"),
     ("dewa-gov-portal.test", "combo", "Dubai Electricity and Water Authority (DEWA)"),
     ("salik-topup.test", "combo", "Salik"),
@@ -124,6 +123,14 @@ def test_lookalikes_are_flagged_without_a_page_fetch(scanner, url, method, brand
     assert lookalike.evidence.startswith("redirects.json#chain[")
     assert LABELS[method][0] in lookalike.en
     assert result.impersonated_brand == brand
+
+
+@pytest.mark.parametrize("url", ["rakbank.test", "tamm.example"])
+def test_a_brand_name_under_another_ending_alone_is_not_flagged(scanner, url):
+    result = scanner.scan(url)
+    lookalike = next(r for r in result.reasons if r.code == "LOOKALIKE_DOMAIN")
+    assert lookalike.weight == TLD_SWAP_WEIGHT and LABELS["tld_swap"][0] in lookalike.en
+    assert result.verdict == "legitimate"
 
 
 @pytest.mark.parametrize("url, brand", [

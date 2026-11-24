@@ -25,7 +25,7 @@ from baaz.domains import host_of, is_ip, registrable_domain, split_host
 from baaz.models import Finding, ScanContext
 from baaz.page import PageFacts
 from baaz.resolve import SHORTENERS
-from baaz.score import COMMON_TOKEN_WEIGHTS, weight_of
+from baaz.score import COMMON_TOKEN_WEIGHTS, TLD_SWAP_WEIGHT, weight_of
 
 # Deceptive words (data/domain_words.yaml) of this many letters also count
 # inside a longer token (adcblogin); shorter ones only as a whole token.
@@ -113,7 +113,7 @@ def brand_findings(host: str, evidence: str) -> list[tuple[Finding, str | None]]
             code, params = "BRAND_GEO_DOMAIN", {"domain": host, "brand": m.brand.name_en, "place": m.place}
         else:
             code, params = "BRAND_IN_DOMAIN", {"domain": host, "brand": m.brand.name_en}
-        weight = COMMON_TOKEN_WEIGHTS[code] if m.common else None
+        weight = COMMON_TOKEN_WEIGHTS[code] if m.common else TLD_SWAP_WEIGHT if m.method == "tld_swap" else None
         name = None if m.common and code == "BRAND_IN_DOMAIN" else m.brand.name_en
         found.append((Finding(code, evidence, params, weight), name))
     return found

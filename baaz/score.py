@@ -49,6 +49,14 @@ WEIGHTS: dict[str, int] = {
 # turn up in ordinary domains such as office-furniture-dubai.com.
 COMMON_TOKEN_WEIGHTS: dict[str, int] = {"BRAND_IN_DOMAIN": 5, "BRAND_GEO_DOMAIN": 10}
 
+# A brand's exact name under another ending (tamm.com for tamm.abudhabi) is
+# often an unrelated owner of many years, so it weighs less than a typo or
+# homoglyph and, as a reduced finding, does not cancel DOMAIN_OLD.
+TLD_SWAP_WEIGHT = 25
+
+# A new domain always has a new certificate: one fact, counted once.
+NEW_DOMAIN = frozenset({"NEW_DOMAIN_7D", "NEW_DOMAIN_30D"})
+
 # Signals strong enough that an old domain is no comfort (DOMAIN_OLD is dropped).
 STRONG = frozenset({
     "SKIMMER_GATEWAY",
@@ -126,8 +134,10 @@ def confidence_for(risk_score: int, fetch_status: str, forced: bool) -> float:
 def score(findings: list[Finding], fetch_status: str) -> Score:
     kept = dedupe(findings)
     codes = {f.code for f in kept}
-    if codes & STRONG:
+    if any(f.code in STRONG and weight_of(f) >= WEIGHTS[f.code] for f in kept):
         kept = [f for f in kept if f.code != "DOMAIN_OLD"]
+    if codes & NEW_DOMAIN:
+        kept = [f for f in kept if f.code != "NEW_TLS_CERT"]
     total = sum(weight_of(f) for f in kept)
     risk = max(0, min(100, total))
     forced = bool(codes & FORCE_FRAUD)
