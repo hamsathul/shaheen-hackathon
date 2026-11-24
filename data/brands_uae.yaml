@@ -43,7 +43,7 @@ brands:
 
   - id: dubai_police
     name_en: Dubai Police
-    name_ar: ""
+    name_ar: شرطة دبي
     category: police
     official_domains:
       - dubaipolice.gov.ae
@@ -56,7 +56,7 @@ brands:
 
   - id: ministry_of_interior
     name_en: Ministry of Interior (UAE)
-    name_ar: ""
+    name_ar: وزارة الداخلية
     category: government
     official_domains:
       - moi.gov.ae
@@ -69,7 +69,7 @@ brands:
 
   - id: icp
     name_en: Federal Authority for Identity, Citizenship, Customs and Port Security (ICP)
-    name_ar: ""
+    name_ar: الهيئة الاتحادية للهوية والجنسية والجمارك وأمن المنافذ
     category: government
     official_domains:
       - icp.gov.ae
@@ -97,7 +97,7 @@ brands:
 
   - id: federal_tax_authority
     name_en: Federal Tax Authority
-    name_ar: ""
+    name_ar: الهيئة الاتحادية للضرائب
     category: government
     official_domains:
       - tax.gov.ae
@@ -110,7 +110,7 @@ brands:
 
   - id: central_bank_uae
     name_en: Central Bank of the UAE
-    name_ar: ""
+    name_ar: مصرف الإمارات العربية المتحدة المركزي
     category: government
     official_domains:
       - centralbank.ae
@@ -138,7 +138,7 @@ brands:
 
   - id: salik
     name_en: Salik
-    name_ar: ""
+    name_ar: سالك
     category: government
     official_domains:
       - salik.ae
@@ -151,7 +151,7 @@ brands:
 
   - id: dubai_rta
     name_en: Roads and Transport Authority (Dubai RTA)
-    name_ar: ""
+    name_ar: هيئة الطرق والمواصلات
     category: government
     official_domains:
       - rta.ae
@@ -165,7 +165,7 @@ brands:
 
   - id: dewa
     name_en: Dubai Electricity and Water Authority (DEWA)
-    name_ar: ""
+    name_ar: هيئة كهرباء ومياه دبي
     category: utility
     official_domains:
       - dewa.gov.ae
@@ -178,7 +178,7 @@ brands:
 
   - id: addc
     name_en: Abu Dhabi Distribution Company (ADDC)
-    name_ar: ""
+    name_ar: شركة أبوظبي للتوزيع
     category: utility
     official_domains:
       - addc.ae
@@ -223,7 +223,7 @@ brands:
 
   - id: fab
     name_en: First Abu Dhabi Bank (FAB)
-    name_ar: ""
+    name_ar: بنك أبوظبي الأول
     category: bank
     official_domains:
       - bankfab.com
@@ -236,7 +236,7 @@ brands:
 
   - id: adcb
     name_en: Abu Dhabi Commercial Bank (ADCB)
-    name_ar: ""
+    name_ar: بنك أبوظبي التجاري
     category: bank
     official_domains:
       - adcb.com
@@ -249,7 +249,7 @@ brands:
 
   - id: emirates_nbd
     name_en: Emirates NBD
-    name_ar: ""
+    name_ar: الإمارات دبي الوطني
     category: bank
     official_domains:
       - emiratesnbd.com
@@ -277,7 +277,7 @@ brands:
 
   - id: mashreq
     name_en: Mashreq
-    name_ar: ""
+    name_ar: بنك المشرق
     category: bank
     official_domains:
       - mashreq.com
@@ -305,7 +305,7 @@ brands:
 
   - id: rakbank
     name_en: RAKBANK
-    name_ar: ""
+    name_ar: بنك رأس الخيمة الوطني
     category: bank
     official_domains:
       - rakbank.ae
@@ -318,7 +318,7 @@ brands:
 
   - id: aramex
     name_en: Aramex
-    name_ar: ""
+    name_ar: أرامكس
     category: logistics
     official_domains:
       - aramex.com
@@ -331,7 +331,7 @@ brands:
 
   - id: emirates_airline
     name_en: Emirates
-    name_ar: ""
+    name_ar: طيران الإمارات
     category: airline
     official_domains:
       - emirates.com
@@ -344,7 +344,7 @@ brands:
 
   - id: etihad
     name_en: Etihad Airways
-    name_ar: ""
+    name_ar: الاتحاد للطيران
     category: airline
     official_domains:
       - etihad.com
