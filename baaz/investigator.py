@@ -720,7 +720,11 @@ def _investigate(settings: Settings, store: Store, scan_id: str, mode: str, chos
 
 
 def first_sentence(text: str) -> str:
-    return re.split(r"(?<=[.!?؟])\s+", text.strip(), maxsplit=1)[0][:240]
+    """The first sentence, cut at a word boundary with an ellipsis past 240 characters."""
+    sentence = re.split(r"(?<=[.!?؟])\s+", text.strip(), maxsplit=1)[0]
+    if len(sentence) <= 240:
+        return sentence
+    return sentence[:240].rsplit(" ", 1)[0].rstrip(",;:(") + "…"
 
 
 def model_answers(settings: Settings) -> bool:
