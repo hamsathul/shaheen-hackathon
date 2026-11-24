@@ -129,3 +129,25 @@ def test_collect_queues_lead_websites_once_and_never_rechecks_a_place(tmp_path, 
 
     assert maps.collect(store, Limits(max_per_run=100, rate=0)) == 0
     assert store.counters()["maps_leads"] == 2
+
+
+def test_the_live_searches_survive_a_restart_without_other_listings_names(tmp_path):
+    store = Store(tmp_path / "t.db")
+    before = maps.LiveSearches()
+    query = maps.Query("RAKBANK customer service", "en")
+    before.sent(query)
+    lead_place = listing("a", "RAKBANK 24/7 Helpline", "+971 50 000 0500", "https://rakbank-help.test/")
+    other_place = listing("b", "Invented Corner Cafe")
+    lead_place["location"] = other_place["location"] = {"latitude": 24.45, "longitude": 54.38}
+    before.answered(tuple(maps.Listing.of(p, maps.classify(p)) for p in (lead_place, other_place)))
+    before.save(store)
+    assert "Invented Corner Cafe" not in store.get_meta(maps.LAST_ROUND)
+
+    after = maps.LiveSearches()
+    after.restore(store)
+    _, searches = after.snapshot()
+    restored = searches[0].listings
+    assert searches[0].query == query
+    assert [(x.name, x.outcome, x.lat) for x in restored] == [
+        ("RAKBANK 24/7 Helpline", "lead", 24.45), ("", "other", 24.45)]
+    assert restored[0].lead == maps.classify(lead_place)

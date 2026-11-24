@@ -27,9 +27,11 @@ only; the website and phone fields put it in Google's Text Search Enterprise
 SKU.
 
 The searches of the last round and the one under way, with every listing's
-name, location and outcome, are kept in memory only (`live`), for the
-dashboard's live panel: Google's terms allow storing place IDs, and
-coordinates for up to 30 days, but no other listing content.
+name, location and outcome, are kept in memory (`live`) for the dashboard's
+live panel. Google's terms allow storing place IDs, and coordinates for up to
+30 days, but no other listing content, so the copy kept for a restart
+(`LAST_ROUND`) has each listing's coordinates and outcome and a lead's details
+(the leads table holds them already), never another listing's name.
 
 It needs `GOOGLE_MAPS_API_KEY`; without one the watcher leaves it out.
 `GOOGLE_MAPS_API_BASE` points it at another server speaking the same API,
@@ -38,12 +40,13 @@ such as a local stub.
 
 from __future__ import annotations
 
+import json
 import logging
 import re
 import threading
 from collections import deque
-from dataclasses import dataclass, replace
-from datetime import datetime
+from dataclasses import asdict, dataclass, replace
+from datetime import datetime, timedelta, timezone
 from functools import lru_cache
 from typing import Any
 
@@ -61,6 +64,8 @@ from baaz.store import Store, utcnow
 SOURCE = "maps"
 CURSOR = "maps:cursor"
 CALLS = "maps:calls"  # meta: "<GST date> <searches sent that day>"
+LAST_ROUND = "maps:last_round"  # meta: the live searches, kept for a restart (LiveSearches.save)
+KEEP_COORDINATES = timedelta(days=30)  # how long Google lets Baaz keep a listing's coordinates
 QUERIES_PER_RUN = 6
 PACE_S = 6.0  # seconds between the searches of a round, so a viewer can follow them one by one
 SEARCH_PATH = "/v1/places:searchText"
@@ -213,7 +218,7 @@ def classify(place: dict[str, Any]) -> Lead | None:
 
 @dataclass(frozen=True)
 class Listing:
-    """A listing as the live panel shows it. In memory only, never stored."""
+    """A listing as the live panel shows it. Its name is never stored unless it is a lead."""
     name: str
     lat: float | None
     lng: float | None
@@ -242,8 +247,8 @@ class Search:
 
 class LiveSearches:
     """The searches of the last round and the one under way, for the dashboard of
-    the same process (`baaz up`). Held in memory only: Google's terms do not let
-    Baaz store listing names. One round runs at a time, whoever starts it."""
+    the same process (`baaz up`), and kept without listing names for the next
+    start. One round runs at a time, whoever starts it."""
 
     def __init__(self) -> None:
         self._lock = threading.Lock()
@@ -283,6 +288,35 @@ class LiveSearches:
             if self._searches and self._searches[-1].listings is None:
                 last = self._searches.pop()
                 self._searches.append(replace(last, listings=listings or (), failed=listings is None))
+
+    def save(self, store: Store) -> None:
+        """Keep the answered searches for the next start: query, time, and each
+        listing's coordinates and outcome. A lead keeps its details; any other
+        listing loses its name, which Google's terms do not let Baaz store."""
+        with self._lock:
+            answered = [s for s in self._searches if s.listings is not None]
+        store.set_meta(LAST_ROUND, json.dumps([
+            {"query": asdict(s.query), "sent_at": s.sent_at, "failed": s.failed,
+             "listings": [{"lat": x.lat, "lng": x.lng, "outcome": x.outcome, "lead": asdict(x.lead) if x.lead else None}
+                          for x in s.listings or ()]}
+            for s in answered], ensure_ascii=False))
+
+    def restore(self, store: Store) -> None:
+        """The searches `save` kept, unless their coordinates are older than Google allows."""
+        kept = json.loads(store.get_meta(LAST_ROUND) or "[]")
+        cutoff = datetime.now(timezone.utc) - KEEP_COORDINATES
+        searches = []
+        for item in kept:
+            if datetime.fromisoformat(item["sent_at"]) < cutoff:
+                continue
+            listings = []
+            for x in item["listings"]:
+                lead = x["lead"] and Lead(**{**x["lead"], "reasons": tuple(x["lead"]["reasons"]),
+                                             "official_phones": tuple(x["lead"]["official_phones"])})
+                listings.append(Listing(lead.name if lead else "", x["lat"], x["lng"], x["outcome"], lead or None))
+            searches.append(Search(Query(**item["query"]), item["sent_at"], tuple(listings), item["failed"]))
+        with self._lock:
+            self._searches.extend(searches)
 
     def snapshot(self) -> tuple[bool, list[Search]]:
         """Whether a round is under way, and the searches kept, oldest first."""
@@ -398,6 +432,7 @@ def run_round(store: Store, limits: Limits) -> int:
                     store.mark_maps_place(str(place["id"]))
                 live.answered(tuple(listings))
                 log.info("maps: %r: %d listings, %d new, %d leads", query.text, len(places), new, leads)
+        live.save(store)
     except Exception:  # noqa: BLE001 - a collector fails soft
         log.exception("maps: run failed")
         live.answered(None)

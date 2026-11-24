@@ -256,6 +256,7 @@ def run(*, settings: Settings | None = None, once: bool = False, workers: int = 
     options = ScanOptions(render=render)
     if "maps" in names:
         maps.live.attach(stop)
+        maps.live.restore(store)
 
     if requeued := store.requeue_stale():
         log.info("requeued %d candidates left mid-scan by an earlier run", requeued)
