@@ -1,0 +1,17 @@
+{
+  "domain": "anniversary-gift-claim.test",
+  "source": "rdap",
+  "server": "https://rdap.registry.example/domain/anniversary-gift-claim.test",
+  "created": "2026-11-21",
+  "registrar": "Example Registrar, Inc.",
+  "registrar_abuse_email": "abuse@registrar.example",
+  "registrar_abuse_phone": "+1.5550100",
+  "status": [
+    "client transfer prohibited"
+  ],
+  "nameservers": [
+    "ns1.dns-host.example",
+    "ns2.dns-host.example"
+  ],
+  "error": null
+}

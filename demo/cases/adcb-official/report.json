@@ -1,0 +1,52 @@
+{
+  "id": "20261124-893712",
+  "url": "https://www.adcb.com/",
+  "final_url": "https://www.adcb.com/en/personal/",
+  "redirect_chain": [
+    "https://www.adcb.com/",
+    "https://www.adcb.com/en/personal/"
+  ],
+  "fetch_status": "ok",
+  "verdict": "legitimate",
+  "risk_score": 0,
+  "confidence": 0.95,
+  "fraud_type": null,
+  "impersonated_brand": null,
+  "reasons": [
+    {
+      "code": "OFFICIAL_DOMAIN",
+      "weight": 0,
+      "en": "adcb.com is an official domain of Abu Dhabi Commercial Bank (ADCB).",
+      "ar": "adcb.com نطاق رسمي تابع لـAbu Dhabi Commercial Bank (ADCB).",
+      "evidence": "redirects.json#final_url"
+    }
+  ],
+  "signals": {
+    "final_domain": "adcb.com",
+    "fetched": true,
+    "rendered": true,
+    "stage_seconds": {
+      "resolve": 0.0,
+      "render": 0.0,
+      "allowlist": 0.0,
+      "page": 0.0,
+      "storefront": 0.0
+    },
+    "captured_from": "20261124-3889d3",
+    "captured_at": "2026-11-24T12:02:34Z",
+    "status_code": 200,
+    "tls_verified": true,
+    "title": "ADCB | A leading banking institution in the UAE",
+    "brands_on_page": [
+      "Abu Dhabi Commercial Bank (ADCB)"
+    ],
+    "sensitive_fields": [],
+    "form_targets": [
+      "adcb.com"
+    ]
+  },
+  "cluster_id": null,
+  "analyst_confirmed": false,
+  "evidence_path": "evidence/20261124-893712/",
+  "scanned_at": "2026-11-24T12:09:47Z"
+}

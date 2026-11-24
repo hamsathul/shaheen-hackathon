@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Baaz | {{ t.feed }}{% endblock %}
+{% block main %}
+<section class="status">
+  <div class="since">
+    <span class="dot{{ ' live' if feed.running_since }}" aria-hidden="true"></span>
+    {% if feed.running_since %}
+    {{ t.running_since }} <b data-field="running_since">{{ feed.running_since }}</b> GST
+    <span class="muted">(<span data-field="uptime">{{ feed.uptime }}</span>)</span>
+    {% else %}
+    <span data-field="running_since">{{ t.not_running }}</span>
+    {% endif %}
+  </div>
+  <div class="counters">
+    {% for key in ("candidates_seen", "scanned", "flagged", "investigated", "confirmed") %}
+    <div class="counter {{ key }}">
+      <div class="n" data-counter="{{ key }}">{{ feed.counters[key] }}</div>
+      <div class="k">{{ t[key] }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="panel scanbox">
+  <h2>{{ t.scan_title }}</h2>
+  <form method="post" action="/scan" id="scan-form">
+    <input type="text" name="url" autocomplete="off" spellcheck="false" dir="ltr" placeholder="{{ t.scan_placeholder }}" aria-label="{{ t.scan_title }}">
+    <button type="submit" data-busy="{{ t.scanning }}">{{ t.scan_button }}</button>
+  </form>
+  {% if error %}<p class="error">{{ t.scan_error }}</p>{% endif %}
+  <p class="muted small">{{ t.scan_note }}</p>
+</section>
+
+<section class="panel">
+  <div class="feed-head">
+    <h2>{{ t.latest }}</h2>
+    <div class="filters">
+      <a href="/" class="{{ 'on' if not verdict }}">{{ t.all }}</a>
+      {% for v in filters %}
+      <a href="/?verdict={{ v }}" class="{{ v }}{{ ' on' if verdict == v }}">{{ verdicts[v] }}</a>
+      {% endfor %}
+    </div>
+  </div>
+  <table class="feed">
+    <thead>
+      <tr><th>{{ t.time }}</th><th>{{ t.domain }}</th><th>{{ t.verdict }}</th><th class="num">{{ t.score }}</th><th>{{ t.type }}</th><th>{{ t.brand }}</th><th>{{ t.source }}</th></tr>
+    </thead>
+    <tbody id="feed-rows" data-empty="{{ t.no_scans }}">
+      {% for row in feed.rows %}
+      <tr data-id="{{ row.id }}">
+        <td class="nowrap">{{ row.time }}</td>
+        <td class="domain" dir="ltr"><a href="/case/{{ row.id }}">{{ row.domain }}</a>{% if row.confirmed %} <span class="tick" title="{{ t.confirmed }}">&#10003;</span>{% endif %}</td>
+        <td><span class="badge {{ row.verdict }}">{{ row.verdict_label }}</span></td>
+        <td class="num">{{ row.score }}</td>
+        <td>{{ row.type }}</td>
+        <td>{{ row.brand }}</td>
+        <td class="muted">{{ row.source }}</td>
+      </tr>
+      {% else %}
+      <tr class="empty"><td colspan="7">{{ t.no_scans }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}
+{% block scripts %}<script src="/static/feed.js"></script>{% endblock %}

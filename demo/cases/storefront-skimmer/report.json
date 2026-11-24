@@ -1,0 +1,101 @@
+{
+  "id": "20261124-1c3ff1",
+  "url": "https://bose-uae-outlet.test/",
+  "final_url": "https://bose-uae-outlet.test/",
+  "redirect_chain": [
+    "https://bose-uae-outlet.test/"
+  ],
+  "fetch_status": "ok",
+  "verdict": "fraud",
+  "risk_score": 100,
+  "confidence": 0.95,
+  "fraud_type": "fake_storefront_skimmer",
+  "impersonated_brand": "Bose",
+  "reasons": [
+    {
+      "code": "SKIMMER_GATEWAY",
+      "weight": 60,
+      "en": "Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores.",
+      "ar": "صفحة الدفع تستخدم بوابة الدفع الخاصة 'sankee' التي لم تُرصد إلا في متاجر وهمية تسرق بيانات البطاقات.",
+      "evidence": "storefront.json#payment_methods"
+    },
+    {
+      "code": "CARD_FORM_NO_PROCESSOR",
+      "weight": 35,
+      "en": "Checkout collects card number, expiry and CVV in the site's own form, with no recognised payment processor.",
+      "ar": "صفحة الدفع تجمع رقم البطاقة وتاريخ الانتهاء ورمز CVV في نموذج الموقع نفسه دون أي مزوّد دفع معروف.",
+      "evidence": "storefront.json#checkout"
+    },
+    {
+      "code": "BRAND_GEO_DOMAIN",
+      "weight": 25,
+      "en": "bose-uae-outlet.test combines the brand Bose with the place name 'uae', a pattern used by fake local stores.",
+      "ar": "النطاق bose-uae-outlet.test يجمع العلامة Bose مع اسم المكان 'uae'، وهو نمط تستخدمه المتاجر المحلية الوهمية.",
+      "evidence": "redirects.json#chain[0]"
+    },
+    {
+      "code": "NEW_DOMAIN_30D",
+      "weight": 20,
+      "en": "The domain was registered 18 days ago (2026-11-06).",
+      "ar": "تم تسجيل النطاق قبل 18 يومًا (2026-11-06).",
+      "evidence": "whois.json#created"
+    },
+    {
+      "code": "DEEP_DISCOUNTS",
+      "weight": 20,
+      "en": "100% of sampled products are discounted by more than 70%.",
+      "ar": "100% من المنتجات التي تم فحصها مخفّضة بأكثر من 70%.",
+      "evidence": "storefront.json#prices"
+    },
+    {
+      "code": "BRAND_IN_DOMAIN",
+      "weight": 15,
+      "en": "bose-uae-outlet.test contains the brand name Bose but is not an official Bose domain.",
+      "ar": "النطاق bose-uae-outlet.test يحتوي اسم العلامة Bose لكنه ليس نطاقًا رسميًا لها.",
+      "evidence": "redirects.json#chain[0]"
+    }
+  ],
+  "signals": {
+    "final_domain": "bose-uae-outlet.test",
+    "fetched": true,
+    "rendered": true,
+    "stage_seconds": {
+      "resolve": 0.0,
+      "render": 1.6,
+      "allowlist": 0.0,
+      "url_signals": 0.0,
+      "page": 0.0,
+      "storefront": 0.0
+    },
+    "status_code": 200,
+    "tls_verified": true,
+    "domain_age_days": 18,
+    "registrar": "Example Registrar, Inc.",
+    "asn": "AS64501",
+    "hosting_country": "SG",
+    "cert_age_days": 17,
+    "nxdomain": false,
+    "top_site_rank": null,
+    "hosting_platform": null,
+    "embedded_targets": [],
+    "title": "Bose UAE Outlet | Official Clearance Sale up to 80% off",
+    "brands_on_page": [
+      "Bose"
+    ],
+    "sensitive_fields": [],
+    "form_targets": [],
+    "storefront": {
+      "woocommerce": true,
+      "payment_methods": [
+        "sankee",
+        "public-payment"
+      ],
+      "storefront_brand": "Bose",
+      "checkout_form": "visible"
+    }
+  },
+  "cluster_id": null,
+  "analyst_confirmed": false,
+  "evidence_path": "evidence/20261124-1c3ff1/",
+  "scanned_at": "2026-11-24T12:09:42Z"
+}

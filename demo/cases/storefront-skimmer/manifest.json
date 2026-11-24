@@ -1,0 +1,95 @@
+{
+  "tool": {
+    "name": "baaz",
+    "version": "0.1.0"
+  },
+  "scan_id": "20261124-1c3ff1",
+  "url": "https://bose-uae-outlet.test/",
+  "final_url": "https://bose-uae-outlet.test/",
+  "scanned_at": {
+    "utc": "2026-11-24T12:09:42Z",
+    "dubai": "2026-11-24T16:09:42+04:00"
+  },
+  "generated_at": {
+    "utc": "2026-11-24T12:09:44Z",
+    "dubai": "2026-11-24T16:09:44+04:00"
+  },
+  "user_agents": {
+    "desktop": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+    "profile:mobile_ar": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1",
+    "profile:desktop": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+    "profile:crawler": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+  },
+  "collection": "All collection was non-intrusive: unauthenticated GET requests to public pages and public endpoints, plus public DNS, RDAP/WHOIS and TLS certificate lookups. No form was submitted, no credential was entered and no login or access control was bypassed.",
+  "files": [
+    {
+      "name": "agent_trace.jsonl",
+      "size": 26877,
+      "sha256": "86c2f14d61b7b54d36f31647abc9adf0c1908c9925906adea4d257d7df41b11e"
+    },
+    {
+      "name": "cert.json",
+      "size": 312,
+      "sha256": "be1e6ca506d56778c30b08c949012cbbb82a5c5eef9b7d71b02bffcc33917891"
+    },
+    {
+      "name": "dns_hosting.json",
+      "size": 338,
+      "sha256": "977da62270b6ce755ce4fbbe78f7108308dd0d573cbd386a848e7a3718cea397"
+    },
+    {
+      "name": "investigation.json",
+      "size": 2597,
+      "sha256": "bbc3b22801584dea6178471fcd449c6baa011da102edb0370c198b99e7fae679"
+    },
+    {
+      "name": "page.html",
+      "size": 2334,
+      "sha256": "d202ee5a58bb88a3f7654e50ba6a950795a354d0dfb4cf7542bf7388d0f7a4a2"
+    },
+    {
+      "name": "page.json",
+      "size": 434,
+      "sha256": "8c61d17a4475d347364b2fe6d582d1bfe8f415cf7e4a55624081f247312d2d71"
+    },
+    {
+      "name": "profiles.json",
+      "size": 1045,
+      "sha256": "b1c3bea8349ea1bac6ec3e420f321fdaadb2be7998a771e1eb479759bb45c3ef"
+    },
+    {
+      "name": "redirects.json",
+      "size": 300,
+      "sha256": "a1c88e2a10877fb8a09de7c97904c1d4b7fe0f8813a649f58a36ab9b30ad946d"
+    },
+    {
+      "name": "report.html",
+      "size": 14301,
+      "sha256": "be715b8d1e01ba78121a0a3f82ee1e2463b81411961cbe1f1bf0cae08bb505d6"
+    },
+    {
+      "name": "report.json",
+      "size": 3597,
+      "sha256": "0f22a32d8b1aac63bfe3c3d17096424e8725c8d18de979f9ba6dabe4d2009a4a"
+    },
+    {
+      "name": "screenshot.png",
+      "size": 18671,
+      "sha256": "e5475d4eab8a174adfca1fd54dbeaae20077e255ca9e8d76e67e336b45530ee1"
+    },
+    {
+      "name": "storefront.json",
+      "size": 996,
+      "sha256": "ab416bfbf75c1816697b80d858628aa771c624591cc0b21e50fe06e15197327d"
+    },
+    {
+      "name": "whois.json",
+      "size": 443,
+      "sha256": "107f3a541588e4a39d9b299a1d106a237c877426f5e1bb7378635c9b2c7a8c66"
+    }
+  ],
+  "updated_at": {
+    "utc": "2026-11-24T12:10:52Z",
+    "dubai": "2026-11-24T16:10:52+04:00"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "domain": "anniversary-gift-claim.test",
+  "host": "anniversary-gift-claim.test",
+  "a": [
+    "203.0.113.140"
+  ],
+  "aaaa": [],
+  "nxdomain": false,
+  "ns": [
+    "ns1.dns-host.example",
+    "ns2.dns-host.example"
+  ],
+  "mx": [],
+  "ip": "203.0.113.140",
+  "asn": "AS64500",
+  "asn_name": "EXAMPLE-HOSTING-AS",
+  "country": "NL",
+  "error": null
+}

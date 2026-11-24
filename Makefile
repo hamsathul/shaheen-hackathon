@@ -1,4 +1,4 @@
-.PHONY: install test docker
+.PHONY: install test docker demo watch
 
 install:
 	uv sync
@@ -9,3 +9,9 @@ test:
 
 docker:
 	docker compose build
+
+demo:
+	uv run baaz demo
+
+watch:
+	uv run baaz watch

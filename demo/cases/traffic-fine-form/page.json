@@ -1,0 +1,67 @@
+{
+  "title": "TAMM | Traffic Fines Inquiry and Payment",
+  "site_name": "",
+  "h1": [
+    "Traffic fine inquiry"
+  ],
+  "logos": [],
+  "text_len": 250,
+  "forms": [
+    {
+      "action": "https://traffic-fines-portal.test/inquiry",
+      "method": "post",
+      "inputs": [
+        {
+          "tag": "input",
+          "type": "text",
+          "name": "emirates_id",
+          "id": "eid",
+          "placeholder": "784-XXXX-XXXXXXX-X",
+          "autocomplete": "",
+          "aria_label": "",
+          "label": "Emirates ID number"
+        },
+        {
+          "tag": "input",
+          "type": "text",
+          "name": "plate_number",
+          "id": "plate",
+          "placeholder": "",
+          "autocomplete": "",
+          "aria_label": "",
+          "label": "Plate number"
+        },
+        {
+          "tag": "input",
+          "type": "tel",
+          "name": "mobile",
+          "id": "mob",
+          "placeholder": "",
+          "autocomplete": "",
+          "aria_label": "",
+          "label": "Mobile number"
+        }
+      ],
+      "pseudo": false,
+      "sensitive": [
+        "emirates_id"
+      ]
+    }
+  ],
+  "sensitive_fields": [
+    "emirates_id"
+  ],
+  "script_hosts": [],
+  "iframe_hosts": [],
+  "brands_on_page": [
+    {
+      "brand": "TAMM",
+      "where": "title",
+      "term": "TAMM"
+    }
+  ],
+  "urgency_terms": [
+    "Traffic fine"
+  ],
+  "exfiltration": []
+}

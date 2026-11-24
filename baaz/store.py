@@ -126,7 +126,7 @@ class Store:
         if verdicts:
             sql += f" WHERE verdict IN ({','.join('?' * len(verdicts))})"
             args.extend(verdicts)
-        sql += " ORDER BY scanned_at DESC LIMIT ?"
+        sql += " ORDER BY scanned_at DESC, rowid DESC LIMIT ?"
         args.append(limit)
         with self._conn() as db:
             rows = db.execute(sql, args).fetchall()
@@ -193,6 +193,17 @@ class Store:
         with self._conn() as db:
             cur = db.execute("UPDATE candidates SET status = 'queued' WHERE status = 'scanning'")
         return cur.rowcount
+
+    def scan_sources(self, scan_ids: list[str]) -> dict[str, str]:
+        """The collector that queued each of these scans, for those that came through the queue."""
+        if not scan_ids:
+            return {}
+        with self._conn() as db:
+            rows = db.execute(
+                f"SELECT scan_id, source FROM candidates WHERE scan_id IN ({','.join('?' * len(scan_ids))})",
+                scan_ids,
+            ).fetchall()
+        return {r["scan_id"]: r["source"] for r in rows}
 
     def domain_seen_since(self, domain: str, hours: float) -> bool:
         since = (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat(timespec="seconds")

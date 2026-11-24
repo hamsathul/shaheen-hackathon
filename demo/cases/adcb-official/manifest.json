@@ -1,0 +1,56 @@
+{
+  "tool": {
+    "name": "baaz",
+    "version": "0.1.0"
+  },
+  "scan_id": "20261124-893712",
+  "url": "https://www.adcb.com/",
+  "final_url": "https://www.adcb.com/en/personal/",
+  "scanned_at": {
+    "utc": "2026-11-24T12:09:47Z",
+    "dubai": "2026-11-24T16:09:47+04:00"
+  },
+  "generated_at": {
+    "utc": "2026-11-24T12:09:47Z",
+    "dubai": "2026-11-24T16:09:47+04:00"
+  },
+  "user_agents": {
+    "desktop": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+    "profile:mobile_ar": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1",
+    "profile:desktop": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+    "profile:crawler": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+  },
+  "collection": "All collection was non-intrusive: unauthenticated GET requests to public pages and public endpoints, plus public DNS, RDAP/WHOIS and TLS certificate lookups. No form was submitted, no credential was entered and no login or access control was bypassed.",
+  "files": [
+    {
+      "name": "page.html",
+      "size": 120467,
+      "sha256": "d332c9ddc940762a36f75d64695788ce635b84a452985bc03f43770fc238b68c"
+    },
+    {
+      "name": "page.json",
+      "size": 8478,
+      "sha256": "d0159efc601ae39544fa25c74c9545b0d86792888c4be259422b57a06e692798"
+    },
+    {
+      "name": "redirects.json",
+      "size": 424,
+      "sha256": "958288e0f7639db5f014cfc9ce7bda364acd5e7311764a0ec5e328630a3146e1"
+    },
+    {
+      "name": "report.html",
+      "size": 9129,
+      "sha256": "bb0420c3de13dd8485a51bfa42afe2d936acb20fc8f3f871d26f9ce9dd28fccc"
+    },
+    {
+      "name": "report.json",
+      "size": 1373,
+      "sha256": "04425d4def18e1719dba0ffc32ca54aa6c965c144fe486f494414b59de6dc110"
+    },
+    {
+      "name": "screenshot.png",
+      "size": 180274,
+      "sha256": "42aabe6afcc54c31ee8e05635f8bc4a1990dd9cc63c5fb9f48abb188ba83798e"
+    }
+  ]
+}

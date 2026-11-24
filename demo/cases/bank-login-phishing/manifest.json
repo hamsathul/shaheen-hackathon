@@ -1,0 +1,81 @@
+{
+  "tool": {
+    "name": "baaz",
+    "version": "0.1.0"
+  },
+  "scan_id": "20261124-43e9e2",
+  "url": "http://adcb-secure-verify.test/",
+  "final_url": "https://adcb-secure-verify.test/en/login",
+  "scanned_at": {
+    "utc": "2026-11-24T12:09:41Z",
+    "dubai": "2026-11-24T16:09:41+04:00"
+  },
+  "generated_at": {
+    "utc": "2026-11-24T12:09:42Z",
+    "dubai": "2026-11-24T16:09:42+04:00"
+  },
+  "user_agents": {
+    "desktop": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+    "profile:mobile_ar": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1",
+    "profile:desktop": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+    "profile:crawler": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+  },
+  "collection": "All collection was non-intrusive: unauthenticated GET requests to public pages and public endpoints, plus public DNS, RDAP/WHOIS and TLS certificate lookups. No form was submitted, no credential was entered and no login or access control was bypassed.",
+  "files": [
+    {
+      "name": "cert.json",
+      "size": 324,
+      "sha256": "22e56f509132790f88e129c86e47776ae40622f3054c9adb36512b9e65f83c05"
+    },
+    {
+      "name": "dns_hosting.json",
+      "size": 344,
+      "sha256": "eb640565ed73319f682e74528864b43a8d2e06ebb6375454455746c699831ad1"
+    },
+    {
+      "name": "page.html",
+      "size": 2171,
+      "sha256": "5d2ab0c54c44f261f561f37ec7f7326464c0e8c0ca028c1023a6945e71763026"
+    },
+    {
+      "name": "page.json",
+      "size": 1636,
+      "sha256": "d52d2a416f45e85954373e71d4611a955bf386d6475968b1241cc1e057e0ca59"
+    },
+    {
+      "name": "profiles.json",
+      "size": 1024,
+      "sha256": "025f6ea186fea450b39fe12063a3eba20df299304c71e23515bd1dd7eb7f671d"
+    },
+    {
+      "name": "redirects.json",
+      "size": 448,
+      "sha256": "9dd0ede806e0e286739f6381d1752534fc50a4dd6231587d478808f7cea14e08"
+    },
+    {
+      "name": "report.html",
+      "size": 14858,
+      "sha256": "8551ce1156cd915200a60f834a7b9529baf9958ea472409b4076dfe7163e5734"
+    },
+    {
+      "name": "report.json",
+      "size": 3916,
+      "sha256": "3b86efd3943686e54bef2eb5fdbf2e66d246b0ae5acb44d4b9efb7a338daca42"
+    },
+    {
+      "name": "screenshot.png",
+      "size": 14251,
+      "sha256": "9627f9d04f418ed4fd0f33146f2b8bdb0b57e28732246966afcb882c8c9f7ce2"
+    },
+    {
+      "name": "storefront.json",
+      "size": 164,
+      "sha256": "83c67a1f35bd455dd2fd6b40c18e13add3c183092847aafb115295caa8bb5815"
+    },
+    {
+      "name": "whois.json",
+      "size": 449,
+      "sha256": "06662fb1eb94978d8782aaee38d4f4e7b5a7161c2833a3bbad890ac430a9f1bf"
+    }
+  ]
+}

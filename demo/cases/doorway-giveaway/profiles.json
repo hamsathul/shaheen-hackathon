@@ -1,0 +1,38 @@
+{
+  "mobile_ar": {
+    "final_url": "https://anniversary-gift-claim.test/claim",
+    "domain": "anniversary-gift-claim.test",
+    "status": 200,
+    "fetch_status": "ok",
+    "text_len": 390,
+    "title": "Etihad Airways 20th Anniversary Giveaway",
+    "redirected": true,
+    "redirect_code": false,
+    "empty_html": false,
+    "challenge": false
+  },
+  "desktop": {
+    "final_url": "https://anniversary-gift-claim.test/claim",
+    "domain": "anniversary-gift-claim.test",
+    "status": 200,
+    "fetch_status": "ok",
+    "text_len": 390,
+    "title": "Etihad Airways 20th Anniversary Giveaway",
+    "redirected": true,
+    "redirect_code": false,
+    "empty_html": false,
+    "challenge": false
+  },
+  "crawler": {
+    "final_url": "https://dubai-deals-today.test/offer",
+    "domain": "dubai-deals-today.test",
+    "status": 200,
+    "fetch_status": "ok",
+    "text_len": 1140,
+    "title": "Dubai Deals Today | The week's best offers in Dubai",
+    "redirected": false,
+    "redirect_code": false,
+    "empty_html": false,
+    "challenge": false
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "final_url": "https://traffic-fines-portal.test/fines",
+  "fetch_status": "ok",
+  "status_code": 200,
+  "tls_verified": true,
+  "shortener": null,
+  "error": null,
+  "chain": [
+    {
+      "url": "https://traffic-fines-portal.test/fines",
+      "status": 200,
+      "via": "start",
+      "text_len": null
+    }
+  ]
+}

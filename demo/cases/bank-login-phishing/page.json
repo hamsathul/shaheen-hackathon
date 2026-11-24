@@ -1,0 +1,75 @@
+{
+  "title": "ADCB Online Banking | Secure Login",
+  "site_name": "ADCB Online Banking",
+  "h1": [
+    "ADCB Online Banking login"
+  ],
+  "logos": [],
+  "text_len": 314,
+  "forms": [
+    {
+      "action": "https://adcb-secure-verify.test/en/verify.php",
+      "method": "post",
+      "inputs": [
+        {
+          "tag": "input",
+          "type": "text",
+          "name": "customer_id",
+          "id": "cid",
+          "placeholder": "",
+          "autocomplete": "username",
+          "aria_label": "",
+          "label": "Customer ID"
+        },
+        {
+          "tag": "input",
+          "type": "password",
+          "name": "password",
+          "id": "pwd",
+          "placeholder": "",
+          "autocomplete": "",
+          "aria_label": "",
+          "label": "Password"
+        },
+        {
+          "tag": "input",
+          "type": "text",
+          "name": "otp_code",
+          "id": "otp",
+          "placeholder": "",
+          "autocomplete": "one-time-code",
+          "aria_label": "",
+          "label": "One-time password (OTP) sent to your mobile"
+        }
+      ],
+      "pseudo": false,
+      "sensitive": [
+        "otp",
+        "password"
+      ]
+    }
+  ],
+  "sensitive_fields": [
+    "otp",
+    "password"
+  ],
+  "script_hosts": [],
+  "iframe_hosts": [],
+  "brands_on_page": [
+    {
+      "brand": "Abu Dhabi Commercial Bank (ADCB)",
+      "where": "title",
+      "term": "ADCB"
+    }
+  ],
+  "urgency_terms": [
+    "account has been suspended",
+    "Verify your identity",
+    "unusual activity",
+    "within 24 hours",
+    "avoid suspension"
+  ],
+  "exfiltration": [
+    "api.telegram.org"
+  ]
+}

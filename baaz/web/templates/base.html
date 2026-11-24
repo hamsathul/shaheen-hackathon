@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}" dir="{{ dir }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="same-origin">
+<title>{% block title %}Baaz{% endblock %}</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="/">
+    <span class="mark" aria-hidden="true">B</span>
+    <span class="name">Baaz <span class="name-ar" lang="ar">باز</span></span>
+    <span class="tagline">{{ t.tagline }}</span>
+  </a>
+  <nav>
+    <a href="/">{{ t.feed }}</a>
+    <a class="switch" href="/lang/{{ 'en' if lang == 'ar' else 'ar' }}?next={{ here | urlencode }}">{{ t.switch }}</a>
+  </nav>
+</header>
+<main>
+{% block main %}{% endblock %}
+</main>
+<footer class="bottom">{{ t.defanged }}</footer>
+{% block scripts %}{% endblock %}
+</body>
+</html>

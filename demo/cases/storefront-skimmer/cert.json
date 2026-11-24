@@ -1,0 +1,13 @@
+{
+  "host": "bose-uae-outlet.test",
+  "verified": true,
+  "subject": "CN=bose-uae-outlet.test",
+  "issuer": "CN=R11, O=Let's Encrypt, C=US",
+  "not_before": "2026-11-07T09:09:40Z",
+  "not_after": "2027-02-05T09:09:40Z",
+  "san": [
+    "bose-uae-outlet.test",
+    "www.bose-uae-outlet.test"
+  ],
+  "error": null
+}

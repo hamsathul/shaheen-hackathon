@@ -1,0 +1,38 @@
+{
+  "mobile_ar": {
+    "final_url": "https://adcb-secure-verify.test/en/login",
+    "domain": "adcb-secure-verify.test",
+    "status": 200,
+    "fetch_status": "ok",
+    "text_len": 314,
+    "title": "ADCB Online Banking | Secure Login",
+    "redirected": false,
+    "redirect_code": false,
+    "empty_html": false,
+    "challenge": false
+  },
+  "desktop": {
+    "final_url": "https://adcb-secure-verify.test/en/login",
+    "domain": "adcb-secure-verify.test",
+    "status": 200,
+    "fetch_status": "ok",
+    "text_len": 314,
+    "title": "ADCB Online Banking | Secure Login",
+    "redirected": false,
+    "redirect_code": false,
+    "empty_html": false,
+    "challenge": false
+  },
+  "crawler": {
+    "final_url": "https://adcb-secure-verify.test/en/login",
+    "domain": "adcb-secure-verify.test",
+    "status": 200,
+    "fetch_status": "ok",
+    "text_len": 314,
+    "title": "ADCB Online Banking | Secure Login",
+    "redirected": false,
+    "redirect_code": false,
+    "empty_html": false,
+    "challenge": false
+  }
+}

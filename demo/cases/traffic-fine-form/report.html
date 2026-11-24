@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Baaz evidence report 20261124-c16e37</title>
+<style>
+  :root { --ink: #1b1f24; --muted: #5b6470; --line: #d9dde3; --soft: #f4f5f7;
+          --fraud: #b42318; --suspicious: #b54708; --legitimate: #067647; }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: var(--ink); background: #fff;
+         font: 14px/1.5 -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  main { max-width: 960px; margin: 0 auto; padding: 32px 28px 48px; }
+  header { display: flex; justify-content: space-between; align-items: baseline;
+           border-bottom: 3px solid var(--ink); padding-bottom: 10px; }
+  header h1 { margin: 0; font-size: 20px; letter-spacing: .02em; }
+  header .case { font: 13px ui-monospace, Menlo, Consolas, monospace; color: var(--muted); }
+  h2 { font-size: 15px; margin: 28px 0 8px; padding-bottom: 4px; border-bottom: 1px solid var(--line); }
+  .verdict { display: grid; grid-template-columns: 180px 1fr; gap: 18px; margin-top: 18px; }
+  .badge { border-radius: 6px; color: #fff; padding: 14px; text-align: center; }
+  .badge.fraud { background: var(--fraud); }
+  .badge.suspicious { background: var(--suspicious); }
+  .badge.legitimate { background: var(--legitimate); }
+  .badge .label { font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+  .badge .score { font-size: 34px; font-weight: 700; line-height: 1.1; }
+  .badge .of { font-size: 12px; opacity: .85; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; vertical-align: top; padding: 5px 8px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 600; width: 190px; }
+  thead th { width: auto; background: var(--soft); }
+  .kv th { background: none; }
+  .mono, .url { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; word-break: break-all; }
+  .num { text-align: right; white-space: nowrap; }
+  .pos { color: var(--fraud); font-weight: 600; }
+  .neg { color: var(--legitimate); font-weight: 600; }
+  .pointer { color: var(--muted); font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; }
+  .shot { border: 1px solid var(--line); border-radius: 4px; max-width: 100%; display: block; }
+  .ar { font-family: "Geeza Pro", "Segoe UI", "Noto Naskh Arabic", Tahoma, sans-serif; font-size: 15px; }
+  .ar th, .ar td { text-align: right; }
+  .muted { color: var(--muted); }
+  .hash { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11.5px; word-break: break-all; }
+  footer { margin-top: 32px; padding-top: 10px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12.5px; }
+  @media print {
+    main { padding: 0; max-width: none; }
+    h2 { break-after: avoid; }
+    tr, .shot { break-inside: avoid; }
+    .badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>Baaz evidence report</h1>
+  <span class="case">case 20261124-c16e37</span>
+</header>
+
+<section class="verdict">
+  <div class="badge suspicious">
+    <div class="label">suspicious</div>
+    <div class="score">50</div>
+    <div class="of">risk score out of 100</div>
+  </div>
+  <table class="kv">
+    <tr><th>Reported link</th><td class="url">hxxps://traffic-fines-portal[.]test/fines</td></tr>
+    <tr><th>Fetch status</th><td>ok</td></tr>
+    <tr><th>Confidence</th><td>0.67</td></tr>
+    <tr><th>Fraud type</th><td>phishing</td></tr>
+    <tr><th>Impersonated brand</th><td>TAMM</td></tr>
+    <tr><th>Scanned</th><td>2026-11-24T12:09:46Z <span class="muted">/ 2026-11-24T16:09:46+04:00 Dubai</span></td></tr>
+  </table>
+</section>
+
+<h2>Screenshot of the landing page</h2>
+<img class="shot" src="screenshot.png" alt="Screenshot of the landing page at scan time">
+
+<h2>Reasons</h2>
+<table>
+  <thead><tr><th class="num">Weight</th><th>Reason</th><th>Evidence</th></tr></thead>
+  <tr>
+    <td class="num pos">+30</td>
+    <td>The page presents itself as TAMM and asks for an Emirates ID number, but it is not on an official TAMM domain.</td>
+    <td class="pointer">page.json#forms[0]</td>
+  </tr>
+  <tr>
+    <td class="num pos">+10</td>
+    <td>The domain uses words meant to look official or urgent: fines, portal.</td>
+    <td class="pointer">redirects.json#chain[0]</td>
+  </tr>
+  <tr>
+    <td class="num pos">+10</td>
+    <td>The page uses urgency or payment-pressure wording: Traffic fine.</td>
+    <td class="pointer">page.json#urgency_terms</td>
+  </tr>
+</table>
+
+<h2 lang="ar" dir="rtl" class="ar">الأسباب</h2>
+<div dir="rtl" lang="ar" class="ar">
+<table>
+  <thead><tr><th class="num">الوزن</th><th>السبب</th></tr></thead>
+  <tr>
+    <td class="num pos" dir="ltr">+30</td>
+    <td>الصفحة تنتحل صفة TAMM وتطلب رقم الهوية الإماراتية، لكنها ليست على نطاق رسمي لـTAMM.</td>
+  </tr>
+  <tr>
+    <td class="num pos" dir="ltr">+10</td>
+    <td>النطاق يستخدم كلمات توحي بأنه رسمي أو عاجل: fines وportal.</td>
+  </tr>
+  <tr>
+    <td class="num pos" dir="ltr">+10</td>
+    <td>الصفحة تستخدم عبارات استعجال أو ضغط للدفع: Traffic fine.</td>
+  </tr>
+</table>
+</div>
+
+<h2>Redirect chain</h2>
+<table>
+  <thead><tr><th class="num">#</th><th>URL</th><th>HTTP status</th><th>How</th></tr></thead>
+  <tr>
+    <td class="num">0</td>
+    <td class="url">hxxps://traffic-fines-portal[.]test/fines</td>
+    <td>200</td>
+    <td>start</td>
+  </tr>
+</table>
+
+<h2>Registration</h2>
+<table class="kv">
+  <tr><th>Domain</th><td class="mono">traffic-fines-portal[.]test</td></tr>
+<tr><th>Registered</th><td>2026-10-10</td></tr><tr><th>Registrar</th><td>Example Registrar, Inc.</td></tr><tr><th>Registrar abuse email</th><td class="mono">abuse@registrar.example</td></tr><tr><th>Registrar abuse phone</th><td class="mono">+1.5550100</td></tr><tr><th>Status</th><td>client transfer prohibited</td></tr><tr><th>Name servers</th><td class="mono">ns1.dns-host.example, ns2.dns-host.example</td></tr>  <tr><th>Source</th><td>rdap <span class="muted mono">(hxxps://rdap[.]registry[.]example/domain/traffic-fines-portal[.]test)</span></td></tr>
+</table>
+
+<h2>Hosting</h2>
+<table class="kv">
+  <tr><th>Host</th><td class="mono">traffic-fines-portal[.]test</td></tr>
+<tr><th>IPv4 (A)</th><td class="mono">192.0.2.55</td></tr><tr><th>Network</th><td>AS64502 EXAMPLE-VPS-AS</td></tr><tr><th>Country</th><td>US</td></tr><tr><th>NS</th><td class="mono">ns1.dns-host.example, ns2.dns-host.example</td></tr></table>
+
+<h2>TLS certificate</h2>
+<table class="kv">
+<tr><th>Subject</th><td class="mono">CN=traffic-fines-portal[.]test</td></tr><tr><th>Issuer</th><td>CN=R11, O=Let&#39;s Encrypt, C=US</td></tr><tr><th>Valid from</th><td>2026-10-15T09:09:40Z</td></tr><tr><th>Valid until</th><td>2027-01-13T09:09:40Z</td></tr><tr><th>Chain verified</th><td>yes</td></tr><tr><th>Names (SAN)</th><td class="mono">traffic-fines-portal[.]test, www[.]traffic-fines-portal[.]test</td></tr></table>
+
+<h2>Page</h2>
+<table class="kv">
+  <tr><th>title</th><td class="mono">TAMM | Traffic Fines Inquiry and Payment</td></tr>
+  <tr><th>h1</th><td class="mono">Traffic fine inquiry</td></tr>
+  <tr><th>text_len</th><td class="mono">250</td></tr>
+  <tr><th>forms</th><td class="mono">[{&#34;action&#34;: &#34;hxxps://traffic-fines-portal[.]test/inquiry&#34;, &#34;method&#34;: &#34;post&#34;, &#34;inputs&#34;: [{&#34;tag&#34;: &#34;input&#34;, &#34;type&#34;: &#34;text&#34;, &#34;name&#34;: &#34;emirates_id&#34;, &#34;id&#34;: &#34;eid&#34;, &#34;placeholder&#34;: &#34;784-XXXX-XXXXXXX-X&#34;, &#34;autocomplete&#34;: &#34;&#34;, &#34;aria_label&#34;: &#34;&#34;, &#34;label&#34;: &#34;Emirates ID number&#34;}, {&#34;tag&#34;: &#34;input&#34;, &#34;type&#34;: &#34;text&#34;, &#34;name&#34;: &#34;plate_number&#34;, &#34;id&#34;: &#34;plate&#34;, &#34;placeholder&#34;: &#34;&#34;, &#34;autocomplete&#34;: &#34;&#34;, &#34;aria_label&#34;: &#34;&#34;, &#34;label&#34;: ...</td></tr>
+  <tr><th>sensitive_fields</th><td class="mono">emirates_id</td></tr>
+  <tr><th>brands_on_page</th><td class="mono">[{&#34;brand&#34;: &#34;TAMM&#34;, &#34;where&#34;: &#34;title&#34;, &#34;term&#34;: &#34;TAMM&#34;}]</td></tr>
+  <tr><th>urgency_terms</th><td class="mono">Traffic fine</td></tr>
+</table>
+<h2>Fetch profiles</h2>
+<table class="kv">
+  <tr><th>mobile_ar</th><td class="mono">{&#34;final_url&#34;: &#34;hxxps://traffic-fines-portal[.]test/fines&#34;, &#34;domain&#34;: &#34;traffic-fines-portal[.]test&#34;, &#34;status&#34;: 200, &#34;fetch_status&#34;: &#34;ok&#34;, &#34;text_len&#34;: 250, &#34;title&#34;: &#34;TAMM | Traffic Fines Inquiry and Payment&#34;, &#34;redirected&#34;: false, &#34;redirect_code&#34;: false, &#34;empty_html&#34;: false, &#34;challenge&#34;: false}</td></tr>
+  <tr><th>desktop</th><td class="mono">{&#34;final_url&#34;: &#34;hxxps://traffic-fines-portal[.]test/fines&#34;, &#34;domain&#34;: &#34;traffic-fines-portal[.]test&#34;, &#34;status&#34;: 200, &#34;fetch_status&#34;: &#34;ok&#34;, &#34;text_len&#34;: 250, &#34;title&#34;: &#34;TAMM | Traffic Fines Inquiry and Payment&#34;, &#34;redirected&#34;: false, &#34;redirect_code&#34;: false, &#34;empty_html&#34;: false, &#34;challenge&#34;: false}</td></tr>
+  <tr><th>crawler</th><td class="mono">{&#34;final_url&#34;: &#34;hxxps://traffic-fines-portal[.]test/fines&#34;, &#34;domain&#34;: &#34;traffic-fines-portal[.]test&#34;, &#34;status&#34;: 200, &#34;fetch_status&#34;: &#34;ok&#34;, &#34;text_len&#34;: 250, &#34;title&#34;: &#34;TAMM | Traffic Fines Inquiry and Payment&#34;, &#34;redirected&#34;: false, &#34;redirect_code&#34;: false, &#34;empty_html&#34;: false, &#34;challenge&#34;: false}</td></tr>
+</table>
+<h2>Storefront</h2>
+<table class="kv">
+  <tr><th>origin</th><td class="mono">hxxps://traffic-fines-portal[.]test</td></tr>
+  <tr><th>woocommerce</th><td class="mono">False</td></tr>
+  <tr><th>wordpress</th><td class="mono">False</td></tr>
+  <tr><th>errors</th><td class="mono">{&#34;wp_json&#34;: &#34;HTTP 404&#34;, &#34;cart&#34;: &#34;HTTP 404&#34;}</td></tr>
+</table>
+
+<h2>Evidence files</h2>
+<p class="muted">SHA-256 of every file in this pack at scan time. <span class="mono">manifest.json</span> lists these and this report; <span class="mono">baaz verify 20261124-c16e37</span> recomputes them.</p>
+<table>
+  <thead><tr><th>File</th><th class="num">Bytes</th><th>SHA-256</th></tr></thead>
+  <tr><td class="mono">cert.json</td><td class="num">332</td><td class="hash">39865332b918d92757fc3f4db6892c75bb8cc6acfefcf1b4fbb5c474ad0b0308</td></tr>
+  <tr><td class="mono">dns_hosting.json</td><td class="num">340</td><td class="hash">f1f8dc8015b5b4b8f5a3b36db7b767663dd87b62d4e4071f53370dedbffd57a1</td></tr>
+  <tr><td class="mono">page.html</td><td class="num">1746</td><td class="hash">dc87ed986ea2304f42ba7c82e70e51d93e15df02f8bdbf5669d4be2df9dd73f5</td></tr>
+  <tr><td class="mono">page.json</td><td class="num">1404</td><td class="hash">db772de0450318c94c46d8a79d7862a872aacd15a8b5cec5ad0a66c41ebd0e96</td></tr>
+  <tr><td class="mono">profiles.json</td><td class="num">1045</td><td class="hash">7981e66d4850e2b95c5c77a30b653c77e9618436ae8b8e5842717f5088c14fd0</td></tr>
+  <tr><td class="mono">redirects.json</td><td class="num">320</td><td class="hash">aa5e10a4fc45aefba4eecb9294dfba459c20a6ba216c487ee99161418956b46b</td></tr>
+  <tr><td class="mono">report.json</td><td class="num">2383</td><td class="hash">d820a6d62502e5aea1855dcd774991012a15fd623cfb4f8d07141f4529a969c3</td></tr>
+  <tr><td class="mono">screenshot.png</td><td class="num">12792</td><td class="hash">818ed004597a54266db7f6182d5d4d53af55480dc1575159ae2abf3c2677956a</td></tr>
+  <tr><td class="mono">storefront.json</td><td class="num">166</td><td class="hash">a706a80d342dffacb9f2817f05865f160a1c5ab0b153522bde3f0b982221af7c</td></tr>
+  <tr><td class="mono">whois.json</td><td class="num">453</td><td class="hash">971a67c45ae7a7479444e6f9472db199206a4898c767f0e0c22beba5e2d5da93</td></tr>
+</table>
+
+<footer>
+  <p>Scanned 2026-11-24T12:09:46Z (2026-11-24T16:09:46+04:00 Dubai). Report generated 2026-11-24T12:09:47Z (2026-11-24T16:09:47+04:00 Dubai) by Baaz 0.1.0.</p>
+  <p>All collection was non-intrusive: unauthenticated GET requests to public pages and public endpoints, plus public DNS, RDAP/WHOIS and TLS certificate lookups. No form was submitted, no credential was entered and no login or access control was bypassed.</p>
+  <p>Suspect addresses are defanged (hxxp, [.]) and nothing in this report links to the suspect site.</p>
+</footer>
+</main>
+</body>
+</html>

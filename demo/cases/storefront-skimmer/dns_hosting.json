@@ -1,0 +1,19 @@
+{
+  "domain": "bose-uae-outlet.test",
+  "host": "bose-uae-outlet.test",
+  "a": [
+    "198.51.100.77"
+  ],
+  "aaaa": [],
+  "nxdomain": false,
+  "ns": [
+    "ns1.dns-host.example",
+    "ns2.dns-host.example"
+  ],
+  "mx": [],
+  "ip": "198.51.100.77",
+  "asn": "AS64501",
+  "asn_name": "EXAMPLE-CLOUD-AS",
+  "country": "SG",
+  "error": null
+}

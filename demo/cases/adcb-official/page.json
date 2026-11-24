@@ -1,0 +1,323 @@
+{
+  "title": "ADCB | A leading banking institution in the UAE",
+  "site_name": "",
+  "h1": [
+    "Switch to ADCBEarn up to AED10,000 worth of TouchPoints",
+    "Introducing a new era of bankingPowered by AI. Shaped by you.",
+    "Introducing Emirati Youth PackageBanking that grows with you at every stage",
+    "55 Winners. 1 Million TouchPoints each.Win your share of 55 Million TouchPoints",
+    "ADCB CREDIT CARDSEnjoy 0% interest for up to 12 months",
+    "Switch to ADCBEarn up to AED10,000 worth of TouchPoints",
+    "Introducing a new era of bankingPowered by AI. Shaped by you.",
+    "Introducing Emirati Youth PackageBanking that grows with you at every stage",
+    "55 Winners. 1 Million TouchPoints each.Win your share of 55 Million TouchPoints",
+    "ADCB CREDIT CARDSEnjoy 0% interest for up to 12 months",
+    "Switch to ADCBEarn up to AED10,000 worth of TouchPoints"
+  ],
+  "logos": [
+    "Tamooha Initiative",
+    "Tamooha Initiative"
+  ],
+  "text_len": 20000,
+  "forms": [
+    {
+      "action": "https://www.adcb.com/en/search.aspx",
+      "method": "get",
+      "inputs": [
+        {
+          "tag": "input",
+          "type": "text",
+          "name": "stq",
+          "id": "st-search-input-header",
+          "placeholder": "I am looking for...",
+          "autocomplete": "off",
+          "aria_label": "",
+          "label": "search input header"
+        }
+      ],
+      "pseudo": false,
+      "sensitive": []
+    },
+    {
+      "action": "https://www.adcb.com/en/personal/",
+      "method": "get",
+      "inputs": [
+        {
+          "tag": "input",
+          "type": "hidden",
+          "name": "",
+          "id": "",
+          "placeholder": "",
+          "autocomplete": "",
+          "aria_label": "",
+          "label": ""
+        },
+        {
+          "tag": "input",
+          "type": "hidden",
+          "name": "",
+          "id": "gtm_PageNameCG",
+          "placeholder": "",
+          "autocomplete": "",
+          "aria_label": "",
+          "label": ""
+        },
+        {
+          "tag": "input",
+          "type": "hidden",
+          "name": "",
+          "id": "gtm_PageTypeCG",
+          "placeholder": "",
+          "autocomplete": "",
+          "aria_label": "",
+          "label": ""
+        },
+        {
+          "tag": "input",
+          "type": "hidden",
+          "name": "",
+          "id": "gtm_BankingCD",
+          "placeholder": "",
+          "autocomplete": "",
+          "aria_label": "",
+          "label": ""
+        },
+        {
+          "tag": "input",
+          "type": "hidden",
+          "name": "",
+          "id": "gtm_lobCD",
+          "placeholder": "",
+          "autocomplete": "",
+          "aria_label": "",
+          "label": ""
+        },
+        {
+          "tag": "input",
+          "type": "hidden",
+          "name": "",
+          "id": "gtm_ProductCategoryCD",
+          "placeholder": "",
+          "autocomplete": "",
+          "aria_label": "",
+          "label": ""
+        },
+        {
+          "tag": "input",
+          "type": "hidden",
+          "name": "",
+          "id": "gtm_ProductCG",
+          "placeholder": "",
+          "autocomplete": "",
+          "aria_label": "",
+          "label": ""
+        },
+        {
+          "tag": "input",
+          "type": "hidden",
+          "name": "",
+          "id": "gtm_AbsoluteUri",
+          "placeholder": "",
+          "autocomplete": "",
+          "aria_label": "",
+          "label": ""
+        },
+        {
+          "tag": "input",
+          "type": "hidden",
+          "name": "",
+          "id": "gtm_Lang",
+          "placeholder": "",
+          "autocomplete": "",
+          "aria_label": "",
+          "label": ""
+        },
+        {
+          "tag": "input",
+          "type": "hidden",
+          "name": "",
+          "id": "hdnlmktag",
+          "placeholder": "",
+          "autocomplete": "",
+          "aria_label": "",
+          "label": ""
+        },
+        {
+          "tag": "input",
+          "type": "hidden",
+          "name": "",
+          "id": "promo_autoplay_timeout",
+          "placeholder": "",
+          "autocomplete": "",
+          "aria_label": "",
+          "label": ""
+        },
+        {
+          "tag": "input",
+          "type": "hidden",
+          "name": "",
+          "id": "idCountNewCont",
+          "placeholder": "",
+          "autocomplete": "",
+          "aria_label": "",
+          "label": ""
+        },
+        {
+          "tag": "input",
+          "type": "hidden",
+          "name": "",
+          "id": "news_autoplay_timeout",
+          "placeholder": "",
+          "autocomplete": "",
+          "aria_label": "",
+          "label": ""
+        },
+        {
+          "tag": "input",
+          "type": "text",
+          "name": "",
+          "id": "country-autocomplete",
+          "placeholder": "Enter address or ZIP code",
+          "autocomplete": "off",
+          "aria_label": "",
+          "label": ""
+        },
+        {
+          "tag": "input",
+          "type": "text",
+          "name": "",
+          "id": "city-autocomplete",
+          "placeholder": "Enter address or ZIP code",
+          "autocomplete": "off",
+          "aria_label": "",
+          "label": ""
+        },
+        {
+          "tag": "input",
+          "type": "checkbox",
+          "name": "ot-group-id-C0002",
+          "id": "ot-group-id-C0002",
+          "placeholder": "",
+          "autocomplete": "",
+          "aria_label": "",
+          "label": "Performance Cookies"
+        },
+        {
+          "tag": "input",
+          "type": "checkbox",
+          "name": "ot-group-id-C0003",
+          "id": "ot-group-id-C0003",
+          "placeholder": "",
+          "autocomplete": "",
+          "aria_label": "",
+          "label": "Functional Cookies"
+        },
+        {
+          "tag": "input",
+          "type": "checkbox",
+          "name": "ot-group-id-C0004",
+          "id": "ot-group-id-C0004",
+          "placeholder": "",
+          "autocomplete": "",
+          "aria_label": "",
+          "label": "Targeting Cookies"
+        },
+        {
+          "tag": "input",
+          "type": "text",
+          "name": "vendor-search-handler",
+          "id": "vendor-search-handler",
+          "placeholder": "",
+          "autocomplete": "",
+          "aria_label": "",
+          "label": ""
+        },
+        {
+          "tag": "input",
+          "type": "checkbox",
+          "name": "",
+          "id": "chkbox-id",
+          "placeholder": "",
+          "autocomplete": "",
+          "aria_label": "",
+          "label": "checkbox label"
+        },
+        {
+          "tag": "input",
+          "type": "checkbox",
+          "name": "",
+          "id": "select-all-hosts-groups-handler",
+          "placeholder": "",
+          "autocomplete": "",
+          "aria_label": "",
+          "label": "checkbox label"
+        },
+        {
+          "tag": "input",
+          "type": "checkbox",
+          "name": "",
+          "id": "select-all-vendor-groups-handler",
+          "placeholder": "",
+          "autocomplete": "",
+          "aria_label": "",
+          "label": "checkbox label"
+        },
+        {
+          "tag": "input",
+          "type": "checkbox",
+          "name": "",
+          "id": "select-all-vendor-leg-handler",
+          "placeholder": "",
+          "autocomplete": "",
+          "aria_label": "",
+          "label": "checkbox label"
+        }
+      ],
+      "pseudo": true,
+      "sensitive": []
+    }
+  ],
+  "sensitive_fields": [],
+  "script_hosts": [
+    "tr.snapchat.com",
+    "analytics.tiktok.com",
+    "www.googletagmanager.com",
+    "us-pl.lemnisk.co",
+    "c.amazon-adsystem.com",
+    "snap.licdn.com",
+    "connect.facebook.net",
+    "sc-static.net",
+    "www.redditstatic.com",
+    "static.ads-twitter.com",
+    "s.adroll.com",
+    "cdn25.lemnisk.co",
+    "www.adcb.com",
+    "cdn-eu.readspeaker.com",
+    "cdn.cookielaw.org",
+    "cdn12.lemnisk.co",
+    "d.adroll.com",
+    "googleads.g.doubleclick.net",
+    "nb.lemnisk.co",
+    "static.cloudflareinsights.com",
+    "dynamic.criteo.com",
+    "tag.yieldoptimizer.com",
+    "sslwidget.criteo.com"
+  ],
+  "iframe_hosts": [
+    "us-pl.lemnisk.co",
+    "5398600.fls.doubleclick.net",
+    "8126668.fls.doubleclick.net",
+    "aax-eu.amazon-adsystem.com",
+    "13822456.fls.doubleclick.net",
+    "gum.criteo.com"
+  ],
+  "brands_on_page": [
+    {
+      "brand": "Abu Dhabi Commercial Bank (ADCB)",
+      "where": "title",
+      "term": "ADCB"
+    }
+  ],
+  "urgency_terms": [],
+  "exfiltration": []
+}

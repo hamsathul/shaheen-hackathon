@@ -1,0 +1,13 @@
+{
+  "host": "anniversary-gift-claim.test",
+  "verified": true,
+  "subject": "CN=anniversary-gift-claim.test",
+  "issuer": "CN=R11, O=Let's Encrypt, C=US",
+  "not_before": "2026-11-21T09:09:40Z",
+  "not_after": "2027-02-19T09:09:40Z",
+  "san": [
+    "anniversary-gift-claim.test",
+    "www.anniversary-gift-claim.test"
+  ],
+  "error": null
+}

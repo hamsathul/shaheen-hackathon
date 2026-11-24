@@ -1,0 +1,22 @@
+{
+  "final_url": "https://anniversary-gift-claim.test/claim",
+  "fetch_status": "ok",
+  "status_code": 200,
+  "tls_verified": true,
+  "shortener": null,
+  "error": null,
+  "chain": [
+    {
+      "url": "https://dubai-deals-today.test/offer",
+      "status": 200,
+      "via": "start",
+      "text_len": 7
+    },
+    {
+      "url": "https://anniversary-gift-claim.test/claim",
+      "status": 200,
+      "via": "script",
+      "text_len": null
+    }
+  ]
+}

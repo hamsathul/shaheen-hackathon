@@ -9,12 +9,16 @@ import logging
 import sys
 from pathlib import Path
 
-from baaz import __version__, batch, evidence, investigator, mcp_server, watch
+import uvicorn
+
+from baaz import __version__, batch, demo, evidence, investigator, mcp_server, watch
+from baaz.capture import CaptureError
 from baaz.config import load_settings
 from baaz.domains import normalize_url, registrable_domain
 from baaz.models import ScanOptions, ScanResult
 from baaz.pipeline import Scanner
 from baaz.store import Store
+from baaz.web.app import create_app
 
 
 def _print_result(result: ScanResult, as_json: bool) -> None:
@@ -29,9 +33,19 @@ def _print_result(result: ScanResult, as_json: bool) -> None:
 
 
 def cmd_scan(args: argparse.Namespace) -> int:
+    if (args.url is None) == (args.from_capture is None):
+        print("error: give either a URL or --from-capture <evidence_dir>", file=sys.stderr)
+        return 2
     options = ScanOptions(render=not args.no_render, storefront=not args.no_storefront)
     with Scanner() as scanner:
-        result = scanner.scan(args.url, options)
+        if args.from_capture is None:
+            result = scanner.scan(args.url, options)
+        else:
+            try:
+                result = scanner.rescan(args.from_capture, options)
+            except CaptureError as exc:
+                print(f"error: {exc}", file=sys.stderr)
+                return 2
     _print_result(result, args.json)
     return 0
 
@@ -220,13 +234,56 @@ def _add_agent_commands(sub: argparse._SubParsersAction) -> None:
     p.set_defaults(func=cmd_mcp)
 
 
+def cmd_dashboard(args: argparse.Namespace) -> int:
+    uvicorn.run(create_app(), host=args.host, port=args.port)
+    return 0
+
+
+def cmd_demo_load(args: argparse.Namespace) -> int:
+    try:
+        demo.print_cases(demo.load_cases(args.cases))
+    except (CaptureError, OSError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    return 0
+
+
+def cmd_demo(args: argparse.Namespace) -> int:
+    try:
+        demo.run(args.cases, args.host, args.port, args.watch)
+    except (CaptureError, OSError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    return 0
+
+
+def add_dashboard_commands(sub: argparse._SubParsersAction) -> None:
+    p = sub.add_parser("dashboard", help="serve the dashboard (live feed, cases, confirm, export)")
+    p.add_argument("--host", default="127.0.0.1", help="interface to listen on (0.0.0.0 for the LAN)")
+    p.add_argument("--port", type=int, default=8000)
+    p.set_defaults(func=cmd_dashboard)
+
+    p = sub.add_parser("demo-load", help="re-analyse saved capture folders offline into the store")
+    p.add_argument("cases", type=Path, nargs="?", default=Path("demo/cases"), help="default: demo/cases")
+    p.set_defaults(func=cmd_demo_load)
+
+    p = sub.add_parser("demo", help="load demo/cases, then serve the dashboard")
+    p.add_argument("--cases", type=Path, default=Path("demo/cases"))
+    p.add_argument("--watch", action="store_true", help="also run the watcher in the background")
+    p.add_argument("--host", default="127.0.0.1", help="interface to listen on (0.0.0.0 for the LAN)")
+    p.add_argument("--port", type=int, default=8000)
+    p.set_defaults(func=cmd_demo)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="baaz", description=__doc__)
     parser.add_argument("--version", action="version", version=f"baaz {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
 
     p = sub.add_parser("scan", help="score one link 0-100 with reasons and an evidence pack")
-    p.add_argument("url")
+    p.add_argument("url", nargs="?")
+    p.add_argument("--from-capture", type=Path, metavar="EVIDENCE_DIR",
+                   help="re-analyse a saved evidence folder offline (no network) under a new scan ID")
     p.add_argument("--json", action="store_true", help="print exactly one JSON object")
     p.add_argument("--no-render", action="store_true", help="skip the headless browser")
     p.add_argument("--no-storefront", action="store_true", help="skip WooCommerce storefront checks")
@@ -263,6 +320,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("target", help="a URL, or a text file (one per line) or CSV with a url column")
     p.add_argument("--source", default="manual", help="source label (default: manual)")
     p.set_defaults(func=cmd_enqueue)
+    add_dashboard_commands(sub)
 
     _add_agent_commands(sub)
 

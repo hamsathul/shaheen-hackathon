@@ -1,0 +1,22 @@
+{
+  "final_url": "https://www.adcb.com/en/personal/",
+  "fetch_status": "ok",
+  "status_code": 200,
+  "tls_verified": true,
+  "shortener": null,
+  "error": null,
+  "chain": [
+    {
+      "url": "https://www.adcb.com/",
+      "status": 301,
+      "via": "start",
+      "text_len": null
+    },
+    {
+      "url": "https://www.adcb.com/en/personal/",
+      "status": 200,
+      "via": "http",
+      "text_len": null
+    }
+  ]
+}

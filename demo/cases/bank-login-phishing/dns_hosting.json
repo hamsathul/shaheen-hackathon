@@ -1,0 +1,19 @@
+{
+  "domain": "adcb-secure-verify.test",
+  "host": "adcb-secure-verify.test",
+  "a": [
+    "203.0.113.24"
+  ],
+  "aaaa": [],
+  "nxdomain": false,
+  "ns": [
+    "ns1.dns-host.example",
+    "ns2.dns-host.example"
+  ],
+  "mx": [],
+  "ip": "203.0.113.24",
+  "asn": "AS64500",
+  "asn_name": "EXAMPLE-HOSTING-AS",
+  "country": "NL",
+  "error": null
+}

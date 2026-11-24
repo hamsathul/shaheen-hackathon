@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Baaz evidence report 20261124-1c3ff1</title>
+<style>
+  :root { --ink: #1b1f24; --muted: #5b6470; --line: #d9dde3; --soft: #f4f5f7;
+          --fraud: #b42318; --suspicious: #b54708; --legitimate: #067647; }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: var(--ink); background: #fff;
+         font: 14px/1.5 -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  main { max-width: 960px; margin: 0 auto; padding: 32px 28px 48px; }
+  header { display: flex; justify-content: space-between; align-items: baseline;
+           border-bottom: 3px solid var(--ink); padding-bottom: 10px; }
+  header h1 { margin: 0; font-size: 20px; letter-spacing: .02em; }
+  header .case { font: 13px ui-monospace, Menlo, Consolas, monospace; color: var(--muted); }
+  h2 { font-size: 15px; margin: 28px 0 8px; padding-bottom: 4px; border-bottom: 1px solid var(--line); }
+  .verdict { display: grid; grid-template-columns: 180px 1fr; gap: 18px; margin-top: 18px; }
+  .badge { border-radius: 6px; color: #fff; padding: 14px; text-align: center; }
+  .badge.fraud { background: var(--fraud); }
+  .badge.suspicious { background: var(--suspicious); }
+  .badge.legitimate { background: var(--legitimate); }
+  .badge .label { font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+  .badge .score { font-size: 34px; font-weight: 700; line-height: 1.1; }
+  .badge .of { font-size: 12px; opacity: .85; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; vertical-align: top; padding: 5px 8px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 600; width: 190px; }
+  thead th { width: auto; background: var(--soft); }
+  .kv th { background: none; }
+  .mono, .url { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; word-break: break-all; }
+  .num { text-align: right; white-space: nowrap; }
+  .pos { color: var(--fraud); font-weight: 600; }
+  .neg { color: var(--legitimate); font-weight: 600; }
+  .pointer { color: var(--muted); font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; }
+  .shot { border: 1px solid var(--line); border-radius: 4px; max-width: 100%; display: block; }
+  .ar { font-family: "Geeza Pro", "Segoe UI", "Noto Naskh Arabic", Tahoma, sans-serif; font-size: 15px; }
+  .ar th, .ar td { text-align: right; }
+  .muted { color: var(--muted); }
+  .hash { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11.5px; word-break: break-all; }
+  footer { margin-top: 32px; padding-top: 10px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12.5px; }
+  @media print {
+    main { padding: 0; max-width: none; }
+    h2 { break-after: avoid; }
+    tr, .shot { break-inside: avoid; }
+    .badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>Baaz evidence report</h1>
+  <span class="case">case 20261124-1c3ff1</span>
+</header>
+
+<section class="verdict">
+  <div class="badge fraud">
+    <div class="label">fraud</div>
+    <div class="score">100</div>
+    <div class="of">risk score out of 100</div>
+  </div>
+  <table class="kv">
+    <tr><th>Reported link</th><td class="url">hxxps://bose-uae-outlet[.]test/</td></tr>
+    <tr><th>Fetch status</th><td>ok</td></tr>
+    <tr><th>Confidence</th><td>0.95</td></tr>
+    <tr><th>Fraud type</th><td>fake storefront skimmer</td></tr>
+    <tr><th>Impersonated brand</th><td>Bose</td></tr>
+    <tr><th>Scanned</th><td>2026-11-24T12:09:42Z <span class="muted">/ 2026-11-24T16:09:42+04:00 Dubai</span></td></tr>
+  </table>
+</section>
+
+<h2>Screenshot of the landing page</h2>
+<img class="shot" src="screenshot.png" alt="Screenshot of the landing page at scan time">
+
+<h2>Reasons</h2>
+<table>
+  <thead><tr><th class="num">Weight</th><th>Reason</th><th>Evidence</th></tr></thead>
+  <tr>
+    <td class="num pos">+60</td>
+    <td>Checkout uses the private payment gateway &#39;sankee&#39;, seen only on card-skimming fake stores.</td>
+    <td class="pointer">storefront.json#payment_methods</td>
+  </tr>
+  <tr>
+    <td class="num pos">+35</td>
+    <td>Checkout collects card number, expiry and CVV in the site&#39;s own form, with no recognised payment processor.</td>
+    <td class="pointer">storefront.json#checkout</td>
+  </tr>
+  <tr>
+    <td class="num pos">+25</td>
+    <td>bose-uae-outlet[.]test combines the brand Bose with the place name &#39;uae&#39;, a pattern used by fake local stores.</td>
+    <td class="pointer">redirects.json#chain[0]</td>
+  </tr>
+  <tr>
+    <td class="num pos">+20</td>
+    <td>The domain was registered 18 days ago (2026-11-06).</td>
+    <td class="pointer">whois.json#created</td>
+  </tr>
+  <tr>
+    <td class="num pos">+20</td>
+    <td>100% of sampled products are discounted by more than 70%.</td>
+    <td class="pointer">storefront.json#prices</td>
+  </tr>
+  <tr>
+    <td class="num pos">+15</td>
+    <td>bose-uae-outlet[.]test contains the brand name Bose but is not an official Bose domain.</td>
+    <td class="pointer">redirects.json#chain[0]</td>
+  </tr>
+</table>
+
+<h2 lang="ar" dir="rtl" class="ar">الأسباب</h2>
+<div dir="rtl" lang="ar" class="ar">
+<table>
+  <thead><tr><th class="num">الوزن</th><th>السبب</th></tr></thead>
+  <tr>
+    <td class="num pos" dir="ltr">+60</td>
+    <td>صفحة الدفع تستخدم بوابة الدفع الخاصة &#39;sankee&#39; التي لم تُرصد إلا في متاجر وهمية تسرق بيانات البطاقات.</td>
+  </tr>
+  <tr>
+    <td class="num pos" dir="ltr">+35</td>
+    <td>صفحة الدفع تجمع رقم البطاقة وتاريخ الانتهاء ورمز CVV في نموذج الموقع نفسه دون أي مزوّد دفع معروف.</td>
+  </tr>
+  <tr>
+    <td class="num pos" dir="ltr">+25</td>
+    <td>النطاق bose-uae-outlet[.]test يجمع العلامة Bose مع اسم المكان &#39;uae&#39;، وهو نمط تستخدمه المتاجر المحلية الوهمية.</td>
+  </tr>
+  <tr>
+    <td class="num pos" dir="ltr">+20</td>
+    <td>تم تسجيل النطاق قبل 18 يومًا (2026-11-06).</td>
+  </tr>
+  <tr>
+    <td class="num pos" dir="ltr">+20</td>
+    <td>100% من المنتجات التي تم فحصها مخفّضة بأكثر من 70%.</td>
+  </tr>
+  <tr>
+    <td class="num pos" dir="ltr">+15</td>
+    <td>النطاق bose-uae-outlet[.]test يحتوي اسم العلامة Bose لكنه ليس نطاقًا رسميًا لها.</td>
+  </tr>
+</table>
+</div>
+
+<h2>Redirect chain</h2>
+<table>
+  <thead><tr><th class="num">#</th><th>URL</th><th>HTTP status</th><th>How</th></tr></thead>
+  <tr>
+    <td class="num">0</td>
+    <td class="url">hxxps://bose-uae-outlet[.]test/</td>
+    <td>200</td>
+    <td>start</td>
+  </tr>
+</table>
+
+<h2>Registration</h2>
+<table class="kv">
+  <tr><th>Domain</th><td class="mono">bose-uae-outlet[.]test</td></tr>
+<tr><th>Registered</th><td>2026-11-06</td></tr><tr><th>Registrar</th><td>Example Registrar, Inc.</td></tr><tr><th>Registrar abuse email</th><td class="mono">abuse@registrar.example</td></tr><tr><th>Registrar abuse phone</th><td class="mono">+1.5550100</td></tr><tr><th>Status</th><td>client transfer prohibited</td></tr><tr><th>Name servers</th><td class="mono">ns1.dns-host.example, ns2.dns-host.example</td></tr>  <tr><th>Source</th><td>rdap <span class="muted mono">(hxxps://rdap[.]registry[.]example/domain/bose-uae-outlet[.]test)</span></td></tr>
+</table>
+
+<h2>Hosting</h2>
+<table class="kv">
+  <tr><th>Host</th><td class="mono">bose-uae-outlet[.]test</td></tr>
+<tr><th>IPv4 (A)</th><td class="mono">198.51.100.77</td></tr><tr><th>Network</th><td>AS64501 EXAMPLE-CLOUD-AS</td></tr><tr><th>Country</th><td>SG</td></tr><tr><th>NS</th><td class="mono">ns1.dns-host.example, ns2.dns-host.example</td></tr></table>
+
+<h2>TLS certificate</h2>
+<table class="kv">
+<tr><th>Subject</th><td class="mono">CN=bose-uae-outlet[.]test</td></tr><tr><th>Issuer</th><td>CN=R11, O=Let&#39;s Encrypt, C=US</td></tr><tr><th>Valid from</th><td>2026-11-07T09:09:40Z</td></tr><tr><th>Valid until</th><td>2027-02-05T09:09:40Z</td></tr><tr><th>Chain verified</th><td>yes</td></tr><tr><th>Names (SAN)</th><td class="mono">bose-uae-outlet[.]test, www[.]bose-uae-outlet[.]test</td></tr></table>
+
+<h2>Page</h2>
+<table class="kv">
+  <tr><th>title</th><td class="mono">Bose UAE Outlet | Official Clearance Sale up to 80% off</td></tr>
+  <tr><th>site_name</th><td class="mono">Bose UAE Outlet</td></tr>
+  <tr><th>h1</th><td class="mono">Bose UAE Outlet: year-end clearance</td></tr>
+  <tr><th>text_len</th><td class="mono">345</td></tr>
+  <tr><th>brands_on_page</th><td class="mono">[{&#34;brand&#34;: &#34;Bose&#34;, &#34;where&#34;: &#34;title&#34;, &#34;term&#34;: &#34;Bose&#34;}]</td></tr>
+</table>
+<h2>Fetch profiles</h2>
+<table class="kv">
+  <tr><th>mobile_ar</th><td class="mono">{&#34;final_url&#34;: &#34;hxxps://bose-uae-outlet[.]test/&#34;, &#34;domain&#34;: &#34;bose-uae-outlet[.]test&#34;, &#34;status&#34;: 200, &#34;fetch_status&#34;: &#34;ok&#34;, &#34;text_len&#34;: 345, &#34;title&#34;: &#34;Bose UAE Outlet | Official Clearance Sale up to 80% off&#34;, &#34;redirected&#34;: false, &#34;redirect_code&#34;: false, &#34;empty_html&#34;: false, &#34;challenge&#34;: false}</td></tr>
+  <tr><th>desktop</th><td class="mono">{&#34;final_url&#34;: &#34;hxxps://bose-uae-outlet[.]test/&#34;, &#34;domain&#34;: &#34;bose-uae-outlet[.]test&#34;, &#34;status&#34;: 200, &#34;fetch_status&#34;: &#34;ok&#34;, &#34;text_len&#34;: 345, &#34;title&#34;: &#34;Bose UAE Outlet | Official Clearance Sale up to 80% off&#34;, &#34;redirected&#34;: false, &#34;redirect_code&#34;: false, &#34;empty_html&#34;: false, &#34;challenge&#34;: false}</td></tr>
+  <tr><th>crawler</th><td class="mono">{&#34;final_url&#34;: &#34;hxxps://bose-uae-outlet[.]test/&#34;, &#34;domain&#34;: &#34;bose-uae-outlet[.]test&#34;, &#34;status&#34;: 200, &#34;fetch_status&#34;: &#34;ok&#34;, &#34;text_len&#34;: 345, &#34;title&#34;: &#34;Bose UAE Outlet | Official Clearance Sale up to 80% off&#34;, &#34;redirected&#34;: false, &#34;redirect_code&#34;: false, &#34;empty_html&#34;: false, &#34;challenge&#34;: false}</td></tr>
+</table>
+<h2>Storefront</h2>
+<table class="kv">
+  <tr><th>origin</th><td class="mono">hxxps://bose-uae-outlet[.]test</td></tr>
+  <tr><th>woocommerce</th><td class="mono">True</td></tr>
+  <tr><th>site_name</th><td class="mono">Bose UAE Outlet</td></tr>
+  <tr><th>timezone</th><td class="mono">Asia/Dubai</td></tr>
+  <tr><th>gmt_offset</th><td class="mono">4</td></tr>
+  <tr><th>storefront_brand</th><td class="mono">Bose</td></tr>
+  <tr><th>payment_methods</th><td class="mono">sankee, public-payment</td></tr>
+  <tr><th>gateways</th><td class="mono">{&#34;strong&#34;: [&#34;sankee&#34;], &#34;weak&#34;: [&#34;public-payment&#34;], &#34;recognised&#34;: [], &#34;unknown&#34;: []}</td></tr>
+  <tr><th>checkout</th><td class="mono">{&#34;url&#34;: &#34;hxxps://bose-uae-outlet[.]test/checkout/&#34;, &#34;form&#34;: &#34;visible&#34;, &#34;card_fields&#34;: [&#34;cvv&#34;, &#34;expiry&#34;, &#34;number&#34;], &#34;processors&#34;: [], &#34;script_hosts&#34;: [&#34;bose-uae-outlet[.]test&#34;], &#34;iframe_hosts&#34;: []}</td></tr>
+  <tr><th>prices</th><td class="mono">{&#34;sampled&#34;: 8, &#34;priced&#34;: 8, &#34;deep_discounted&#34;: 8, &#34;share&#34;: 100, &#34;max_discount&#34;: 80}</td></tr>
+  <tr><th>catalogue</th><td class="mono">{&#34;hash&#34;: &#34;ff08bcb0334bdcd71fb38445670d5591efabf359b728acbe27ecd12d9c75fc23&#34;, &#34;cluster&#34;: &#34;C-dca47c75&#34;}</td></tr>
+  <tr><th>admin_clusters</th><td class="mono">A-eee1d0e5</td></tr>
+</table>
+
+<h2>Evidence files</h2>
+<p class="muted">SHA-256 of every file in this pack at scan time. <span class="mono">manifest.json</span> lists these and this report; <span class="mono">baaz verify 20261124-1c3ff1</span> recomputes them.</p>
+<table>
+  <thead><tr><th>File</th><th class="num">Bytes</th><th>SHA-256</th></tr></thead>
+  <tr><td class="mono">cert.json</td><td class="num">312</td><td class="hash">be1e6ca506d56778c30b08c949012cbbb82a5c5eef9b7d71b02bffcc33917891</td></tr>
+  <tr><td class="mono">dns_hosting.json</td><td class="num">338</td><td class="hash">977da62270b6ce755ce4fbbe78f7108308dd0d573cbd386a848e7a3718cea397</td></tr>
+  <tr><td class="mono">page.html</td><td class="num">2334</td><td class="hash">d202ee5a58bb88a3f7654e50ba6a950795a354d0dfb4cf7542bf7388d0f7a4a2</td></tr>
+  <tr><td class="mono">page.json</td><td class="num">434</td><td class="hash">8c61d17a4475d347364b2fe6d582d1bfe8f415cf7e4a55624081f247312d2d71</td></tr>
+  <tr><td class="mono">profiles.json</td><td class="num">1045</td><td class="hash">b1c3bea8349ea1bac6ec3e420f321fdaadb2be7998a771e1eb479759bb45c3ef</td></tr>
+  <tr><td class="mono">redirects.json</td><td class="num">300</td><td class="hash">a1c88e2a10877fb8a09de7c97904c1d4b7fe0f8813a649f58a36ab9b30ad946d</td></tr>
+  <tr><td class="mono">report.json</td><td class="num">3597</td><td class="hash">0f22a32d8b1aac63bfe3c3d17096424e8725c8d18de979f9ba6dabe4d2009a4a</td></tr>
+  <tr><td class="mono">screenshot.png</td><td class="num">18671</td><td class="hash">e5475d4eab8a174adfca1fd54dbeaae20077e255ca9e8d76e67e336b45530ee1</td></tr>
+  <tr><td class="mono">storefront.json</td><td class="num">996</td><td class="hash">ab416bfbf75c1816697b80d858628aa771c624591cc0b21e50fe06e15197327d</td></tr>
+  <tr><td class="mono">whois.json</td><td class="num">443</td><td class="hash">107f3a541588e4a39d9b299a1d106a237c877426f5e1bb7378635c9b2c7a8c66</td></tr>
+</table>
+
+<footer>
+  <p>Scanned 2026-11-24T12:09:42Z (2026-11-24T16:09:42+04:00 Dubai). Report generated 2026-11-24T12:09:44Z (2026-11-24T16:09:44+04:00 Dubai) by Baaz 0.1.0.</p>
+  <p>All collection was non-intrusive: unauthenticated GET requests to public pages and public endpoints, plus public DNS, RDAP/WHOIS and TLS certificate lookups. No form was submitted, no credential was entered and no login or access control was bypassed.</p>
+  <p>Suspect addresses are defanged (hxxp, [.]) and nothing in this report links to the suspect site.</p>
+</footer>
+</main>
+</body>
+</html>

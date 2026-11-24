@@ -1,0 +1,19 @@
+{
+  "domain": "traffic-fines-portal.test",
+  "host": "traffic-fines-portal.test",
+  "a": [
+    "192.0.2.55"
+  ],
+  "aaaa": [],
+  "nxdomain": false,
+  "ns": [
+    "ns1.dns-host.example",
+    "ns2.dns-host.example"
+  ],
+  "mx": [],
+  "ip": "192.0.2.55",
+  "asn": "AS64502",
+  "asn_name": "EXAMPLE-VPS-AS",
+  "country": "US",
+  "error": null
+}

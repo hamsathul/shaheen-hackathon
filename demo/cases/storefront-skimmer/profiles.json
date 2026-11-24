@@ -1,0 +1,38 @@
+{
+  "mobile_ar": {
+    "final_url": "https://bose-uae-outlet.test/",
+    "domain": "bose-uae-outlet.test",
+    "status": 200,
+    "fetch_status": "ok",
+    "text_len": 345,
+    "title": "Bose UAE Outlet | Official Clearance Sale up to 80% off",
+    "redirected": false,
+    "redirect_code": false,
+    "empty_html": false,
+    "challenge": false
+  },
+  "desktop": {
+    "final_url": "https://bose-uae-outlet.test/",
+    "domain": "bose-uae-outlet.test",
+    "status": 200,
+    "fetch_status": "ok",
+    "text_len": 345,
+    "title": "Bose UAE Outlet | Official Clearance Sale up to 80% off",
+    "redirected": false,
+    "redirect_code": false,
+    "empty_html": false,
+    "challenge": false
+  },
+  "crawler": {
+    "final_url": "https://bose-uae-outlet.test/",
+    "domain": "bose-uae-outlet.test",
+    "status": 200,
+    "fetch_status": "ok",
+    "text_len": 345,
+    "title": "Bose UAE Outlet | Official Clearance Sale up to 80% off",
+    "redirected": false,
+    "redirect_code": false,
+    "empty_html": false,
+    "challenge": false
+  }
+}

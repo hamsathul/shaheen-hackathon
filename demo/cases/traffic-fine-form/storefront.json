@@ -1,0 +1,9 @@
+{
+  "origin": "https://traffic-fines-portal.test",
+  "woocommerce": false,
+  "wordpress": false,
+  "errors": {
+    "wp_json": "HTTP 404",
+    "cart": "HTTP 404"
+  }
+}

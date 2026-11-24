@@ -1,0 +1,38 @@
+{
+  "summary_en": "bose-uae-outlet.test is a fake Bose store built to steal card details. Its checkout lists the private gateway 'sankee', which Baaz has only seen on card-skimming stores, and collects the card number, expiry and CVV in the site's own form with no payment processor. The domain is 18 days old and every sampled product is 70 to 80 percent off.",
+  "summary_ar": "النطاق bose-uae-outlet.test متجر وهمي ينتحل علامة Bose لسرقة بيانات البطاقات. تعرض صفحة الدفع بوابة الدفع الخاصة 'sankee' التي لم يرصدها باز إلا في متاجر تسرق البطاقات، وتجمع رقم البطاقة وتاريخ الانتهاء ورمز CVV في نموذج الموقع نفسه دون أي مزوّد دفع. عمر النطاق 18 يومًا، وكل المنتجات التي فُحصت مخفّضة بنسبة تتراوح بين 70 و80 بالمئة.",
+  "fraud_type": "fake_storefront_skimmer",
+  "impersonated_brand": "Bose",
+  "proven": [
+    "The public Store API cart lists the payment gateways 'sankee' and 'public-payment' (storefront.json#payment_methods).",
+    "The checkout asks for card number, expiry and CVV in the site's own form, and no payment processor script or frame loads (storefront.json#checkout).",
+    "All 8 sampled products are discounted by more than 70 percent, up to 80 percent (storefront.json#prices).",
+    "The domain was registered on 2026-11-06, 18 days before the scan (whois.json#created).",
+    "The site calls itself 'Bose UAE Outlet' and is not on an official Bose domain (page.json#title)."
+  ],
+  "inferred": [
+    "Card details typed at checkout most likely go to the operators, since no payment processor is involved.",
+    "The brand, country and 'outlet' naming suggests a kit reused for other fake stores; no sibling store shares a fingerprint with this one yet."
+  ],
+  "related_domains": [],
+  "recommended_actions": [
+    "Confirm the case and send the takedown request to the registrar and the hosting provider.",
+    "Flag new stores with catalogue cluster C-dca47c75 or administrator cluster A-eee1d0e5.",
+    "Scan the two proposed name variants queued by this investigation."
+  ],
+  "score_adjustment": 0,
+  "needs_human_review": false,
+  "mode": "pi",
+  "browser_actions": [
+    {
+      "tool": "browser_navigate",
+      "target": "https://bose-uae-outlet.test/checkout/"
+    },
+    {
+      "tool": "browser_snapshot",
+      "target": "https://bose-uae-outlet.test/checkout/"
+    }
+  ],
+  "policy_violation": false,
+  "illustrative": true
+}

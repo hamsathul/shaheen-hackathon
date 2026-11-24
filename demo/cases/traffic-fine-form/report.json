@@ -1,0 +1,78 @@
+{
+  "id": "20261124-c16e37",
+  "url": "https://traffic-fines-portal.test/fines",
+  "final_url": "https://traffic-fines-portal.test/fines",
+  "redirect_chain": [
+    "https://traffic-fines-portal.test/fines"
+  ],
+  "fetch_status": "ok",
+  "verdict": "suspicious",
+  "risk_score": 50,
+  "confidence": 0.67,
+  "fraud_type": "phishing",
+  "impersonated_brand": "TAMM",
+  "reasons": [
+    {
+      "code": "SENSITIVE_FORM_BRAND",
+      "weight": 30,
+      "en": "The page presents itself as TAMM and asks for an Emirates ID number, but it is not on an official TAMM domain.",
+      "ar": "الصفحة تنتحل صفة TAMM وتطلب رقم الهوية الإماراتية، لكنها ليست على نطاق رسمي لـTAMM.",
+      "evidence": "page.json#forms[0]"
+    },
+    {
+      "code": "DECEPTIVE_DOMAIN_WORDS",
+      "weight": 10,
+      "en": "The domain uses words meant to look official or urgent: fines, portal.",
+      "ar": "النطاق يستخدم كلمات توحي بأنه رسمي أو عاجل: fines وportal.",
+      "evidence": "redirects.json#chain[0]"
+    },
+    {
+      "code": "URGENCY_WORDING",
+      "weight": 10,
+      "en": "The page uses urgency or payment-pressure wording: Traffic fine.",
+      "ar": "الصفحة تستخدم عبارات استعجال أو ضغط للدفع: Traffic fine.",
+      "evidence": "page.json#urgency_terms"
+    }
+  ],
+  "signals": {
+    "final_domain": "traffic-fines-portal.test",
+    "fetched": true,
+    "rendered": true,
+    "stage_seconds": {
+      "resolve": 0.0,
+      "render": 1.6,
+      "allowlist": 0.0,
+      "url_signals": 0.0,
+      "page": 0.0,
+      "storefront": 0.0
+    },
+    "status_code": 200,
+    "tls_verified": true,
+    "domain_age_days": 45,
+    "registrar": "Example Registrar, Inc.",
+    "asn": "AS64502",
+    "hosting_country": "US",
+    "cert_age_days": 40,
+    "nxdomain": false,
+    "top_site_rank": null,
+    "hosting_platform": null,
+    "embedded_targets": [],
+    "title": "TAMM | Traffic Fines Inquiry and Payment",
+    "brands_on_page": [
+      "TAMM"
+    ],
+    "sensitive_fields": [
+      "emirates_id"
+    ],
+    "form_targets": [
+      "traffic-fines-portal.test"
+    ],
+    "storefront": {
+      "woocommerce": false
+    }
+  },
+  "cluster_id": null,
+  "analyst_confirmed": false,
+  "evidence_path": "evidence/20261124-c16e37/",
+  "scanned_at": "2026-11-24T12:09:46Z"
+}

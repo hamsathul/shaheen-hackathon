@@ -1,0 +1,96 @@
+{
+  "id": "20261124-db2bff",
+  "url": "https://dubai-deals-today.test/offer",
+  "final_url": "https://anniversary-gift-claim.test/claim",
+  "redirect_chain": [
+    "https://dubai-deals-today.test/offer",
+    "https://anniversary-gift-claim.test/claim"
+  ],
+  "fetch_status": "ok",
+  "verdict": "fraud",
+  "risk_score": 90,
+  "confidence": 0.83,
+  "fraud_type": "doorway",
+  "impersonated_brand": null,
+  "reasons": [
+    {
+      "code": "NEW_DOMAIN_7D",
+      "weight": 30,
+      "en": "The domain was registered only 3 days ago (2026-11-21).",
+      "ar": "تم تسجيل النطاق قبل 3 أيام فقط (2026-11-21).",
+      "evidence": "whois.json#created"
+    },
+    {
+      "code": "DOORWAY",
+      "weight": 15,
+      "en": "The page is an empty doorway that sends visitors on to anniversary-gift-claim.test.",
+      "ar": "الصفحة بوابة فارغة تحوّل الزوار إلى anniversary-gift-claim.test.",
+      "evidence": "redirects.json#chain[1]"
+    },
+    {
+      "code": "CLOAKING",
+      "weight": 15,
+      "en": "The site shows different content to different visitors (mobile, Arabic, desktop).",
+      "ar": "الموقع يعرض محتوى مختلفًا لزوار مختلفين (جوال، عربي وحاسوب).",
+      "evidence": "profiles.json#mobile_ar"
+    },
+    {
+      "code": "DECEPTIVE_DOMAIN_WORDS",
+      "weight": 10,
+      "en": "The domain uses words meant to look official or urgent: claim.",
+      "ar": "النطاق يستخدم كلمات توحي بأنه رسمي أو عاجل: claim.",
+      "evidence": "redirects.json#chain[1]"
+    },
+    {
+      "code": "NEW_TLS_CERT",
+      "weight": 10,
+      "en": "The site's TLS certificate was issued 3 days ago.",
+      "ar": "تم إصدار شهادة TLS للموقع قبل 3 يومًا.",
+      "evidence": "cert.json#not_before"
+    },
+    {
+      "code": "URGENCY_WORDING",
+      "weight": 10,
+      "en": "The page uses urgency or payment-pressure wording: Final notice, within 24 hours.",
+      "ar": "الصفحة تستخدم عبارات استعجال أو ضغط للدفع: Final notice وwithin 24 hours.",
+      "evidence": "page.json#urgency_terms"
+    }
+  ],
+  "signals": {
+    "final_domain": "anniversary-gift-claim.test",
+    "fetched": true,
+    "rendered": true,
+    "stage_seconds": {
+      "resolve": 0.0,
+      "render": 1.6,
+      "allowlist": 0.0,
+      "url_signals": 0.0,
+      "page": 0.0,
+      "storefront": 0.0
+    },
+    "status_code": 200,
+    "tls_verified": true,
+    "domain_age_days": 3,
+    "registrar": "Example Registrar, Inc.",
+    "asn": "AS64500",
+    "hosting_country": "NL",
+    "cert_age_days": 3,
+    "nxdomain": false,
+    "top_site_rank": null,
+    "hosting_platform": null,
+    "embedded_targets": [],
+    "title": "Etihad Airways 20th Anniversary Giveaway",
+    "brands_on_page": [
+      "Etihad Airways"
+    ],
+    "sensitive_fields": [],
+    "form_targets": [],
+    "storefront": {
+      "woocommerce": false
+    }
+  },
+  "cluster_id": null,
+  "analyst_confirmed": false,
+  "evidence_path": "evidence/20261124-db2bff/",
+  "scanned_at": "2026-11-24T12:09:44Z"
+}

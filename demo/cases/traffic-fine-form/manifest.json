@@ -1,0 +1,81 @@
+{
+  "tool": {
+    "name": "baaz",
+    "version": "0.1.0"
+  },
+  "scan_id": "20261124-c16e37",
+  "url": "https://traffic-fines-portal.test/fines",
+  "final_url": "https://traffic-fines-portal.test/fines",
+  "scanned_at": {
+    "utc": "2026-11-24T12:09:46Z",
+    "dubai": "2026-11-24T16:09:46+04:00"
+  },
+  "generated_at": {
+    "utc": "2026-11-24T12:09:47Z",
+    "dubai": "2026-11-24T16:09:47+04:00"
+  },
+  "user_agents": {
+    "desktop": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+    "profile:mobile_ar": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1",
+    "profile:desktop": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+    "profile:crawler": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+  },
+  "collection": "All collection was non-intrusive: unauthenticated GET requests to public pages and public endpoints, plus public DNS, RDAP/WHOIS and TLS certificate lookups. No form was submitted, no credential was entered and no login or access control was bypassed.",
+  "files": [
+    {
+      "name": "cert.json",
+      "size": 332,
+      "sha256": "39865332b918d92757fc3f4db6892c75bb8cc6acfefcf1b4fbb5c474ad0b0308"
+    },
+    {
+      "name": "dns_hosting.json",
+      "size": 340,
+      "sha256": "f1f8dc8015b5b4b8f5a3b36db7b767663dd87b62d4e4071f53370dedbffd57a1"
+    },
+    {
+      "name": "page.html",
+      "size": 1746,
+      "sha256": "dc87ed986ea2304f42ba7c82e70e51d93e15df02f8bdbf5669d4be2df9dd73f5"
+    },
+    {
+      "name": "page.json",
+      "size": 1404,
+      "sha256": "db772de0450318c94c46d8a79d7862a872aacd15a8b5cec5ad0a66c41ebd0e96"
+    },
+    {
+      "name": "profiles.json",
+      "size": 1045,
+      "sha256": "7981e66d4850e2b95c5c77a30b653c77e9618436ae8b8e5842717f5088c14fd0"
+    },
+    {
+      "name": "redirects.json",
+      "size": 320,
+      "sha256": "aa5e10a4fc45aefba4eecb9294dfba459c20a6ba216c487ee99161418956b46b"
+    },
+    {
+      "name": "report.html",
+      "size": 12710,
+      "sha256": "6b36e5fceca57c1d79d324c7a9854672bfa57f79251f18f0b935b6c7e34a9fb6"
+    },
+    {
+      "name": "report.json",
+      "size": 2383,
+      "sha256": "d820a6d62502e5aea1855dcd774991012a15fd623cfb4f8d07141f4529a969c3"
+    },
+    {
+      "name": "screenshot.png",
+      "size": 12792,
+      "sha256": "818ed004597a54266db7f6182d5d4d53af55480dc1575159ae2abf3c2677956a"
+    },
+    {
+      "name": "storefront.json",
+      "size": 166,
+      "sha256": "a706a80d342dffacb9f2817f05865f160a1c5ab0b153522bde3f0b982221af7c"
+    },
+    {
+      "name": "whois.json",
+      "size": 453,
+      "sha256": "971a67c45ae7a7479444e6f9472db199206a4898c767f0e0c22beba5e2d5da93"
+    }
+  ]
+}

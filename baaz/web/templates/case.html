@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+{% block title %}Baaz | {{ t.case }} {{ r.id }}{% endblock %}
+{% block main %}
+<p class="crumbs"><a href="/">{{ t.back }}</a></p>
+{% if notice %}<p class="notice">{{ t[notice] }}</p>{% endif %}
+{% if error %}<p class="error">{{ t.confirm_error }}</p>{% endif %}
+
+<section class="case-head">
+  <div class="verdict-badge {{ r.verdict }}">
+    <div class="label">{{ verdicts[r.verdict] }}</div>
+    <div class="score">{{ r.risk_score }}</div>
+    <div class="of">{{ t.risk }}</div>
+  </div>
+  <div class="facts">
+    <h1><bdi dir="ltr">{{ host | defang }}</bdi></h1>
+    <p class="caseid">{{ t.case }} <span class="mono" dir="ltr">{{ r.id }}</span>
+      {% if r.analyst_confirmed %}<span class="pill ok">&#10003; {{ t.confirmed }}</span>{% endif %}
+    </p>
+    <table class="kv">
+      <tr><th>{{ t.fraud_type }}</th><td>{{ fraud_types[r.fraud_type] if r.fraud_type else t.none }}</td></tr>
+      <tr><th>{{ t.impersonated }}</th><td>{{ r.impersonated_brand or t.none }}</td></tr>
+      <tr><th>{{ t.confidence }}</th><td>{{ "%.2f" | format(r.confidence) }}</td></tr>
+      <tr><th>{{ t.link }}</th><td class="mono" dir="ltr">{{ r.url | defang }}</td></tr>
+      {% if r.final_url and r.final_url != r.url %}
+      <tr><th>{{ t.landing }}</th><td class="mono" dir="ltr">{{ r.final_url | defang }}</td></tr>
+      {% endif %}
+      <tr><th>{{ t.scanned_at }}</th><td>{{ r.scanned_at | gst }} GST &middot; {{ t.fetch_status }}: {{ r.fetch_status }}</td></tr>
+      {% if r.signals.captured_from %}
+      <tr><th>{{ t.reanalysis }}</th><td><span class="mono" dir="ltr">{{ r.signals.captured_from }}</span> &middot; {{ t.collected }} {{ r.signals.captured_at | gst }} GST</td></tr>
+      {% endif %}
+    </table>
+  </div>
+</section>
+
+<div class="grid2">
+  <section class="panel reasons" dir="ltr" lang="en">
+    <h2>{{ t.reasons_en }}</h2>
+    {% for reason in r.reasons %}
+    <div class="reason">
+      <span class="w {{ 'pos' if reason.weight > 0 else 'neg' if reason.weight < 0 else 'zero' }}">{{ "%+d" | format(reason.weight) }}</span>
+      <div><p>{{ reason.en | defang }}</p><p class="pointer">{{ reason.evidence }}</p></div>
+    </div>
+    {% else %}
+    <p class="muted">{{ t.no_reasons }}</p>
+    {% endfor %}
+  </section>
+  <section class="panel reasons ar" dir="rtl" lang="ar">
+    <h2>{{ t.reasons_ar }}</h2>
+    {% for reason in r.reasons %}
+    <div class="reason">
+      <span class="w {{ 'pos' if reason.weight > 0 else 'neg' if reason.weight < 0 else 'zero' }}" dir="ltr">{{ "%+d" | format(reason.weight) }}</span>
+      <div><p>{{ reason.ar | defang }}</p><p class="pointer" dir="ltr">{{ reason.evidence }}</p></div>
+    </div>
+    {% else %}
+    <p class="muted">لم تُرصد أي إشارة.</p>
+    {% endfor %}
+  </section>
+</div>
+
+<div class="grid2 shot-row">
+  <section class="panel">
+    <h2>{{ t.screenshot }}</h2>
+    {% if screenshot %}
+    <img class="shot" src="/case/{{ r.id }}/screenshot.png" alt="{{ t.screenshot }}">
+    {% else %}
+    <p class="muted">{{ t.none }}</p>
+    {% endif %}
+  </section>
+  <section class="panel actions">
+    <h2>{{ t.actions }}</h2>
+    {% if confirmation %}
+    <p class="confirmed-line">&#10003; {{ t.confirmed_by }} <b>{{ confirmation.analyst }}</b> &middot; {{ confirmation.confirmed_at.utc | gst }} GST</p>
+    {% if confirmation.note %}<p class="muted">{{ confirmation.note | defang }}</p>{% endif %}
+    {% elif r.verdict != "legitimate" %}
+    <form method="post" action="/case/{{ r.id }}/confirm" class="stack">
+      <label>{{ t.analyst }}<input type="text" name="analyst" required></label>
+      <label>{{ t.note }}<input type="text" name="note"></label>
+      <button type="submit" class="danger">{{ t.confirm }}</button>
+    </form>
+    {% endif %}
+    <a class="button" href="/case/{{ r.id }}/evidence.zip">{{ t.download }}</a>
+    <div class="verify {{ 'ok' if not problems else 'bad' }}">
+      <b>{{ t.verify }}</b>
+      {% if not problems %}
+      <p>&#10003; {{ t.verify_ok }}</p>
+      <p class="hash" dir="ltr">{{ t.manifest }} {{ manifest_sha }}</p>
+      {% else %}
+      <p>&#10007; {{ t.verify_fail }}</p>
+      <ul class="hash" dir="ltr">{% for p in problems %}<li>{{ p }}</li>{% endfor %}</ul>
+      {% endif %}
+    </div>
+    {% if r.verdict != "legitimate" %}
+    <form method="post" action="/case/{{ r.id }}/investigate">
+      <button type="submit">{{ t.reinvestigate }}</button>
+    </form>
+    {% endif %}
+  </section>
+</div>
+
+<section class="panel ai">
+  <div class="panel-head">
+    <h2>{{ t.ai }}</h2>
+    {% if inv %}
+    <div class="pills">
+      {% if inv.mode %}<span class="pill">{{ t.mode }}: {{ inv.mode }}</span>{% endif %}
+      <span class="pill">{{ t.inv_status }}: {{ inv.status }}</span>
+      {% if inv.policy_violation %}<span class="pill danger">{{ t.policy_violation }}</span>{% endif %}
+    </div>
+    {% endif %}
+  </div>
+  {% if not inv %}
+  <p class="muted">{{ t.no_investigation }}</p>
+  {% else %}
+  {% if inv.illustrative %}<p class="muted small">{{ t.illustrative }}</p>{% endif %}
+  {% if inv.error %}<p class="error">{{ inv.error }}</p>{% endif %}
+  {% if inv.summary_en or inv.summary_ar %}
+  <div class="grid2">
+    <div dir="ltr" lang="en"><h3>{{ t.summary }}</h3><p class="summary">{{ inv.summary_en | defang }}</p></div>
+    <div dir="rtl" lang="ar" class="ar"><h3>الملخص</h3><p class="summary">{{ inv.summary_ar | defang }}</p></div>
+  </div>
+  {% endif %}
+  <div class="grid2">
+    <div><h3 class="proven">{{ t.proven }}</h3>
+      <ul class="facts-list" dir="auto">{% for item in inv.proven %}<li>{{ item | defang }}</li>{% else %}<li class="muted">{{ t.none }}</li>{% endfor %}</ul></div>
+    <div><h3 class="inferred">{{ t.inferred }}</h3>
+      <ul class="facts-list" dir="auto">{% for item in inv.inferred %}<li>{{ item | defang }}</li>{% else %}<li class="muted">{{ t.none }}</li>{% endfor %}</ul></div>
+  </div>
+  <div class="grid3">
+    <div><h3>{{ t.related }}</h3>
+      <ul class="mono" dir="ltr">{% for d in inv.related %}<li>{{ d | defang }}</li>{% else %}<li class="muted">{{ t.none }}</li>{% endfor %}</ul></div>
+    <div><h3>{{ t.recommended }}</h3>
+      <ul dir="auto">{% for a in inv.actions %}<li>{{ a | defang }}</li>{% else %}<li class="muted">{{ t.none }}</li>{% endfor %}</ul></div>
+    <div><h3>{{ t.adjustment }}</h3>
+      <p class="big" dir="ltr">{{ "%+d" | format(inv.adjustment) if inv.adjustment is not none else t.none }}</p>
+      <p class="muted small">{{ t.adjustment_note }}</p>
+      {% if inv.human_review is not none %}<p>{{ t.human_review }}: <b>{{ t.yes if inv.human_review else t.no }}</b></p>{% endif %}
+    </div>
+  </div>
+  <h3>{{ t.browser_actions }}</h3>
+  {% if inv.browser_actions %}
+  <ol class="audit" dir="ltr">{% for a in inv.browser_actions %}<li><code>{{ a.tool }}</code> <span class="mono">{{ a.target | defang }}</span></li>{% endfor %}</ol>
+  {% else %}
+  <p class="muted">{{ t.none }}</p>
+  {% endif %}
+  <p class="{{ 'error' if inv.policy_violation else 'muted small' }}">{{ t.policy_violation if inv.policy_violation else t.policy_ok }}</p>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <h2>{{ t.trace }}</h2>
+  {% if trace %}
+  <ol class="timeline" dir="ltr">
+    {% for s in trace %}
+    {% if s.kind == "tool" %}
+    <li class="step tool{{ ' err' if s.error }}">
+      <div class="call">
+        {% if s.server %}<span class="server">{{ s.server }}</span>{% endif %}
+        <code class="tool">{{ s.tool }}</code>
+        <code class="args">{{ s.args | defang }}</code>
+        {% if s.ms is not none %}<span class="ms">{{ s.ms | round | int }} ms</span>{% endif %}
+        {% if s.error %}<span class="pill danger">{{ t.error }}</span>{% endif %}
+      </div>
+      {% if s.result %}<pre class="result">{{ s.result | defang }}</pre>{% endif %}
+    </li>
+    {% else %}
+    <li class="step model{{ ' final' if s.final }}">
+      <div class="who">{{ t.final if s.final else t.model }}</div>
+      <p dir="auto">{{ s.text | defang }}</p>
+    </li>
+    {% endif %}
+    {% endfor %}
+  </ol>
+  {% else %}
+  <p class="muted">{{ t.no_trace }}</p>
+  {% endif %}
+</section>
+
+<div class="grid2">
+  <section class="panel">
+    <h2>{{ t.chain }}</h2>
+    <table class="data" dir="ltr">
+      <thead><tr><th class="num">#</th><th>URL</th><th>{{ t.status }}</th><th>{{ t.how }}</th></tr></thead>
+      {% for hop in chain %}
+      <tr><td class="num">{{ loop.index0 }}</td><td class="mono">{{ hop.url | defang }}</td><td>{{ hop.status if hop.status is not none else "" }}</td><td>{{ hop.via or "" }}</td></tr>
+      {% endfor %}
+    </table>
+  </section>
+  <section class="panel">
+    <h2>{{ t.signals }}</h2>
+    <table class="data kvdata" dir="ltr">
+      {% for key, value in signals %}
+      <tr><th class="mono">{{ key }}</th><td class="mono">{{ value | defang }}</td></tr>
+      {% endfor %}
+    </table>
+  </section>
+</div>
+
+{% if storefront %}
+<section class="panel">
+  <h2>{{ t.storefront }}</h2>
+  <table class="data kvdata" dir="ltr">
+    {% for key, value in storefront %}
+    <tr><th class="mono">{{ key }}</th><td class="mono">{{ value | defang }}</td></tr>
+    {% endfor %}
+  </table>
+</section>
+{% endif %}
+
+{% if takedown %}
+<section class="panel">
+  <h2>{{ t.takedown }}</h2>
+  <pre class="takedown" dir="ltr">{{ takedown | defang }}</pre>
+</section>
+{% endif %}
+{% endblock %}

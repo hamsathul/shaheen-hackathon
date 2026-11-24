@@ -1,0 +1,38 @@
+{
+  "mobile_ar": {
+    "final_url": "https://traffic-fines-portal.test/fines",
+    "domain": "traffic-fines-portal.test",
+    "status": 200,
+    "fetch_status": "ok",
+    "text_len": 250,
+    "title": "TAMM | Traffic Fines Inquiry and Payment",
+    "redirected": false,
+    "redirect_code": false,
+    "empty_html": false,
+    "challenge": false
+  },
+  "desktop": {
+    "final_url": "https://traffic-fines-portal.test/fines",
+    "domain": "traffic-fines-portal.test",
+    "status": 200,
+    "fetch_status": "ok",
+    "text_len": 250,
+    "title": "TAMM | Traffic Fines Inquiry and Payment",
+    "redirected": false,
+    "redirect_code": false,
+    "empty_html": false,
+    "challenge": false
+  },
+  "crawler": {
+    "final_url": "https://traffic-fines-portal.test/fines",
+    "domain": "traffic-fines-portal.test",
+    "status": 200,
+    "fetch_status": "ok",
+    "text_len": 250,
+    "title": "TAMM | Traffic Fines Inquiry and Payment",
+    "redirected": false,
+    "redirect_code": false,
+    "empty_html": false,
+    "challenge": false
+  }
+}

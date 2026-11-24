@@ -1,0 +1,108 @@
+{
+  "id": "20261124-43e9e2",
+  "url": "http://adcb-secure-verify.test/",
+  "final_url": "https://adcb-secure-verify.test/en/login",
+  "redirect_chain": [
+    "http://adcb-secure-verify.test/",
+    "https://adcb-secure-verify.test/en/login"
+  ],
+  "fetch_status": "ok",
+  "verdict": "fraud",
+  "risk_score": 100,
+  "confidence": 1.0,
+  "fraud_type": "phishing",
+  "impersonated_brand": "Abu Dhabi Commercial Bank (ADCB)",
+  "reasons": [
+    {
+      "code": "LOOKALIKE_DOMAIN",
+      "weight": 40,
+      "en": "adcb-secure-verify.test imitates the official domain adcb.com (brand name with extra words).",
+      "ar": "النطاق adcb-secure-verify.test يقلّد النطاق الرسمي adcb.com (اسم العلامة مع كلمات إضافية).",
+      "evidence": "redirects.json#chain[0]"
+    },
+    {
+      "code": "NEW_DOMAIN_7D",
+      "weight": 30,
+      "en": "The domain was registered only 2 days ago (2026-11-22).",
+      "ar": "تم تسجيل النطاق قبل 2 أيام فقط (2026-11-22).",
+      "evidence": "whois.json#created"
+    },
+    {
+      "code": "SENSITIVE_FORM_BRAND",
+      "weight": 30,
+      "en": "The page presents itself as Abu Dhabi Commercial Bank (ADCB) and asks for a one-time code (OTP), a password, but it is not on an official Abu Dhabi Commercial Bank (ADCB) domain.",
+      "ar": "الصفحة تنتحل صفة Abu Dhabi Commercial Bank (ADCB) وتطلب رمز تحقق لمرة واحدة (OTP) وكلمة مرور، لكنها ليست على نطاق رسمي لـAbu Dhabi Commercial Bank (ADCB).",
+      "evidence": "page.json#forms[0]"
+    },
+    {
+      "code": "FORM_OFFSITE_POST",
+      "weight": 15,
+      "en": "A form on the page sends what you type to another domain, api.telegram.org.",
+      "ar": "نموذج في الصفحة يرسل ما تكتبه إلى نطاق آخر هو api.telegram.org.",
+      "evidence": "page.json#exfiltration"
+    },
+    {
+      "code": "DECEPTIVE_DOMAIN_WORDS",
+      "weight": 10,
+      "en": "The domain uses words meant to look official or urgent: verify, secure.",
+      "ar": "النطاق يستخدم كلمات توحي بأنه رسمي أو عاجل: verify وsecure.",
+      "evidence": "redirects.json#chain[0]"
+    },
+    {
+      "code": "NEW_TLS_CERT",
+      "weight": 10,
+      "en": "The site's TLS certificate was issued 1 days ago.",
+      "ar": "تم إصدار شهادة TLS للموقع قبل 1 يومًا.",
+      "evidence": "cert.json#not_before"
+    },
+    {
+      "code": "URGENCY_WORDING",
+      "weight": 10,
+      "en": "The page uses urgency or payment-pressure wording: account has been suspended, Verify your identity, unusual activity.",
+      "ar": "الصفحة تستخدم عبارات استعجال أو ضغط للدفع: account has been suspended وVerify your identity وunusual activity.",
+      "evidence": "page.json#urgency_terms"
+    }
+  ],
+  "signals": {
+    "final_domain": "adcb-secure-verify.test",
+    "fetched": true,
+    "rendered": true,
+    "stage_seconds": {
+      "resolve": 0.0,
+      "render": 1.7,
+      "allowlist": 0.0,
+      "url_signals": 0.0,
+      "page": 0.0,
+      "storefront": 0.0
+    },
+    "status_code": 200,
+    "tls_verified": true,
+    "domain_age_days": 2,
+    "registrar": "Example Registrar, Inc.",
+    "asn": "AS64500",
+    "hosting_country": "NL",
+    "cert_age_days": 1,
+    "nxdomain": false,
+    "top_site_rank": null,
+    "hosting_platform": null,
+    "embedded_targets": [],
+    "title": "ADCB Online Banking | Secure Login",
+    "brands_on_page": [
+      "Abu Dhabi Commercial Bank (ADCB)"
+    ],
+    "sensitive_fields": [
+      "otp",
+      "password"
+    ],
+    "form_targets": [
+      "adcb-secure-verify.test"
+    ],
+    "storefront": {
+      "woocommerce": false
+    }
+  },
+  "cluster_id": null,
+  "analyst_confirmed": false,
+  "evidence_path": "evidence/20261124-43e9e2/",
+  "scanned_at": "2026-11-24T12:09:41Z"
+}

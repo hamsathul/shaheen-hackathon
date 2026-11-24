@@ -1,0 +1,22 @@
+{
+  "final_url": "https://adcb-secure-verify.test/en/login",
+  "fetch_status": "ok",
+  "status_code": 200,
+  "tls_verified": true,
+  "shortener": null,
+  "error": null,
+  "chain": [
+    {
+      "url": "http://adcb-secure-verify.test/",
+      "status": 301,
+      "via": "start",
+      "text_len": null
+    },
+    {
+      "url": "https://adcb-secure-verify.test/en/login",
+      "status": 200,
+      "via": "http",
+      "text_len": null
+    }
+  ]
+}

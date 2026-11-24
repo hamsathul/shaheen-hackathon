@@ -1,0 +1,25 @@
+{
+  "title": "Etihad Airways 20th Anniversary Giveaway",
+  "site_name": "",
+  "h1": [
+    "Congratulations! You have been selected"
+  ],
+  "logos": [],
+  "text_len": 390,
+  "forms": [],
+  "sensitive_fields": [],
+  "script_hosts": [],
+  "iframe_hosts": [],
+  "brands_on_page": [
+    {
+      "brand": "Etihad Airways",
+      "where": "title",
+      "term": "Etihad Airways"
+    }
+  ],
+  "urgency_terms": [
+    "Final notice",
+    "within 24 hours"
+  ],
+  "exfiltration": []
+}

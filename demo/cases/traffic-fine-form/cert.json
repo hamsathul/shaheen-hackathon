@@ -1,0 +1,13 @@
+{
+  "host": "traffic-fines-portal.test",
+  "verified": true,
+  "subject": "CN=traffic-fines-portal.test",
+  "issuer": "CN=R11, O=Let's Encrypt, C=US",
+  "not_before": "2026-10-15T09:09:40Z",
+  "not_after": "2027-01-13T09:09:40Z",
+  "san": [
+    "traffic-fines-portal.test",
+    "www.traffic-fines-portal.test"
+  ],
+  "error": null
+}

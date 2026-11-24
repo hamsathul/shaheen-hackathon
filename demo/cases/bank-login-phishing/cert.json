@@ -1,0 +1,13 @@
+{
+  "host": "adcb-secure-verify.test",
+  "verified": true,
+  "subject": "CN=adcb-secure-verify.test",
+  "issuer": "CN=R11, O=Let's Encrypt, C=US",
+  "not_before": "2026-11-23T09:09:40Z",
+  "not_after": "2027-02-21T09:09:40Z",
+  "san": [
+    "adcb-secure-verify.test",
+    "www.adcb-secure-verify.test"
+  ],
+  "error": null
+}

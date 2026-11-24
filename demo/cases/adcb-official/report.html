@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Baaz evidence report 20261124-893712</title>
+<style>
+  :root { --ink: #1b1f24; --muted: #5b6470; --line: #d9dde3; --soft: #f4f5f7;
+          --fraud: #b42318; --suspicious: #b54708; --legitimate: #067647; }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: var(--ink); background: #fff;
+         font: 14px/1.5 -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  main { max-width: 960px; margin: 0 auto; padding: 32px 28px 48px; }
+  header { display: flex; justify-content: space-between; align-items: baseline;
+           border-bottom: 3px solid var(--ink); padding-bottom: 10px; }
+  header h1 { margin: 0; font-size: 20px; letter-spacing: .02em; }
+  header .case { font: 13px ui-monospace, Menlo, Consolas, monospace; color: var(--muted); }
+  h2 { font-size: 15px; margin: 28px 0 8px; padding-bottom: 4px; border-bottom: 1px solid var(--line); }
+  .verdict { display: grid; grid-template-columns: 180px 1fr; gap: 18px; margin-top: 18px; }
+  .badge { border-radius: 6px; color: #fff; padding: 14px; text-align: center; }
+  .badge.fraud { background: var(--fraud); }
+  .badge.suspicious { background: var(--suspicious); }
+  .badge.legitimate { background: var(--legitimate); }
+  .badge .label { font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+  .badge .score { font-size: 34px; font-weight: 700; line-height: 1.1; }
+  .badge .of { font-size: 12px; opacity: .85; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; vertical-align: top; padding: 5px 8px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 600; width: 190px; }
+  thead th { width: auto; background: var(--soft); }
+  .kv th { background: none; }
+  .mono, .url { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; word-break: break-all; }
+  .num { text-align: right; white-space: nowrap; }
+  .pos { color: var(--fraud); font-weight: 600; }
+  .neg { color: var(--legitimate); font-weight: 600; }
+  .pointer { color: var(--muted); font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; }
+  .shot { border: 1px solid var(--line); border-radius: 4px; max-width: 100%; display: block; }
+  .ar { font-family: "Geeza Pro", "Segoe UI", "Noto Naskh Arabic", Tahoma, sans-serif; font-size: 15px; }
+  .ar th, .ar td { text-align: right; }
+  .muted { color: var(--muted); }
+  .hash { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11.5px; word-break: break-all; }
+  footer { margin-top: 32px; padding-top: 10px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12.5px; }
+  @media print {
+    main { padding: 0; max-width: none; }
+    h2 { break-after: avoid; }
+    tr, .shot { break-inside: avoid; }
+    .badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>Baaz evidence report</h1>
+  <span class="case">case 20261124-893712</span>
+</header>
+
+<section class="verdict">
+  <div class="badge legitimate">
+    <div class="label">legitimate</div>
+    <div class="score">0</div>
+    <div class="of">risk score out of 100</div>
+  </div>
+  <table class="kv">
+    <tr><th>Reported link</th><td class="url">hxxps://www[.]adcb[.]com/</td></tr>
+    <tr><th>Landing page</th><td class="url">hxxps://www[.]adcb[.]com/en/personal/</td></tr>
+    <tr><th>Fetch status</th><td>ok</td></tr>
+    <tr><th>Confidence</th><td>0.95</td></tr>
+    <tr><th>Fraud type</th><td>none</td></tr>
+    <tr><th>Impersonated brand</th><td>none</td></tr>
+    <tr><th>Scanned</th><td>2026-11-24T12:09:47Z <span class="muted">/ 2026-11-24T16:09:47+04:00 Dubai</span></td></tr>
+  </table>
+</section>
+
+<h2>Screenshot of the landing page</h2>
+<img class="shot" src="screenshot.png" alt="Screenshot of the landing page at scan time">
+
+<h2>Reasons</h2>
+<table>
+  <thead><tr><th class="num">Weight</th><th>Reason</th><th>Evidence</th></tr></thead>
+  <tr>
+    <td class="num ">+0</td>
+    <td>adcb[.]com is an official domain of Abu Dhabi Commercial Bank (ADCB).</td>
+    <td class="pointer">redirects.json#final_url</td>
+  </tr>
+</table>
+
+<h2 lang="ar" dir="rtl" class="ar">الأسباب</h2>
+<div dir="rtl" lang="ar" class="ar">
+<table>
+  <thead><tr><th class="num">الوزن</th><th>السبب</th></tr></thead>
+  <tr>
+    <td class="num " dir="ltr">+0</td>
+    <td>adcb[.]com نطاق رسمي تابع لـAbu Dhabi Commercial Bank (ADCB).</td>
+  </tr>
+</table>
+</div>
+
+<h2>Redirect chain</h2>
+<table>
+  <thead><tr><th class="num">#</th><th>URL</th><th>HTTP status</th><th>How</th></tr></thead>
+  <tr>
+    <td class="num">0</td>
+    <td class="url">hxxps://www[.]adcb[.]com/</td>
+    <td>301</td>
+    <td>start</td>
+  </tr>
+  <tr>
+    <td class="num">1</td>
+    <td class="url">hxxps://www[.]adcb[.]com/en/personal/</td>
+    <td>200</td>
+    <td>http</td>
+  </tr>
+</table>
+
+
+
+
+<h2>Page</h2>
+<table class="kv">
+  <tr><th>title</th><td class="mono">ADCB | A leading banking institution in the UAE</td></tr>
+  <tr><th>h1</th><td class="mono">Switch to ADCBEarn up to AED10,000 worth of TouchPoints, Introducing a new era of bankingPowered by AI. Shaped by you., Introducing Emirati Youth PackageBanking that grows with you at every stage, 55 Winners. 1 Million TouchPoints each[.]Win your share of 55 Million TouchPoints, ADCB CREDIT CARDSEnjoy 0% interest for up to 12 months, Switch to ADCBEarn up to AED10,000 worth of TouchPoints, Introduci...</td></tr>
+  <tr><th>logos</th><td class="mono">Tamooha Initiative, Tamooha Initiative</td></tr>
+  <tr><th>text_len</th><td class="mono">20000</td></tr>
+  <tr><th>forms</th><td class="mono">[{&#34;action&#34;: &#34;hxxps://www[.]adcb[.]com/en/search[.]aspx&#34;, &#34;method&#34;: &#34;get&#34;, &#34;inputs&#34;: [{&#34;tag&#34;: &#34;input&#34;, &#34;type&#34;: &#34;text&#34;, &#34;name&#34;: &#34;stq&#34;, &#34;id&#34;: &#34;st-search-input-header&#34;, &#34;placeholder&#34;: &#34;I am looking for...&#34;, &#34;autocomplete&#34;: &#34;off&#34;, &#34;aria_label&#34;: &#34;&#34;, &#34;label&#34;: &#34;search input header&#34;}], &#34;pseudo&#34;: false, &#34;sensitive&#34;: []}, {&#34;action&#34;: &#34;hxxps://www[.]adcb[.]com/en/personal/&#34;, &#34;method&#34;: &#34;get&#34;, &#34;inputs&#34;: [{&#34;tag&#34;: &#34;input&#34;, ...</td></tr>
+  <tr><th>script_hosts</th><td class="mono">tr[.]snapchat[.]com, analytics[.]tiktok[.]com, www[.]googletagmanager[.]com, us-pl[.]lemnisk[.]co, c[.]amazon-adsystem[.]com, snap[.]licdn[.]com, connect[.]facebook[.]net, sc-static[.]net, www[.]redditstatic[.]com, static[.]ads-twitter[.]com, s[.]adroll[.]com, cdn25[.]lemnisk[.]co, www[.]adcb[.]com, cdn-eu[.]readspeaker[.]com, cdn[.]cookielaw[.]org, cdn12[.]lemnisk[.]co, d[.]adroll[.]com, googleads[.]g[.]doubleclick[.]net, nb[.]lemnisk[.]co, static[.]cloudflareinsights[.]com,...</td></tr>
+  <tr><th>iframe_hosts</th><td class="mono">us-pl[.]lemnisk[.]co, 5398600[.]fls[.]doubleclick[.]net, 8126668[.]fls[.]doubleclick[.]net, aax-eu[.]amazon-adsystem[.]com, 13822456[.]fls[.]doubleclick[.]net, gum[.]criteo[.]com</td></tr>
+  <tr><th>brands_on_page</th><td class="mono">[{&#34;brand&#34;: &#34;Abu Dhabi Commercial Bank (ADCB)&#34;, &#34;where&#34;: &#34;title&#34;, &#34;term&#34;: &#34;ADCB&#34;}]</td></tr>
+</table>
+
+<h2>Evidence files</h2>
+<p class="muted">SHA-256 of every file in this pack at scan time. <span class="mono">manifest.json</span> lists these and this report; <span class="mono">baaz verify 20261124-893712</span> recomputes them.</p>
+<table>
+  <thead><tr><th>File</th><th class="num">Bytes</th><th>SHA-256</th></tr></thead>
+  <tr><td class="mono">page.html</td><td class="num">120467</td><td class="hash">d332c9ddc940762a36f75d64695788ce635b84a452985bc03f43770fc238b68c</td></tr>
+  <tr><td class="mono">page.json</td><td class="num">8478</td><td class="hash">d0159efc601ae39544fa25c74c9545b0d86792888c4be259422b57a06e692798</td></tr>
+  <tr><td class="mono">redirects.json</td><td class="num">424</td><td class="hash">958288e0f7639db5f014cfc9ce7bda364acd5e7311764a0ec5e328630a3146e1</td></tr>
+  <tr><td class="mono">report.json</td><td class="num">1373</td><td class="hash">04425d4def18e1719dba0ffc32ca54aa6c965c144fe486f494414b59de6dc110</td></tr>
+  <tr><td class="mono">screenshot.png</td><td class="num">180274</td><td class="hash">42aabe6afcc54c31ee8e05635f8bc4a1990dd9cc63c5fb9f48abb188ba83798e</td></tr>
+</table>
+
+<footer>
+  <p>Scanned 2026-11-24T12:09:47Z (2026-11-24T16:09:47+04:00 Dubai). Report generated 2026-11-24T12:09:47Z (2026-11-24T16:09:47+04:00 Dubai) by Baaz 0.1.0.</p>
+  <p>All collection was non-intrusive: unauthenticated GET requests to public pages and public endpoints, plus public DNS, RDAP/WHOIS and TLS certificate lookups. No form was submitted, no credential was entered and no login or access control was bypassed.</p>
+  <p>Suspect addresses are defanged (hxxp, [.]) and nothing in this report links to the suspect site.</p>
+</footer>
+</main>
+</body>
+</html>

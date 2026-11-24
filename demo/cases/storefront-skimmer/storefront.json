@@ -1,0 +1,52 @@
+{
+  "origin": "https://bose-uae-outlet.test",
+  "woocommerce": true,
+  "site_name": "Bose UAE Outlet",
+  "timezone": "Asia/Dubai",
+  "gmt_offset": 4,
+  "storefront_brand": "Bose",
+  "payment_methods": [
+    "sankee",
+    "public-payment"
+  ],
+  "gateways": {
+    "strong": [
+      "sankee"
+    ],
+    "weak": [
+      "public-payment"
+    ],
+    "recognised": [],
+    "unknown": []
+  },
+  "checkout": {
+    "url": "https://bose-uae-outlet.test/checkout/",
+    "form": "visible",
+    "card_fields": [
+      "cvv",
+      "expiry",
+      "number"
+    ],
+    "processors": [],
+    "script_hosts": [
+      "bose-uae-outlet.test"
+    ],
+    "iframe_hosts": []
+  },
+  "prices": {
+    "sampled": 8,
+    "priced": 8,
+    "deep_discounted": 8,
+    "share": 100,
+    "max_discount": 80
+  },
+  "catalogue": {
+    "hash": "ff08bcb0334bdcd71fb38445670d5591efabf359b728acbe27ecd12d9c75fc23",
+    "cluster": "C-dca47c75"
+  },
+  "admin_clusters": [
+    "A-eee1d0e5"
+  ],
+  "shared_with_fraud": [],
+  "errors": {}
+}
