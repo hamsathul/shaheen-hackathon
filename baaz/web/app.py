@@ -46,7 +46,7 @@ from baaz.evidence import GST, defang_text
 from baaz.models import ScanResult
 from baaz.pipeline import Scanner
 from baaz.store import Store, utcnow
-from baaz.web import charts, i18n, stats
+from baaz.web import charts, i18n, reports, stats
 from baaz.web.trace import read_trace
 
 WEB_DIR = PACKAGE_DIR / "web"
@@ -624,4 +624,5 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         response.set_cookie(i18n.COOKIE, i18n.lang_of(code), max_age=365 * 24 * 3600, samesite="lax")
         return response
 
+    reports.add_routes(app, store, settings, page, get_case)
     return app

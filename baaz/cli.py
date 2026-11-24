@@ -11,7 +11,7 @@ from pathlib import Path
 
 import uvicorn
 
-from baaz import __version__, batch, demo, evidence, investigator, mcp_server, up, watch
+from baaz import __version__, batch, demo, evidence, investigator, mcp_server, summary, up, watch
 from baaz.capture import CaptureError
 from baaz.config import load_settings
 from baaz.domains import normalize_url, registrable_domain
@@ -84,6 +84,11 @@ def cmd_export(args: argparse.Namespace) -> int:
     if problems := evidence.verify(settings.evidence_dir / args.id):
         print(f"warning: the pack fails verification: {'; '.join(problems)}", file=sys.stderr)
     print(out)
+    return 0
+
+
+def cmd_summary(args: argparse.Namespace) -> int:
+    print(summary.write(load_settings(), args.period, args.lang, args.out))
     return 0
 
 
@@ -334,6 +339,14 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("id")
     p.add_argument("--out", type=Path, help="zip path (default: evidence/<id>.zip)")
     p.set_defaults(func=cmd_export)
+
+    p = sub.add_parser("summary", help="write the threat summary for the police as one self-contained HTML file")
+    p.add_argument("--period", choices=summary.PERIODS, default="7d",
+                   help="today or the last 7 days in UAE time, the last 24 hours, or all (default 7d)")
+    p.add_argument("--lang", choices=("en", "ar"), default="en")
+    p.add_argument("--out", type=Path,
+                   help="HTML path (default: evidence/reports/threat-summary-<period>-<lang>-<time>.html)")
+    p.set_defaults(func=cmd_summary)
 
     p = sub.add_parser("watch", help="run the collectors and scan what they find, 24/7")
     p.add_argument("--once", action="store_true", help="one collector round, drain the queue, exit")

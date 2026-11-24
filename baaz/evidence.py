@@ -181,10 +181,10 @@ def _short(value: Any, limit: int = 400) -> str:
 
 
 @cache
-def _report_fonts() -> str:
+def font_faces(fonts: tuple[tuple[str, str, str], ...] = REPORT_FONTS) -> str:
     """@font-face rules with each woff2 file inlined as a data URL."""
     faces = []
-    for family, weight, name in REPORT_FONTS:
+    for family, weight, name in fonts:
         data = base64.b64encode((PACKAGE_DIR / "web" / "static" / "fonts" / name).read_bytes()).decode("ascii")
         faces.append(f'@font-face {{ font-family: "{family}"; font-weight: {weight}; '
                      f'src: url(data:font/woff2;base64,{data}) format("woff2"); }}')
@@ -210,7 +210,7 @@ def render_report(result: ScanResult, folder: Path, files: list[dict[str, Any]],
         generated=stamp(generated),
         version=__version__,
         collection=COLLECTION_STATEMENT,
-        fonts=_report_fonts(),
+        fonts=font_faces(),
     )
 
 

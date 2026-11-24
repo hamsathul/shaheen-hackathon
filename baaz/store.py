@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS scans (
 );
 CREATE INDEX IF NOT EXISTS scans_domain ON scans(domain);
 CREATE INDEX IF NOT EXISTS scans_verdict ON scans(verdict, scanned_at);
+CREATE INDEX IF NOT EXISTS scans_time ON scans(scanned_at);
 
 CREATE TABLE IF NOT EXISTS candidates (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -485,3 +486,10 @@ class Store:
     def set_meta(self, key: str, value: str) -> None:
         with self._conn() as db:
             db.execute("INSERT OR REPLACE INTO meta VALUES (?, ?)", (key, value))
+
+    # reports
+
+    def select(self, sql: str, args: list[Any] | tuple[Any, ...] = ()) -> list[dict[str, Any]]:
+        """The rows of a read-only query, for the reports library and the threat summary."""
+        with self._conn() as db:
+            return [dict(r) for r in db.execute(sql, args).fetchall()]

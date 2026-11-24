@@ -267,6 +267,94 @@ STRINGS: dict[str, dict[str, str]] = {
         "simple_source_investigator": "Found by the AI",
         "simple_source_capture": "Saved copies",
         "simple_source_manual": "Checked by hand",
+        # reports
+        "rep_nav": "Reports",
+        "rep_title": "Evidence reports",
+        "rep_cases": "Cases on record",
+        "rep_intro": "One evidence pack per case: the printable report, every file's SHA-256 in manifest.json "
+                     "and a zip to hand over. baaz verify <case id> recomputes the hashes.",
+        "rep_summary": "Threat summary",
+        "rep_summary_note": "A printable report for the police: new fraud sites, brands hit, linked clusters "
+                            "and suggested takedowns, in English or Arabic.",
+        "rep_period_today": "Today",
+        "rep_period_24h": "Last 24 hours",
+        "rep_period_7d": "Last 7 days",
+        "rep_period_all": "All time",
+        "rep_range": "Scanned",
+        "rep_range_today": "Today",
+        "rep_range_7d": "7 days",
+        "rep_range_all": "All dates",
+        "rep_all_brands": "All brands",
+        "rep_search": "Search domains",
+        "rep_search_placeholder": "domain or link",
+        "rep_filter": "Filter",
+        "rep_clear": "Clear filters",
+        "rep_ai": "AI",
+        "rep_analyst": "Analyst",
+        "rep_confirmed": "Confirmed",
+        "rep_evidence": "Evidence",
+        "rep_report": "Report",
+        "rep_zip": "Zip",
+        "rep_no_pack": "no pack here",
+        "rep_none": "No case matches these filters.",
+        "rep_of": "of",
+        "rep_newer": "Newer",
+        "rep_older": "Older",
+        "rep_back": "Reports",
+        "rep_print": "Print / save as PDF",
+        "rep_up_to": "Everything on record up to",
+        "rep_generated": "Generated",
+        "rep_period": "Period",
+        "rep_checked": "Links checked",
+        "rep_flagged": "Flagged",
+        "rep_fraud": "Fraud",
+        "rep_fraud_links": "links scored fraud",
+        "rep_counts_note": "Counts are of the links checked in the period: a site checked twice counts twice. "
+                           "The tables list each site once.",
+        "rep_sites": "New fraud sites",
+        "rep_sites_note": "Sites first scored fraud, or confirmed by an analyst, in this period, newest first. "
+                          "The case is the ID of the site's evidence pack.",
+        "rep_first_seen": "First seen (GST)",
+        "rep_ai_line": "AI investigator",
+        "rep_no_sites": "No new fraud site in this period.",
+        "rep_brands": "Brands hit",
+        "rep_brand_fraud": "New fraud sites",
+        "rep_brand_suspicious": "Other suspicious sites",
+        "rep_no_brands": "No flagged site impersonated a brand in this period.",
+        "rep_clusters": "Linked clusters",
+        "rep_clusters_note": "Sites that share an administrator account, a product catalogue or a private skimmer "
+                             "payment gateway with a new fraud site. An administrator or catalogue cluster is "
+                             "named by an ID derived from the shared value, which stays in Baaz's local database. "
+                             "Grey domains were not scored fraud on their latest scan that found the fingerprint.",
+        "rep_kind_admin": "Same administrator account",
+        "rep_kind_catalogue": "Same product catalogue",
+        "rep_kind_gateway": "Same skimmer payment gateway",
+        "rep_domains": "Domains",
+        "rep_no_clusters": "No new fraud site in this period shares a fingerprint with another domain.",
+        "rep_takedowns": "Suggested takedowns",
+        "rep_takedowns_note": "The new fraud sites grouped by registrar, with the hosting network, from each case's "
+                              "evidence pack. A takedown request goes out for analyst-confirmed cases only: "
+                              "baaz confirm <case id> adds it to the evidence pack, addressed to the registrar and "
+                              "the hosting provider.",
+        "rep_no_registrar": "Registrar not recorded",
+        "rep_hosting": "Hosting",
+        "rep_status": "Status",
+        "rep_ready": "Takedown request ready",
+        "rep_awaiting": "Awaiting analyst confirmation",
+        "rep_leads": "Google Maps leads",
+        "rep_no_leads": "No Google Maps lead in this period.",
+        "rep_scan": "Scan",
+        "rep_method": "Method",
+        "rep_method_checks": "Baaz checks each link with non-intrusive reads of public pages and endpoints: the "
+                             "domain's age and registration, look-alike brand names, the TLS certificate, the "
+                             "hosting, the redirects, the page itself and, for online shops, the payment gateways "
+                             "and the fingerprints shared with known fraud. It never submits a form or enters "
+                             "credentials.",
+        "rep_method_score": "A transparent weighted score from 0 to 100 sets each verdict, and a local AI model may "
+                            "investigate a flagged case and move a suspicious score by 20 points at most. A score "
+                            "is a lead, not proof: a case is confirmed only when an analyst confirms it.",
+        "rep_method_pack": "Every case has an evidence pack whose manifest.json lists the SHA-256 of each file; "
+                           "baaz verify <case id> recomputes them.",
     },
     "ar": {
         "tagline": "صيّاد مواقع الاحتيال التي تنتحل العلامات الإماراتية",
@@ -525,6 +613,93 @@ STRINGS: dict[str, dict[str, str]] = {
         "simple_source_investigator": "وجدها الذكاء الاصطناعي",
         "simple_source_capture": "نسخ محفوظة",
         "simple_source_manual": "فُحصت يدويًا",
+        # reports
+        "rep_nav": "التقارير",
+        "rep_title": "تقارير الأدلة",
+        "rep_cases": "الحالات المسجلة",
+        "rep_intro": "لكل حالة حزمة أدلة: تقرير قابل للطباعة، وبصمة SHA-256 لكل ملف في \u2066manifest.json\u2069، "
+                     "وملف مضغوط للتسليم. يعيد الأمر \u2066baaz verify\u2069 مع رقم الحالة حساب البصمات.",
+        "rep_summary": "ملخص التهديدات",
+        "rep_summary_note": "تقرير قابل للطباعة للشرطة: مواقع الاحتيال الجديدة، والعلامات المستهدفة، والشبكات "
+                            "المترابطة، وطلبات الإزالة المقترحة، بالعربية أو الإنجليزية.",
+        "rep_period_today": "اليوم",
+        "rep_period_24h": "آخر 24 ساعة",
+        "rep_period_7d": "آخر 7 أيام",
+        "rep_period_all": "كل السجلات",
+        "rep_range": "تاريخ الفحص",
+        "rep_range_today": "اليوم",
+        "rep_range_7d": "7 أيام",
+        "rep_range_all": "كل التواريخ",
+        "rep_all_brands": "كل العلامات",
+        "rep_search": "ابحث في النطاقات",
+        "rep_search_placeholder": "نطاق أو رابط",
+        "rep_filter": "تصفية",
+        "rep_clear": "إلغاء التصفية",
+        "rep_ai": "الذكاء الاصطناعي",
+        "rep_analyst": "المحلل",
+        "rep_confirmed": "مؤكدة",
+        "rep_evidence": "الأدلة",
+        "rep_report": "التقرير",
+        "rep_zip": "ملف مضغوط",
+        "rep_no_pack": "لا توجد حزمة هنا",
+        "rep_none": "لا توجد حالة تطابق هذه التصفية.",
+        "rep_of": "من",
+        "rep_newer": "الأحدث",
+        "rep_older": "الأقدم",
+        "rep_back": "التقارير",
+        "rep_print": "اطبع أو احفظ PDF",
+        "rep_up_to": "كل السجلات حتى",
+        "rep_generated": "وقت الإعداد",
+        "rep_period": "الفترة",
+        "rep_checked": "روابط فُحصت",
+        "rep_flagged": "مشبوهة أو احتيالية",
+        "rep_fraud": "احتيال",
+        "rep_fraud_links": "رابطًا حُكم عليه بالاحتيال",
+        "rep_counts_note": "الأعداد لعمليات فحص الروابط في الفترة: الموقع الذي فُحص مرتين يُحسب مرتين. "
+                           "أما الجداول فتذكر كل موقع مرة واحدة.",
+        "rep_sites": "مواقع احتيال جديدة",
+        "rep_sites_note": "مواقع حُكم عليها بالاحتيال لأول مرة، أو أكدها محلل، خلال هذه الفترة، والأحدث أولًا. "
+                          "رقم الحالة هو معرّف حزمة أدلة الموقع.",
+        "rep_first_seen": "أول رصد (توقيت الخليج)",
+        "rep_ai_line": "محقق الذكاء الاصطناعي",
+        "rep_no_sites": "لا توجد مواقع احتيال جديدة في هذه الفترة.",
+        "rep_brands": "العلامات المستهدفة",
+        "rep_brand_fraud": "مواقع احتيال جديدة",
+        "rep_brand_suspicious": "مواقع مشبوهة أخرى",
+        "rep_no_brands": "لم ينتحل أي موقع مرصود علامة تجارية في هذه الفترة.",
+        "rep_clusters": "شبكات مترابطة",
+        "rep_clusters_note": "مواقع تشترك مع موقع احتيال جديد في حساب مدير واحد، أو في كتالوج المنتجات نفسه، أو في "
+                             "بوابة دفع خاصة لسرقة البطاقات. تُسمّى شبكة المدير أو الكتالوج بمعرّف مشتق من القيمة "
+                             "المشتركة، وتبقى القيمة نفسها في قاعدة بيانات باز المحلية. النطاقات الرمادية لم يُحكم "
+                             "عليها بالاحتيال في آخر فحص رصد فيها البصمة.",
+        "rep_kind_admin": "حساب المدير نفسه",
+        "rep_kind_catalogue": "كتالوج المنتجات نفسه",
+        "rep_kind_gateway": "بوابة سرقة البطاقات نفسها",
+        "rep_domains": "النطاقات",
+        "rep_no_clusters": "لا يشترك أي موقع احتيال جديد في هذه الفترة في بصمة مع نطاق آخر.",
+        "rep_takedowns": "طلبات الإزالة المقترحة",
+        "rep_takedowns_note": "مواقع الاحتيال الجديدة مجمّعة حسب جهة تسجيل النطاق، مع شبكة الاستضافة، من حزمة أدلة كل "
+                              "حالة. لا يُرسل طلب الإزالة إلا للحالات التي أكدها محلل: يضيفه الأمر "
+                              "\u2066baaz confirm\u2069 مع رقم الحالة إلى حزمة الأدلة، موجّهًا إلى جهة التسجيل ومزوّد "
+                              "الاستضافة.",
+        "rep_no_registrar": "جهة التسجيل غير مسجّلة",
+        "rep_hosting": "الاستضافة",
+        "rep_status": "حالة الطلب",
+        "rep_ready": "طلب الإزالة جاهز",
+        "rep_awaiting": "بانتظار تأكيد المحلل",
+        "rep_leads": "خيوط من Google Maps",
+        "rep_no_leads": "لا توجد خيوط من Google Maps في هذه الفترة.",
+        "rep_scan": "الفحص",
+        "rep_method": "المنهجية",
+        "rep_method_checks": "يفحص باز كل رابط بقراءات غير تدخلية للصفحات ونقاط الوصول العامة: عمر النطاق وتسجيله، "
+                             "والأسماء المشابهة للعلامات، وشهادة TLS، والاستضافة، وسلسلة التحويل، والصفحة نفسها، "
+                             "وفي المتاجر الإلكترونية بوابات الدفع والبصمات المشتركة مع مواقع احتيال معروفة. ولا "
+                             "يرسل أي نموذج ولا يُدخل بيانات دخول.",
+        "rep_method_score": "تحدد درجة موزونة وشفافة من 0 إلى 100 كل حكم، وقد يحقق نموذج ذكاء اصطناعي محلي في "
+                            "الحالة المرصودة ويعدّل درجة الحالة المشبوهة بعشرين نقطة على الأكثر. الدرجة مؤشر وليست "
+                            "دليلًا: لا تُعدّ الحالة مؤكدة إلا إذا أكدها محلل.",
+        "rep_method_pack": "لكل حالة حزمة أدلة يذكر ملف \u2066manifest.json\u2069 فيها بصمة SHA-256 لكل ملف، "
+                           "ويعيد الأمر \u2066baaz verify\u2069 مع رقم الحالة حسابها.",
     },
 }
 
