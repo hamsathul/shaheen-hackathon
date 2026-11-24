@@ -24,7 +24,7 @@ from jinja2 import Environment, FileSystemLoader
 
 from baaz import __version__, intel, resolve
 from baaz.config import PACKAGE_DIR, Settings, load_settings
-from baaz.domains import defang, host_of, registrable_domain
+from baaz.domains import host_of, registrable_domain
 from baaz.models import ScanContext, ScanResult
 from baaz.store import Store
 
@@ -44,7 +44,8 @@ COLLECTION_STATEMENT = (
 TOP_REASONS = 6
 _ARTIFACTS = ("redirects.json", "whois.json", "dns_hosting.json", "cert.json",
               "page.json", "profiles.json", "storefront.json")
-_HOSTNAME = re.compile(r"\b(?:[a-z0-9-]+\.)+[a-z][a-z0-9-]*[a-z]\b", re.I)
+_SCHEME = re.compile(r"\bhttp(s?)(?=://)", re.I)
+_HOST = re.compile(r"\b(?:[a-z0-9-]+\.)+[a-z][a-z0-9-]*[a-z]\b|\b\d{1,3}(?:\.\d{1,3}){3}\b", re.I)
 
 _templates = Environment(
     loader=FileSystemLoader(PACKAGE_DIR / "web" / "templates"),
@@ -59,13 +60,13 @@ class EvidenceError(Exception):
 
 
 def defang_text(text: Any) -> str:
-    """Defang every URL scheme and host name inside free text."""
-    text = re.sub(r"\bhttp", "hxxp", str(text), flags=re.I)
-    return _HOSTNAME.sub(lambda m: m.group(0).replace(".", "[.]"), text)
+    """Defang a URL, a host name or free text: hxxp(s):// for the scheme and
+    [.] in every host name and IPv4 address, so nothing stays clickable."""
+    text = _SCHEME.sub(r"hxxp\1", str(text))
+    return _HOST.sub(lambda m: m.group(0).replace(".", "[.]"), text)
 
 
-_templates.filters["defang"] = defang
-_templates.filters["defang_text"] = defang_text
+_templates.filters["defang"] = defang_text
 
 
 def stamp(moment: datetime) -> dict[str, str]:
@@ -324,7 +325,7 @@ def takedown_text(result: ScanResult, folder: Path, files: list[dict[str, Any]],
     registrar_to = whois.get("registrar") or "Registrar"
     hosting_to = f"Hosting provider ({network})" if network else "Hosting provider"
     sender = settings.reporter_name + (f" <{settings.reporter_email}>" if settings.reporter_email else "")
-    out = [f"# Abuse report: {defang(domain)}", ""]
+    out = [f"# Abuse report: {defang_text(domain)}", ""]
     if whois.get("registrar_abuse_email") or whois.get("registrar"):
         out.append(f"To: {registrar_to} abuse desk"
                    + (f" <{whois['registrar_abuse_email']}>" if whois.get("registrar_abuse_email") else ""))
@@ -338,11 +339,11 @@ def takedown_text(result: ScanResult, folder: Path, files: list[dict[str, Any]],
 
     out += ["## Case", ""]
     out += line("Case ID", result.id)
-    out += line("Domain", defang(domain))
+    out += line("Domain", defang_text(domain))
     out += [f"- Domain (verbatim): {domain}"]
-    out += line("Reported link", defang(result.url))
+    out += line("Reported link", defang_text(result.url))
     if final != result.url:
-        out += line("Landing page", defang(final))
+        out += line("Landing page", defang_text(final))
     out += line("First seen", _when(first_seen) if first_seen else None)
     out += line("Scanned", _when(_parse_time(result.scanned_at)))
     out += line("Fraud type", fraud.capitalize() if fraud else None)
@@ -360,7 +361,7 @@ def takedown_text(result: ScanResult, folder: Path, files: list[dict[str, Any]],
         *line("Registrar", whois.get("registrar")),
         *line("Registrar abuse contact", whois.get("registrar_abuse_email")),
         *line("Name servers", ", ".join(whois.get("nameservers") or dns.get("ns") or [])),
-        *line("Hosting host", defang(host_of(final)) if host_of(final) != domain else None),
+        *line("Hosting host", defang_text(host_of(final)) if host_of(final) != domain else None),
         *line("IP address", ip),
         *line("Hosting network", network),
         *line("Hosting country", dns.get("country")),

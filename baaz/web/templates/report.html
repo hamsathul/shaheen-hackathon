@@ -87,7 +87,7 @@
   {% for reason in r.reasons %}
   <tr>
     <td class="num {{ 'pos' if reason.weight > 0 else 'neg' if reason.weight < 0 }}">{{ "%+d" | format(reason.weight) }}</td>
-    <td>{{ reason.en | defang_text }}</td>
+    <td>{{ reason.en | defang }}</td>
     <td class="pointer">{{ reason.evidence }}</td>
   </tr>
   {% endfor %}
@@ -104,7 +104,7 @@
   {% for reason in r.reasons %}
   <tr>
     <td class="num {{ 'pos' if reason.weight > 0 else 'neg' if reason.weight < 0 }}" dir="ltr">{{ "%+d" | format(reason.weight) }}</td>
-    <td>{{ reason.ar | defang_text }}</td>
+    <td>{{ reason.ar | defang }}</td>
   </tr>
   {% endfor %}
 </table>
@@ -134,7 +134,7 @@
   {% if whois.registrar_abuse_phone %}<tr><th>Registrar abuse phone</th><td class="mono">{{ whois.registrar_abuse_phone }}</td></tr>{% endif %}
   {% if whois.status %}<tr><th>Status</th><td>{{ whois.status | join(", ") }}</td></tr>{% endif %}
   {% if whois.nameservers %}<tr><th>Name servers</th><td class="mono">{{ whois.nameservers | join(", ") }}</td></tr>{% endif %}
-  <tr><th>Source</th><td>{{ whois.source }}{% if whois.server %} <span class="muted mono">({{ whois.server | defang_text }})</span>{% endif %}</td></tr>
+  <tr><th>Source</th><td>{{ whois.source }}{% if whois.server %} <span class="muted mono">({{ whois.server | defang }})</span>{% endif %}</td></tr>
   {% if whois.error %}<tr><th>Lookup error</th><td class="muted">{{ whois.error }}</td></tr>{% endif %}
 </table>
 {% endif %}
@@ -157,7 +157,7 @@
 {% if cert %}
 <h2>TLS certificate</h2>
 <table class="kv">
-  {% if cert.subject %}<tr><th>Subject</th><td class="mono">{{ cert.subject | defang_text }}</td></tr>{% endif %}
+  {% if cert.subject %}<tr><th>Subject</th><td class="mono">{{ cert.subject | defang }}</td></tr>{% endif %}
   {% if cert.issuer %}<tr><th>Issuer</th><td>{{ cert.issuer }}</td></tr>{% endif %}
   {% if cert.not_before %}<tr><th>Valid from</th><td>{{ cert.not_before }}</td></tr>{% endif %}
   {% if cert.not_after %}<tr><th>Valid until</th><td>{{ cert.not_after }}</td></tr>{% endif %}
