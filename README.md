@@ -19,7 +19,7 @@ Three roles share one pipeline, `scan(url)`.
 | Role | Command | What it does |
 |---|---|---|
 | **Scorer** | `baaz scan <url>` | Scores a link 0 to 100 with reasons in English and Arabic and writes a hashed evidence pack. Deterministic; no AI involved. |
-| **Watcher** | `baaz watch` | Runs 24/7. Four collectors (brand lookalikes, Certificate Transparency, newly registered domains, a brand × country storefront sweep) feed candidates to the scorer. |
+| **Watcher** | `baaz watch` | Runs 24/7. Five collectors (brand lookalikes, Certificate Transparency, newly registered domains, a brand × country storefront sweep, Google Maps listings) feed candidates to the scorer. |
 | **Investigator** | `baaz investigate` | A local model, driven by the [pi](https://pi.dev) agent harness, works each flagged case with Baaz's read-only case tools and a headless browser, then files a report that separates proven facts from inferences. |
 
 An analyst works the results in the dashboard (`baaz dashboard`): live feed, case view with the AI investigation and its tool-call trace, confirm, takedown request, evidence download, English or Arabic interface.
@@ -163,6 +163,21 @@ uv run baaz demo
 
 On Linux, `docker compose up` runs the watcher and the dashboard (localhost:8000) in containers.
 
+### Google Maps
+
+The Maps collector runs victim-style searches on Google Maps, such as "ADCB customer service", "بنك أبوظبي التجاري خدمة العملاء" and "pay traffic fine Abu Dhabi", and checks each listing that names a watched brand. A listing whose website is not on the brand's official domains sends that website to the scorer. A listing that presents itself as the brand's helpline with a number that is not one of the brand's verified numbers is kept for an analyst. Both appear on the dashboard's Maps leads page. Neither is a verdict.
+
+It needs a key for Google's Places API (New):
+
+1. In the Google Cloud console, create a project and link a billing account to it.
+2. Enable **Places API (New)** for the project.
+3. Under APIs & Services > Credentials, create an API key and restrict it to Places API (New).
+4. Put the key in `.env` as `GOOGLE_MAPS_API_KEY=...`.
+
+Without a key the watcher logs one line and runs the other collectors. `uv run baaz watch --once --collectors maps` runs one Maps round and logs each lead.
+
+Each round sends 6 searches, one request each, and a round runs every 6 hours (`BAAZ_MAPS_INTERVAL_HOURS` in `.env`). The searches ask for each listing's website and phone, so Google bills them under its "Places API Text Search Enterprise" SKU. That SKU's free usage cap is 1,000 calls a month, then $35.00 per 1,000 calls ([Google Maps Platform pricing](https://developers.google.com/maps/billing-and-pricing/pricing), checked 2026-11-24). The default interval makes at most 24 searches a day, 744 in a 31-day month, which stays inside the free cap. A shorter interval costs more.
+
 ## Evaluation
 
 All numbers come from one command, run on the demo box on 2026-11-24 with the scoring code in this commit:
@@ -228,7 +243,7 @@ Candidates came from the lookalike generator (401), the storefront sweep (130), 
 - A lookalike domain with no reachable page is scored from its name, registration and certificate alone. Some of those reach `fraud` without any page evidence; the investigator then marks them for human review.
 - Geo-cloaking that shows the scam only to UAE visitors needs a UAE network exit. Baaz fetches from wherever it runs.
 - The browser policy (never type, submit, download or log in) is enforced by the prompt and audited after every run, not technically blocked. A click on a submit button is not flagged by itself; it is visible in the trace.
-- Search-engine and Maps coverage needs API keys we did not have.
+- Search-engine coverage needs an API key we did not have. The Google Maps collector checks phone numbers only for the 7 brands with verified numbers in the brand data. It finds a brand by the name in a listing, so brands named with an everyday word (noon, du, Marshall, Beats) go unmatched, and Emirates matches only by its Arabic name.
 - The evaluation sets are small and were collected on one day. Phishing pages die within hours, so most feed links were dead by scan time.
 
 ## Roadmap to a police pilot
