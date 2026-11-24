@@ -2,7 +2,7 @@
 
 **Shaheen is a 24/7 scam-site hunter for UAE brands. It scores any link with reasons in English and Arabic, watches for new fake sites around the clock, and has a local AI model investigate what it flags, so no case data leaves the building.**
 
-Built by team **Baaz** for the ScamShield AI Hackathon (42 Abu Dhabi with Abu Dhabi Police). Shaheen (شاهين) is Arabic for the peregrine falcon.
+Built for the ScamShield AI Hackathon (42 Abu Dhabi with Abu Dhabi Police). Shaheen (شاهين) is Arabic for the peregrine falcon.
 
 ![Live feed](docs/screenshots/feed.png)
 
