@@ -68,7 +68,7 @@
             <td class="num score">{{ row.score }}</td>
             <td>{{ row.type }}</td>
             <td>{{ row.brand }}</td>
-            <td class="muted">{{ row.source }}</td>
+            <td class="muted">{{ row.source }}{% if row.listing %}<span class="listing" dir="auto">{{ row.listing }}</span>{% endif %}</td>
           </tr>
           {% else %}
           <tr class="empty"><td colspan="7">{{ t.no_scans }}</td></tr>

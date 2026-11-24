@@ -62,7 +62,13 @@
     tr.appendChild(cell(String(r.score), "num score"));
     tr.appendChild(cell(r.type));
     tr.appendChild(cell(r.brand));
-    tr.appendChild(cell(r.source, "muted"));
+    var source = cell(r.source, "muted");
+    if (r.listing) {
+      var listing = el("span", "listing", r.listing);
+      listing.dir = "auto";
+      source.appendChild(listing);
+    }
+    tr.appendChild(source);
     return tr;
   }
 

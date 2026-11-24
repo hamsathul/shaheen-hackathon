@@ -16,6 +16,7 @@
   <p class="tagline">{{ t.tagline }}</p>
   <nav>
     <a href="/"{% if here == "/" %} aria-current="page"{% endif %}>{{ t.feed }}</a>
+    <a href="/maps"{% if here == "/maps" %} aria-current="page"{% endif %}>{{ t.maps }}</a>
     <a class="switch" lang="{{ 'en' if lang == 'ar' else 'ar' }}" href="/lang/{{ 'en' if lang == 'ar' else 'ar' }}?next={{ here | urlencode }}">{{ t.switch }}</a>
   </nav>
 </header>

@@ -3,12 +3,13 @@ investigator's live panel (the runs under way with their tool calls so far,
 the queue, the latest reports), one page per case (reasons in English and
 Arabic, screenshot, AI investigation and its tool-call trace, followed live
 while the model works, analyst confirmation, evidence download and
-verification) and a box to scan a pasted link.
+verification), the Google Maps leads, and a box to scan a pasted link.
 
 Everything is served from this package, the IBM Plex fonts included (no
 CDN), so it works with the network unplugged. Suspect addresses are always
 defanged and never links; page content from suspect sites is escaped like
-any other text.
+any other text. The only outside links are Google Maps listing links on
+google.com.
 """
 
 from __future__ import annotations
@@ -29,7 +30,7 @@ from fastapi.templating import Jinja2Templates
 from jinja2 import Environment, FileSystemLoader
 from starlette.concurrency import run_in_threadpool
 
-from baaz import evidence, investigator
+from baaz import evidence, investigator, watch
 from baaz.config import PACKAGE_DIR, Settings, load_settings
 from baaz.domains import host_of
 from baaz.evidence import GST, defang_text
@@ -169,6 +170,34 @@ def _report_view(report: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _maps_link(url: str) -> str | None:
+    """A listing's Google Maps link, only when it is an https link on google.com."""
+    parts = urlsplit(url)
+    host = (parts.hostname or "").lower()
+    return url if parts.scheme == "https" and (host == "google.com" or host.endswith(".google.com")) else None
+
+
+def _lead_view(row: dict[str, Any], lang: str) -> dict[str, Any]:
+    """A Maps lead for the leads page and the case page; listing text is defanged like page content.
+    The scan of its website comes with the leads page's rows only."""
+    verdict = row.get("verdict")
+    return {
+        "time": _gst(row["found_at"]),
+        "name": _defang(row["name"]),
+        "address": _defang(row["address"]),
+        "brand": row["brand"],
+        "query": row["query"],
+        "reasons": row["reasons"].split(","),
+        "phone": row["phone"],
+        "official_phones": row["official_phones"].replace(",", ", "),
+        "website": _defang(row["website"]) if row["website"] else "",
+        "maps_url": _maps_link(row["maps_url"]),
+        "case": {"id": row["scan_id"], "verdict": verdict, "label": i18n.label(i18n.VERDICTS, lang, verdict),
+                 "score": row["risk_score"]} if verdict else None,
+        "queued": row.get("candidate_status") in ("queued", "scanning"),
+    }
+
+
 def _safe_next(target: str | None) -> str:
     """A local path to go back to; anything else (another site, `//host`) means the feed."""
     if target and target.startswith("/") and not target.startswith(("//", "/\\")):
@@ -240,6 +269,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         scans = store.list_scans((verdict,) if verdict in FILTERS else (), FEED_LIMIT)
         sources = store.scan_sources([r.id for r in scans])
         ai = store.investigation_states([r.id for r in scans])
+        listings = store.maps_leads_for_scans([r.id for r in scans])
         started = store.get_meta("watch_started_at")
         rows = []
         for r in scans:
@@ -254,6 +284,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 "type": i18n.label(i18n.FRAUD_TYPES, lang, r.fraud_type) if r.fraud_type else "",
                 "brand": r.impersonated_brand or "",
                 "source": i18n.label(i18n.SOURCES, lang, source),
+                "listing": _defang(listings[r.id][0]["name"]) if r.id in listings else "",
                 "confirmed": r.analyst_confirmed,
                 "ai": ai.get(r.id, ""),
             })
@@ -327,6 +358,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def api_feed(request: Request, verdict: str | None = None) -> JSONResponse:
         return JSONResponse(feed(lang_of(request), verdict))
 
+    @app.get("/maps")
+    def maps_leads(request: Request) -> Response:
+        lang = lang_of(request)
+        leads = [_lead_view(row, lang) for row in store.maps_leads()]
+        return page(request, "maps.html", leads=leads, enabled=bool(settings.google_maps_api_key),
+                    last_run=_gst(store.get_meta(watch.last_run_key("maps"))),
+                    kinds={kind: sum(kind in lead["reasons"] for lead in leads) for kind in ("website", "helpline")})
+
     @app.post("/scan")
     async def scan_form(url: str = Form("")) -> Response:
         if not url.strip():
@@ -350,6 +389,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if running:  # a run adds its report, trace and browser session to the manifest when it ends
             problems = [p for p in problems if not _run_file(p)]
         takedown = folder / evidence.TAKEDOWN
+        leads = store.maps_leads_for_scans([case_id]).get(case_id, [])
         return page(
             request, "case.html", r=result, host=host_of(result.final_url or result.url), chain=chain,
             signals=_rows(result.signals, SIGNAL_KEYS),
@@ -362,6 +402,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             inv=inv,
             run_files_pending=running,
             trace=read_trace(folder / TRACE),
+            listings=[_lead_view(lead, lang_of(request)) for lead in leads],
             notice=NOTICES.get(notice or ""),
             error=notice == "confirm_error",
         )

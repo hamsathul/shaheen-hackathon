@@ -351,6 +351,20 @@ input::placeholder { color: var(--muted); }
 .scans-table tbody tr:hover td { background: var(--tint); }
 .scans-table tr.empty td { padding-block: 20px; color: var(--muted); }
 
+/* Google Maps leads: the listings page, and a listing under the scan it led to */
+
+.listing { display: block; margin-block-start: 2px; color: var(--muted); font-size: 12.5px; line-height: 1.4; }
+.leads .tally .tally-sub + .tally-sub { margin-block-start: 0; }
+.leads-note { margin-block-start: 16px; }
+.leads-title { margin: 0 0 18px; font: 600 28px/1.1 var(--sans); }
+.leads-table td b[dir] { font-weight: 600; }
+.leads-table .why p { margin: 0 0 4px; font-size: 14px; line-height: 1.45; }
+.leads-table .why .stamp { margin-inline-end: 6px; padding-block: 1px 0; font-size: 10px; }
+.leads-table td.phone > bdi, .leads-table td.maps-link { white-space: nowrap; }
+.leads-table td.site { min-width: 14rem; }
+.leads-table .mono { font-size: 13px; }
+.leads-table td.site a { text-decoration: none; }
+
 /* case: verdict and facts */
 
 .crumbs { margin: 0 0 12px; font-size: 14px; }

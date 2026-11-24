@@ -116,6 +116,34 @@ STRINGS: dict[str, dict[str, str]] = {
         "ai_running": "AI investigation under way",
         "trace_live": "This trace refreshes every 5 seconds while the model works.",
         "verify_pending": "Investigation under way: its report, trace and browser session join the manifest when it ends.",
+        "maps": "Maps leads",
+        "maps_title": "Google Maps leads",
+        "maps_intro": "Listings on Google Maps that name a watched brand and either give a website off the brand's "
+                      "official domains, or present themselves as its helpline with a number that is not one of its "
+                      "verified numbers. A lead is for an analyst to review, never a verdict: its website goes "
+                      "through the scorer like any other link.",
+        "maps_count": "Leads",
+        "maps_website_leads": "with a website off the brand's domains",
+        "maps_helpline_leads": "presented as a helpline on another number",
+        "maps_last_run": "Last Maps search",
+        "maps_never": "No Maps search yet",
+        "maps_off": "Off: set GOOGLE_MAPS_API_KEY in .env to search Google Maps.",
+        "maps_found": "Found (GST)",
+        "maps_listing": "Listing",
+        "maps_why": "Why flagged",
+        "maps_phone": "Phone",
+        "maps_website": "Website",
+        "maps_link": "Listing link",
+        "maps_kind_website": "Website",
+        "maps_kind_helpline": "Helpline",
+        "maps_why_website": "Website not on the brand's official domains",
+        "maps_why_helpline": "Presented as a helpline; the number is not one of the brand's verified numbers",
+        "maps_verified": "Verified",
+        "maps_search": "Search",
+        "maps_official_site": "official domain",
+        "maps_queued": "queued for the scorer",
+        "maps_none": "No Maps leads yet.",
+        "maps_found_on": "Found on Google Maps",
     },
     "ar": {
         "tagline": "صيّاد مواقع الاحتيال التي تنتحل العلامات الإماراتية",
@@ -226,6 +254,33 @@ STRINGS: dict[str, dict[str, str]] = {
         "ai_running": "التحقيق الآلي جارٍ الآن",
         "trace_live": "يُحدَّث هذا السجل كل 5 ثوانٍ أثناء عمل النموذج.",
         "verify_pending": "التحقيق جارٍ: يُضاف تقريره وسجله وجلسة المتصفح إلى البيان عند انتهائه.",
+        "maps": "خيوط الخرائط",
+        "maps_title": "خيوط من Google Maps",
+        "maps_intro": "قوائم على Google Maps تذكر علامة مراقَبة، وتعطي موقعًا إلكترونيًا خارج نطاقات العلامة "
+                      "الرسمية، أو تقدّم نفسها خطًّا لخدمة عملاء العلامة برقم ليس من أرقامها الموثقة. الخيط "
+                      "يراجعه محلل وليس حكمًا: يمر موقعه الإلكتروني على نظام التقييم مثل أي رابط آخر.",
+        "maps_count": "خيوط",
+        "maps_website_leads": "بموقع خارج نطاقات العلامة",
+        "maps_helpline_leads": "تقدّم نفسها خط خدمة برقم آخر",
+        "maps_last_run": "آخر بحث في الخرائط",
+        "maps_never": "لم يُجرَ أي بحث في الخرائط بعد",
+        "maps_off": "متوقف: أضف GOOGLE_MAPS_API_KEY إلى ملف \u200e.env للبحث في Google Maps.",
+        "maps_found": "وقت الرصد (توقيت الخليج)",
+        "maps_listing": "القائمة",
+        "maps_why": "سبب الرصد",
+        "maps_phone": "الهاتف",
+        "maps_website": "الموقع الإلكتروني",
+        "maps_link": "رابط القائمة",
+        "maps_kind_website": "موقع",
+        "maps_kind_helpline": "خط خدمة",
+        "maps_why_website": "الموقع الإلكتروني ليس من نطاقات العلامة الرسمية",
+        "maps_why_helpline": "تقدّم نفسها خطًّا لخدمة العملاء، والرقم ليس من أرقام العلامة الموثقة",
+        "maps_verified": "الموثق",
+        "maps_search": "البحث",
+        "maps_official_site": "نطاق رسمي",
+        "maps_queued": "في انتظار التقييم",
+        "maps_none": "لا توجد خيوط من الخرائط بعد.",
+        "maps_found_on": "رُصد على Google Maps",
     },
 }
 
@@ -246,13 +301,14 @@ FRAUD_TYPES: dict[str, dict[str, str]] = {
     "ar": {"phishing": "تصيّد", "fake_storefront_skimmer": "متجر وهمي يسرق البطاقات", "doorway": "صفحة تحويل"},
 }
 
+# Google's attribution for Places content is the text "Google Maps", never translated.
 SOURCES: dict[str, dict[str, str]] = {
     "en": {"lookalikes": "lookalike sweep", "ctlogs": "certificate logs", "storefronts": "storefront sweep",
-           "newdomains": "new domains", "investigator": "AI investigator", "capture": "saved capture",
-           "manual": "manual"},
+           "newdomains": "new domains", "maps": "Google Maps", "investigator": "AI investigator",
+           "capture": "saved capture", "manual": "manual"},
     "ar": {"lookalikes": "مسح النطاقات المشابهة", "ctlogs": "سجلات الشهادات", "storefronts": "مسح المتاجر",
-           "newdomains": "نطاقات جديدة", "investigator": "المحقق الآلي", "capture": "التقاط محفوظ",
-           "manual": "يدوي"},
+           "newdomains": "نطاقات جديدة", "maps": "Google Maps", "investigator": "المحقق الآلي",
+           "capture": "التقاط محفوظ", "manual": "يدوي"},
 }
 
 

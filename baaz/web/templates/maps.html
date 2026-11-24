@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Baaz | {{ t.maps_title }}{% endblock %}
+{% block main %}
+<div class="frame feed leads">
+  <aside class="side">
+    <div class="since">
+      {% if last_run %}
+      <p class="label"><span class="beat{{ ' on' if enabled }}" aria-hidden="true"></span>{{ t.maps_last_run }}</p>
+      <p class="since-at"><bdi dir="ltr">{{ last_run }} GST</bdi></p>
+      {% else %}
+      <p class="label"><span class="beat" aria-hidden="true"></span>{{ t.maps_never }}</p>
+      {% endif %}
+      {% if not enabled %}<p class="note">{{ t.maps_off }}</p>{% endif %}
+    </div>
+    <dl class="tally">
+      <div class="tally-row">
+        <dt>{{ t.maps_count }}</dt>
+        <dd>{{ leads | length }}</dd>
+        <dd class="tally-sub">{{ kinds.helpline }} {{ t.maps_helpline_leads }}</dd>
+        <dd class="tally-sub">{{ kinds.website }} {{ t.maps_website_leads }}</dd>
+      </div>
+    </dl>
+    <p class="note leads-note">{{ t.maps_intro }}</p>
+  </aside>
+
+  <div class="work">
+    <h1 class="leads-title">{{ t.maps_title }}</h1>
+    <table class="ledger scans-table leads-table">
+      <thead>
+        <tr><th>{{ t.maps_found }}</th><th>{{ t.maps_listing }}</th><th>{{ t.brand }}</th><th>{{ t.maps_why }}</th><th>{{ t.maps_phone }}</th><th>{{ t.maps_website }}</th><th>{{ t.maps_link }}</th></tr>
+      </thead>
+      <tbody>
+        {% for lead in leads %}
+        <tr>
+          <td class="time"><bdi dir="ltr">{{ lead.time }}</bdi></td>
+          <td><b dir="auto">{{ lead.name }}</b><span class="listing" dir="auto">{{ lead.address }}</span><span class="listing">{{ t.maps_search }}: <bdi>{{ lead.query }}</bdi></span></td>
+          <td>{{ lead.brand }}</td>
+          <td class="why">{% for kind in lead.reasons %}<p><span class="stamp dashed">{{ t["maps_kind_" ~ kind] }}</span> {{ t["maps_why_" ~ kind] }}</p>{% endfor %}</td>
+          <td class="phone">{% if lead.phone %}<bdi class="mono" dir="ltr">{{ lead.phone }}</bdi>{% else %}<span class="muted">{{ t.none }}</span>{% endif %}{% if lead.official_phones %}<span class="listing">{{ t.maps_verified }}: <bdi dir="ltr">{{ lead.official_phones }}</bdi></span>{% endif %}</td>
+          <td class="site">
+            {% if lead.website %}
+            <bdi class="mono" dir="ltr">{{ lead.website }}</bdi>
+            {% if lead.case %}<span class="listing"><a href="/case/{{ lead.case.id }}"><span class="mark {{ lead.case.verdict }}">{{ lead.case.label }}</span> <b>{{ lead.case.score }}</b></a></span>
+            {% elif lead.queued %}<span class="listing">{{ t.maps_queued }}</span>
+            {% elif "website" not in lead.reasons %}<span class="listing">{{ t.maps_official_site }}</span>{% endif %}
+            {% else %}
+            <span class="muted">{{ t.none }}</span>
+            {% endif %}
+          </td>
+          <td class="maps-link">{% if lead.maps_url %}<a href="{{ lead.maps_url }}" target="_blank" rel="noopener noreferrer">Google Maps</a>{% endif %}</td>
+        </tr>
+        {% else %}
+        <tr class="empty"><td colspan="7">{{ t.maps_none }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

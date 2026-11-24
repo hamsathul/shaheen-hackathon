@@ -29,6 +29,10 @@
         {% if r.final_url and r.final_url != r.url %}
         <div class="wide"><dt>{{ t.landing }}</dt><dd><bdi class="mono" dir="ltr">{{ r.final_url | defang }}</bdi></dd></div>
         {% endif %}
+        {% for lead in listings %}
+        <div class="wide"><dt>{{ t.maps_found_on }}</dt><dd><b dir="auto">{{ lead.name }}</b> &middot; <span dir="auto">{{ lead.address }}</span>{% if lead.phone %} &middot; <bdi class="mono" dir="ltr">{{ lead.phone }}</bdi>{% endif %}{% if lead.maps_url %} &middot; <a href="{{ lead.maps_url }}" target="_blank" rel="noopener noreferrer">Google Maps</a>{% endif %}
+          <span class="listing">{{ t.maps_search }}: <bdi>{{ lead.query }}</bdi> &middot; {% for kind in lead.reasons %}{{ t["maps_why_" ~ kind] }}{{ "; " if not loop.last }}{% endfor %}</span></dd></div>
+        {% endfor %}
         {% if r.signals.captured_from %}
         <div class="wide"><dt>{{ t.reanalysis }}</dt><dd><span class="mono" dir="ltr">{{ r.signals.captured_from }}</span> &middot; {{ t.collected }} <bdi dir="ltr">{{ r.signals.captured_at | gst }} GST</bdi></dd></div>
         {% endif %}
