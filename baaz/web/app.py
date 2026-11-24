@@ -5,9 +5,10 @@ Arabic, screenshot, AI investigation and its tool-call trace, followed live
 while the model works, analyst confirmation, evidence download and
 verification) and a box to scan a pasted link.
 
-Everything is served from this package: no CDN, no web fonts, so it works
-with the network unplugged. Suspect addresses are always defanged and never
-links; page content from suspect sites is escaped like any other text.
+Everything is served from this package, the IBM Plex fonts included (no
+CDN), so it works with the network unplugged. Suspect addresses are always
+defanged and never links; page content from suspect sites is escaped like
+any other text.
 """
 
 from __future__ import annotations

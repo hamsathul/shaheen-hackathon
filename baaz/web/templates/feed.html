@@ -1,85 +1,82 @@
 {% extends "base.html" %}
 {% block title %}Baaz | {{ t.feed }}{% endblock %}
 {% block main %}
-<section class="status">
-  <div class="since">
-    <span class="dot{{ ' live' if feed.running_since }}" aria-hidden="true"></span>
-    {% if feed.running_since %}
-    {{ t.running_since }} <b data-field="running_since">{{ feed.running_since }}</b> GST
-    <span class="muted">(<span data-field="uptime">{{ feed.uptime }}</span>)</span>
-    {% else %}
-    <span data-field="running_since">{{ t.not_running }}</span>
-    {% endif %}
-  </div>
-  <div class="counters">
-    {% for key in ("candidates_seen", "scanned", "flagged", "investigated", "confirmed") %}
-    <div class="counter {{ key }}">
-      <div class="n" data-counter="{{ key }}">{{ feed.counters[key] }}</div>
-      <div class="k">{{ t[key] }}</div>
-    </div>
-    {% endfor %}
-  </div>
-</section>
-
-<section class="panel live" id="live">
-  <div class="panel-head">
-    <h2>{{ t.live_title }}</h2>
-    <div class="pills">
-      <span class="pill live-state" data-live="state"></span>
-      <span class="pill live-model" data-live="model" hidden></span>
-    </div>
-  </div>
-  <div class="live-grid">
-    <div class="live-runs" data-live="runs"></div>
-    <div class="live-side">
-      <h3>{{ t.live_queue }}</h3>
-      <p class="live-queue" data-live="queue"></p>
-      <h3>{{ t.live_recent }}</h3>
-      <ol class="live-recent" data-live="recent"></ol>
-    </div>
-  </div>
-</section>
-
-<section class="panel scanbox">
-  <h2>{{ t.scan_title }}</h2>
-  <form method="post" action="/scan" id="scan-form">
-    <input type="text" name="url" autocomplete="off" spellcheck="false" dir="ltr" placeholder="{{ t.scan_placeholder }}" aria-label="{{ t.scan_title }}">
-    <button type="submit" data-busy="{{ t.scanning }}">{{ t.scan_button }}</button>
-  </form>
-  {% if error %}<p class="error">{{ t.scan_error }}</p>{% endif %}
-  <p class="muted small">{{ t.scan_note }}</p>
-</section>
-
-<section class="panel">
-  <div class="feed-head">
-    <h2>{{ t.latest }}</h2>
-    <div class="filters">
-      <a href="/" class="{{ 'on' if not verdict }}">{{ t.all }}</a>
-      {% for v in filters %}
-      <a href="/?verdict={{ v }}" class="{{ v }}{{ ' on' if verdict == v }}">{{ verdicts[v] }}</a>
-      {% endfor %}
-    </div>
-  </div>
-  <table class="feed">
-    <thead>
-      <tr><th>{{ t.time }}</th><th>{{ t.domain }}</th><th>{{ t.verdict }}</th><th class="num">{{ t.score }}</th><th>{{ t.type }}</th><th>{{ t.brand }}</th><th>{{ t.source }}</th></tr>
-    </thead>
-    <tbody id="feed-rows" data-empty="{{ t.no_scans }}">
-      {% for row in feed.rows %}
-      <tr data-id="{{ row.id }}">
-        <td class="nowrap">{{ row.time }}</td>
-        <td class="domain" dir="ltr"><a href="/case/{{ row.id }}">{{ row.domain }}</a>{% if row.confirmed %} <span class="tick" title="{{ t.confirmed }}">&#10003;</span>{% endif %}{% if row.ai == "done" %} <span class="ai-tag" title="{{ t.investigated }}">AI</span>{% elif row.ai == "running" %} <span class="ai-tag running" title="{{ t.ai_running }}">AI</span>{% endif %}</td>
-        <td><span class="badge {{ row.verdict }}">{{ row.verdict_label }}</span></td>
-        <td class="num">{{ row.score }}</td>
-        <td>{{ row.type }}</td>
-        <td>{{ row.brand }}</td>
-        <td class="muted">{{ row.source }}</td>
-      </tr>
+<div class="frame feed">
+  <aside class="side">
+    <div class="since">
+      {% if feed.running_since %}
+      <p class="label"><span class="beat on" aria-hidden="true"></span>{{ t.running_since }}</p>
+      <p class="since-at"><bdi dir="ltr"><span data-field="running_since">{{ feed.running_since }}</span> GST</bdi></p>
+      <p class="since-up"><bdi dir="ltr" data-field="uptime">{{ feed.uptime }}</bdi></p>
       {% else %}
-      <tr class="empty"><td colspan="7">{{ t.no_scans }}</td></tr>
+      <p class="label"><span class="beat" aria-hidden="true"></span><span data-field="running_since">{{ t.not_running }}</span></p>
+      {% endif %}
+    </div>
+    <dl class="tally">
+      {% for key in ("candidates_seen", "scanned", "flagged", "investigated", "confirmed") %}
+      <div class="tally-row">
+        <dt>{{ t[key] }}</dt>
+        <dd data-counter="{{ key }}">{{ feed.counters[key] }}</dd>
+        {% if key == "flagged" %}
+        <dd class="tally-sub"><span class="chip fraud" aria-hidden="true"></span><span data-counter="fraud">{{ feed.counters.fraud }}</span> {{ verdicts.fraud }}</dd>
+        {% endif %}
+      </div>
       {% endfor %}
-    </tbody>
-  </table>
-</section>
+    </dl>
+    <form method="post" action="/scan" id="scan-form" class="check">
+      <label class="label" for="scan-url">{{ t.scan_title }}</label>
+      <input id="scan-url" type="text" name="url" autocomplete="off" spellcheck="false" dir="ltr" placeholder="{{ t.scan_placeholder }}">
+      <button type="submit" data-busy="{{ t.scanning }}">{{ t.scan_button }}</button>
+      {% if error %}<p class="error">{{ t.scan_error }}</p>{% endif %}
+      <p class="note">{{ t.scan_note }}</p>
+    </form>
+  </aside>
+
+  <div class="work">
+    <section class="investigator" id="live">
+      <header class="inv-head">
+        <h2>{{ t.live_title }}</h2>
+        <span class="state" data-live="state"></span>
+        <span class="inv-model" data-live="model" hidden></span>
+        <p class="inv-queue"><span class="label">{{ t.live_queue }}</span><span data-live="queue"></span></p>
+      </header>
+      <div class="runs" data-live="runs"></div>
+      <h3 class="label recent-title">{{ t.live_recent }}</h3>
+      <ol class="recent" data-live="recent"></ol>
+    </section>
+
+    <section class="scans">
+      <header class="scans-head">
+        <h2>{{ t.latest }}</h2>
+        <nav class="tabs">
+          <a href="/"{% if not verdict %} class="on" aria-current="true"{% endif %}>{{ t.all }}</a>
+          {% for v in filters %}
+          <a href="/?verdict={{ v }}"{% if verdict == v %} class="on" aria-current="true"{% endif %}>{{ verdicts[v] }}</a>
+          {% endfor %}
+        </nav>
+      </header>
+      <table class="ledger scans-table">
+        <thead>
+          <tr><th>{{ t.time }}</th><th>{{ t.domain }}</th><th>{{ t.verdict }}</th><th class="num">{{ t.score }}</th><th>{{ t.type }}</th><th>{{ t.brand }}</th><th>{{ t.source }}</th></tr>
+        </thead>
+        <tbody id="feed-rows" data-empty="{{ t.no_scans }}">
+          {% for row in feed.rows %}
+          <tr data-id="{{ row.id }}">
+            <td class="time" dir="ltr">{{ row.time }}</td>
+            <td class="domain" dir="ltr"><a href="/case/{{ row.id }}">{{ row.domain }}</a>{% if row.confirmed %} <span class="tick" title="{{ t.confirmed }}">&#10003;</span>{% endif %}{% if row.ai == "done" %} <span class="ai-tag" title="{{ t.investigated }}">AI</span>{% elif row.ai == "running" %} <span class="ai-tag running" title="{{ t.ai_running }}">AI</span>{% endif %}</td>
+            <td><span class="mark {{ row.verdict }}">{{ row.verdict_label }}</span></td>
+            <td class="num score">{{ row.score }}</td>
+            <td>{{ row.type }}</td>
+            <td>{{ row.brand }}</td>
+            <td class="muted">{{ row.source }}</td>
+          </tr>
+          {% else %}
+          <tr class="empty"><td colspan="7">{{ t.no_scans }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  </div>
+</div>
 {% endblock %}
 {% block scripts %}<script src="/static/feed.js"></script>{% endblock %}

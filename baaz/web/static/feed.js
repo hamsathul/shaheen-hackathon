@@ -8,6 +8,7 @@
   var body = document.getElementById("feed-rows");
   var live = document.getElementById("live");
   var seen = {};
+  var calls = {};  // tool calls already shown per running case, to mark the new ones
   Array.prototype.forEach.call(body.querySelectorAll("tr[data-id]"), function (tr) {
     seen[tr.getAttribute("data-id")] = true;
   });
@@ -23,8 +24,8 @@
     return el("td", cls, text);
   }
 
-  function badge(verdict, label) {
-    return el("span", "badge " + (VERDICTS.indexOf(verdict) >= 0 ? verdict : ""), label);
+  function mark(verdict, label) {
+    return el("span", "mark " + (VERDICTS.indexOf(verdict) >= 0 ? verdict : ""), label);
   }
 
   function caseLink(r) {
@@ -38,7 +39,9 @@
     var tr = document.createElement("tr");
     tr.setAttribute("data-id", r.id);
     if (!seen[r.id]) tr.className = "fresh";
-    tr.appendChild(cell(r.time, "nowrap"));
+    var time = cell(r.time, "time");
+    time.dir = "ltr";
+    tr.appendChild(time);
     var domain = cell("", "domain");
     domain.dir = "ltr";
     var link = document.createElement("a");
@@ -54,9 +57,9 @@
     }
     tr.appendChild(domain);
     var verdict = cell("");
-    verdict.appendChild(badge(r.verdict, r.verdict_label));
+    verdict.appendChild(mark(r.verdict, r.verdict_label));
     tr.appendChild(verdict);
-    tr.appendChild(cell(String(r.score), "num"));
+    tr.appendChild(cell(String(r.score), "num score"));
     tr.appendChild(cell(r.type));
     tr.appendChild(cell(r.brand));
     tr.appendChild(cell(r.source, "muted"));
@@ -75,46 +78,71 @@
     });
   }
 
+  function aside(cls, text) {  // a line of prose in the LTR log, in the page's language
+    var item = el("li", cls, text);
+    item.dir = "auto";
+    return item;
+  }
+
   function runBlock(run) {
-    var block = el("article", "live-run");
+    var block = el("article", "run");
     block.setAttribute("data-id", run.id);
-    var head = el("header", "live-run-head");
-    head.appendChild(badge(run.verdict, run.verdict_label));
-    head.appendChild(el("span", "num score", String(run.score)));
+    var head = el("header", "run-head");
+    head.appendChild(mark(run.verdict, run.verdict_label));
+    head.appendChild(el("span", "run-score", String(run.score)));
     head.appendChild(caseLink(run));
-    var elapsed = el("span", "elapsed muted");
-    elapsed.setAttribute("data-started", String(Date.now() - run.elapsed_s * 1000));
-    head.appendChild(elapsed);
-    head.appendChild(el("span", "muted", T.live_calls + ": " + run.tool_count));
-    if (run.mode) head.appendChild(el("span", "pill", run.mode));
     block.appendChild(head);
 
-    var list = el("ol", "live-tools");
+    var meta = el("p", "run-meta");
+    var elapsed = el("span", "elapsed");
+    elapsed.setAttribute("data-started", String(Date.now() - run.elapsed_s * 1000));
+    meta.appendChild(elapsed);
+    meta.appendChild(el("span", null, T.live_calls + " " + run.tool_count));
+    if (run.mode) meta.appendChild(el("span", "mode", run.mode));
+    block.appendChild(meta);
+
+    var list = el("ol", "log-tail");
     list.dir = "ltr";
-    var hidden = run.tool_count - run.tools.length;
-    if (hidden > 0) list.appendChild(el("li", "more muted", "+" + hidden + " " + T.live_earlier));
-    run.tools.forEach(function (t) {
-      var item = el("li", "call " + (t.error ? "error" : t.done ? "done" : "running"));
-      if (t.server) item.appendChild(el("span", "server", t.server));
+    var first = run.tool_count - run.tools.length;
+    var known = calls[run.id];
+    if (first > 0) list.appendChild(aside("more", "+" + first + " " + T.live_earlier));
+    run.tools.forEach(function (t, i) {
+      var n = first + i + 1;
+      var cls = "call " + (t.error ? "err" : t.done ? "done" : "running");
+      if (i === run.tools.length - 1) cls += " latest";
+      if (known !== undefined && n > known) cls += " fresh";
+      var item = el("li", cls);
+      item.appendChild(el("span", "n", String(n).padStart(2, "0")));
+      item.appendChild(el("span", "server", t.server));
       item.appendChild(el("code", "tool", t.tool));
-      if (t.target) item.appendChild(el("span", "target mono", t.target));
+      var target = el("span", "target", t.target);
+      target.title = t.target;
+      item.appendChild(target);
+      if (t.error) item.appendChild(el("span", "stamp dashed", T.error));
       list.appendChild(item);
     });
+    calls[run.id] = run.tool_count;
     var last = run.tools[run.tools.length - 1];
-    if (!last) list.appendChild(el("li", "note muted", T.live_starting));
-    else if (last.done) list.appendChild(el("li", "note muted", T.live_thinking));
+    if (!last) list.appendChild(aside("note", T.live_starting));
+    else if (last.done) list.appendChild(aside("note", T.live_thinking));
     block.appendChild(list);
     return block;
   }
 
   function recentItem(r) {
-    var item = el("li", "live-done");
-    var head = el("div", "live-done-head");
+    var item = el("li", "done-case");
+    var time = el("span", "done-time", r.time.slice(-5));
+    time.title = r.time;
+    time.dir = "ltr";
+    item.appendChild(time);
+    var head = el("div", "done-head");
+    head.appendChild(mark(r.verdict, r.verdict_label));
+    head.appendChild(el("span", "done-score", String(r.score)));
     head.appendChild(caseLink(r));
-    if (r.type) head.appendChild(el("span", "type", r.type));
+    if (r.type) head.appendChild(el("span", "done-type", r.type));
     item.appendChild(head);
     if (r.summary) {
-      var summary = el("p", "summary small", r.summary);
+      var summary = el("p", "done-summary", r.summary);
       summary.dir = "auto";
       item.appendChild(summary);
     }
@@ -123,27 +151,34 @@
 
   function renderLive(a) {
     var state = live.querySelector('[data-live="state"]');
-    state.className = "pill live-state " + a.state;
+    state.className = "state " + a.state;
     state.textContent = T["live_" + a.state];
     var model = live.querySelector('[data-live="model"]');
     model.hidden = !a.model || a.state === "off";
-    model.textContent = T.live_model + ": " + a.model;
+    model.replaceChildren(el("span", "label", T.live_model), el("code", null, a.model));
 
     var runs = document.createDocumentFragment();
     if (a.model_down) runs.appendChild(el("p", "live-warning", T.live_waiting_note));
     a.running.forEach(function (run) { runs.appendChild(runBlock(run)); });
     if (!a.running.length && !a.model_down) {
-      runs.appendChild(el("p", "muted", a.state === "idle" ? T.live_idle_note : T.live_off_note));
+      runs.appendChild(el("p", "live-quiet", a.state === "idle" ? T.live_idle_note : T.live_off_note));
     }
-    live.querySelector('[data-live="runs"]').replaceChildren(runs);
+    var holder = live.querySelector('[data-live="runs"]');
+    holder.replaceChildren(runs);
+    holder.className = "runs" + (a.running.length > 1 ? " parallel" : "");
 
-    live.querySelector('[data-live="queue"]').textContent = a.queue.map(function (q) {
-      return q.label + " " + q.n;
-    }).join(" · ");
+    var queue = document.createDocumentFragment();
+    a.queue.forEach(function (q) {
+      var item = el("span", "queue-item");
+      item.appendChild(el("b", null, String(q.n)));
+      item.appendChild(document.createTextNode(" " + q.label));
+      queue.appendChild(item);
+    });
+    live.querySelector('[data-live="queue"]').replaceChildren(queue);
 
     var recent = document.createDocumentFragment();
     a.recent.forEach(function (r) { recent.appendChild(recentItem(r)); });
-    if (!a.recent.length) recent.appendChild(el("li", "muted", T.live_no_recent));
+    if (!a.recent.length) recent.appendChild(el("li", "live-quiet", T.live_no_recent));
     live.querySelector('[data-live="recent"]').replaceChildren(recent);
     tickElapsed();
   }
