@@ -3,11 +3,13 @@ SQLite queue; a pool of workers drains it through the same `scan()` as every
 other entry point.
 
 Each round runs the collectors that are due (each has its own interval,
-recorded in meta `collector:<name>:last_run`), drains the queue until it is
-empty or the round's time slice ends, logs the counters, then sleeps until
-the next collector is due. A failing collector or scan is logged and the
-loop goes on. Ctrl-C (or SIGTERM where the platform has it) lets the
-in-flight scans finish, then exits.
+recorded in meta `collector:<name>:last_run`) in a thread of their own while
+the workers scan what they queue, so the first scans start within seconds
+even on a fresh store. The workers stop when the collectors are done and the
+queue is empty or the round's time slice has ended; the round then logs the
+counters and sleeps until the next collector is due. A failing collector or
+scan is logged and the loop goes on. Ctrl-C (or SIGTERM where the platform
+has it) lets the in-flight scans finish, then exits.
 """
 
 from __future__ import annotations
@@ -44,12 +46,20 @@ class Collector:
     rate: float  # requests per second
 
 
+# Run in this order: the storefront sweep takes about a minute and finds skimmers,
+# the lookalike sweep takes about ten minutes on a fresh store.
 COLLECTORS: dict[str, Collector] = {
-    "lookalikes": Collector(lookalikes.collect, 6 * 3600, 3000, 20.0),
-    "ctlogs": Collector(ctlogs.collect, 3600, 3, 0.2),
     "storefronts": Collector(storefronts.collect, 0, 300, 10.0),
+    "ctlogs": Collector(ctlogs.collect, 3600, 3, 0.2),
     "newdomains": Collector(newdomains.collect, 24 * 3600, 500, 1.0),
+    "lookalikes": Collector(lookalikes.collect, 6 * 3600, 3000, 20.0),
 }
+
+
+def check_collectors(names: list[str]) -> None:
+    unknown = set(names) - set(COLLECTORS)
+    if unknown:
+        raise ValueError(f"unknown collector(s): {', '.join(sorted(unknown))}; choose from {', '.join(COLLECTORS)}")
 
 
 def _last_run_key(name: str) -> str:
@@ -98,15 +108,18 @@ def _scan_one(scanner: Scanner, store: Store, row: Any, options: ScanOptions) ->
 
 
 def _worker(settings: Settings, store: Store, options: ScanOptions, deadline: float,
-            stop: threading.Event, claim_lock: threading.Lock) -> int:
+            stop: threading.Event, claim_lock: threading.Lock, collecting: Callable[[], bool]) -> int:
     scanned = 0
     try:
         with Scanner(settings, store) as scanner:
-            while not stop.is_set() and time.monotonic() < deadline:
+            while not stop.is_set() and (collecting() or time.monotonic() < deadline):
                 with claim_lock:
                     row = store.claim_candidate()
                 if row is None:
-                    break
+                    if not collecting():
+                        break
+                    stop.wait(POLL)
+                    continue
                 _scan_one(scanner, store, row, options)
                 scanned += 1
     except Exception:  # noqa: BLE001 - a broken worker ends; the others go on
@@ -125,12 +138,13 @@ def _wait_all(futures: list[Future[int]], store: Store) -> None:
 
 
 def drain(settings: Settings, store: Store, options: ScanOptions, workers: int, deadline: float,
-          stop: threading.Event) -> int:
-    """Scan queued candidates with `workers` threads until the queue is empty,
-    `deadline` (monotonic time) passes or `stop` is set; returns the scans done."""
+          stop: threading.Event, collecting: Callable[[], bool]) -> int:
+    """Scan queued candidates with `workers` threads until `stop` is set or, once
+    `collecting()` is false, until the queue is empty or `deadline` (monotonic
+    time) has passed; returns the scans done."""
     claim_lock = threading.Lock()
     with ThreadPoolExecutor(max_workers=workers, thread_name_prefix="baaz-scan") as pool:
-        futures = [pool.submit(_worker, settings, store, options, deadline, stop, claim_lock)
+        futures = [pool.submit(_worker, settings, store, options, deadline, stop, claim_lock, collecting)
                    for _ in range(workers)]
         try:
             _wait_all(futures, store)
@@ -165,13 +179,12 @@ def run(*, settings: Settings | None = None, once: bool = False, workers: int = 
         collectors: list[str] | None = None, interval: float = 300, max_per_run: int | None = None,
         render: bool = True, reset_clock: bool = False, stop: threading.Event | None = None) -> dict[str, int]:
     """Watch until stopped (Ctrl-C, SIGTERM or `stop`), or for one round with
-    `once`. `interval` is the longest a round's drain lasts and the longest
-    sleep between rounds. Returns the store's counters at exit."""
+    `once`. `interval` is the longest a round's drain lasts once its
+    collectors are done, and the longest sleep between rounds. Returns the
+    store's counters at exit."""
     settings = settings or load_settings()
     names = collectors or list(COLLECTORS)
-    unknown = set(names) - set(COLLECTORS)
-    if unknown:
-        raise ValueError(f"unknown collector(s): {', '.join(sorted(unknown))}; choose from {', '.join(COLLECTORS)}")
+    check_collectors(names)
     store = Store(settings.db_path)
     stop = stop or threading.Event()
     options = ScanOptions(render=render)
@@ -186,9 +199,12 @@ def run(*, settings: Settings | None = None, once: bool = False, workers: int = 
     previous = _on_sigterm_raise_interrupt()
     try:
         while not stop.is_set():
-            added = run_collectors(store, names, max_per_run, stop)
             deadline = float("inf") if once else time.monotonic() + interval
-            scanned = drain(settings, store, options, workers, deadline, stop)
+            with ThreadPoolExecutor(max_workers=1, thread_name_prefix="baaz-collect") as pool:
+                collected = pool.submit(run_collectors, store, names, max_per_run, stop)
+                scanned = drain(settings, store, options, workers, deadline, stop,
+                                lambda job=collected: not job.done())
+            added = collected.result()
             log.info("round done: %d new candidates, %d scans", added, scanned)
             log_counters(store)
             if once:
