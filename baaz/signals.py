@@ -1,6 +1,8 @@
 """URL and domain signals: lexical checks on every hop of the redirect chain,
 brand and lookalike matching, risky TLDs and hosting platforms, plus the
-registration, certificate and popularity facts of the landing domain.
+registration, certificate and popularity facts of the landing domain. Page
+signals: brands the page presents itself as, the sensitive fields it asks
+for, where its forms send data, urgency wording, doorways and cloaking.
 
 Each `*_findings` function is pure and returns the findings it would add;
 `url_signals` runs them over a scan and records the results on the context.
@@ -8,6 +10,8 @@ Each `*_findings` function is pure and returns the findings it would add;
 
 from __future__ import annotations
 
+import re
+from dataclasses import dataclass
 from datetime import date, datetime
 from functools import lru_cache
 from typing import Any
@@ -19,6 +23,7 @@ from baaz import brands
 from baaz.config import DATA_DIR
 from baaz.domains import host_of, is_ip, registrable_domain, split_host
 from baaz.models import Finding, ScanContext
+from baaz.page import PageFacts
 from baaz.resolve import SHORTENERS
 from baaz.score import COMMON_TOKEN_WEIGHTS, weight_of
 
@@ -225,3 +230,217 @@ def url_signals(ctx: ScanContext, intel_by_domain: dict[str, dict[str, Any]]) ->
         ctx.impersonated_brand = max(branded, key=lambda pair: pair[0])[1]
     ctx.features.update(intel_features(facts, ctx.scanned_at))
     ctx.features.update(top_site_rank=rank, hosting_platform=platform, embedded_targets=embedded)
+
+
+# Page signals: what the page itself shows and asks for.
+
+DOORWAY_TEXT = 200
+CLOAK_FULL_TEXT = 500
+CLOAK_EMPTY_TEXT = 100
+CLOAK_EMPTY_HTML = 512
+MAX_PAGE_BRANDS = 2  # a page naming more brands than this is a shop or a directory, not an impersonation
+MAX_TERMS = 3
+_PAREN = re.compile(r"\(([^)]*)\)")
+_REDIRECT_CODE = re.compile(
+    r"""location(?:\.href)?\s*=(?!=)|location\.(?:replace|assign)\s*\(|http-equiv\s*=\s*["']?refresh""", re.I)
+_CHALLENGE_TEXT = re.compile(
+    r"just a moment|attention required|checking your browser|verify you are (a )?human|are you a robot"
+    r"|captcha|ddos protection|access denied|request blocked|security check|enable javascript and cookies",
+    re.I,
+)
+_CHALLENGE_HTML = re.compile(r"_cf_chl_opt|cf-chl-|_incapsula_resource|sgcaptcha|px-captcha", re.I)
+_TELEGRAM_BOT = re.compile(r"api\.telegram\.org/bot", re.I)
+
+
+@dataclass(frozen=True)
+class BrandOnPage:
+    brand: brands.Brand
+    where: str  # title, site_name, h1, logo or text
+    term: str
+
+
+def _name_parts(brand: brands.Brand) -> list[str]:
+    """Display names of a brand worth finding on a page: `Abu Dhabi Commercial
+    Bank (ADCB)` gives both names, `Meta / Facebook` both halves. A name that is
+    an ordinary word (one of the brand's common tokens: Emirates, Visa, noon)
+    is left out, since it turns up in ordinary text."""
+    inner = [p for group in _PAREN.findall(brand.name_en) for p in group.split(",")]
+    outer = _PAREN.sub("", brand.name_en).split("/")
+    parts = [p.strip() for p in outer + inner]
+    return [p for p in parts if len(p) >= 3 and p.lower() not in brand.common_tokens]
+
+
+def _term_pattern(term: str) -> re.Pattern[str]:
+    if re.search(r"[؀-ۿ]", term):
+        return re.compile(re.escape(term))
+    body = r"\s+".join(map(re.escape, term.split()))
+    return re.compile(rf"(?<![\w&]){body}(?!\w)", re.I)
+
+
+@lru_cache(maxsize=1)
+def _page_terms() -> tuple[tuple[brands.Brand, tuple[tuple[str, re.Pattern[str]], ...]], ...]:
+    out = []
+    for brand in brands.load_brands():
+        terms = _name_parts(brand) + [brand.name_ar] + list(brand.keywords) + list(brand.tokens)
+        terms = [t for t in dict.fromkeys(terms) if len(t) >= 3]
+        out.append((brand, tuple((t, _term_pattern(t)) for t in terms)))
+    return tuple(out)
+
+
+def find_brands(text: str, scopes: tuple[str, ...] = ()) -> list[tuple[brands.Brand, str]]:
+    """Brands named in `text`, each with the term as written; only brands of `scopes` when given."""
+    found = []
+    for brand, terms in _page_terms():
+        if scopes and brand.scope not in scopes:
+            continue
+        for _, pattern in terms:
+            m = pattern.search(text)
+            if m:
+                found.append((brand, m.group(0)))
+                break
+    return found
+
+
+def _own_name_shown(facts: PageFacts, domain: str) -> bool:
+    """Whether the page's title, site name, h1 or logo names its own domain (`GitHub` on github.com)."""
+    label = split_host(domain)[1].replace("-", "")
+    shown = re.sub(r"[\s\-]", "", " ".join([facts.title, facts.site_name, *facts.h1, *facts.logos]).lower())
+    return len(label) >= 4 and label in shown
+
+
+def brands_on_page(facts: PageFacts, domain: str) -> list[BrandOnPage]:
+    """Brands the page presents itself as: named in its title, `og:site_name`,
+    h1 or logo, or in the first 1,500 characters of its own text (links,
+    buttons, menus and footers aside). The text only counts when the page does
+    not show its own domain's name, so a site that names a partner in passing
+    is not taken for that partner."""
+    places = [("title", facts.title), ("site_name", facts.site_name),
+              ("h1", " | ".join(facts.h1)), ("logo", " | ".join(facts.logos))]
+    if not _own_name_shown(facts, domain):
+        places.append(("text", facts.lead))
+    found: dict[str, BrandOnPage] = {}
+    for where, text in places:
+        for brand, term in find_brands(text) if text else []:
+            found.setdefault(brand.id, BrandOnPage(brand, where, term))
+    return list(found.values())
+
+
+def fields_for(brand: brands.Brand, sensitive: set[str]) -> set[str]:
+    """The sensitive fields worth stealing under this brand's name. A login on
+    a product-brand page is the shop's own account, so product brands count
+    card fields only; card-network and wallet logos sit next to every card
+    form, so payment brands count everything but card fields."""
+    if brand.scope == "storefront":
+        return sensitive & {"card"}
+    if brand.category == "payments":
+        return sensitive - {"card"}
+    return set(sensitive)
+
+
+def _form_index(facts: PageFacts, fields: set[str]) -> int:
+    return next((i for i, f in enumerate(facts.forms) if f.sensitive() & fields), 0)
+
+
+@lru_cache(maxsize=1)
+def _urgency_patterns() -> tuple[re.Pattern[str], ...]:
+    data = yaml.safe_load((DATA_DIR / "wording.yaml").read_text(encoding="utf-8"))["urgency"]
+    return tuple(_term_pattern(p) for p in data["en"] + data["ar"])
+
+
+def urgency_terms(text: str) -> list[str]:
+    """Distinct urgency phrases (data/wording.yaml) in `text`, as written there."""
+    return [m.group(0) for m in (p.search(text) for p in _urgency_patterns()) if m]
+
+
+def exfiltration_targets(html: str) -> list[str]:
+    """Data drops named in the page source: a Telegram bot API call."""
+    return ["api.telegram.org"] if _TELEGRAM_BOT.search(html or "") else []
+
+
+def page_findings(facts: PageFacts, final_url: str, html: str) -> tuple[list[Finding], str | None]:
+    """SENSITIVE_FORM_BRAND, FORM_OFFSITE_POST and URGENCY_WORDING for a page,
+    with the brand it impersonates."""
+    domain = registrable_domain(final_url)
+    sensitive = facts.sensitive_fields()
+    found: list[Finding] = []
+    impersonated = None
+    named = brands_on_page(facts, domain)
+    if sensitive and len(named) <= MAX_PAGE_BRANDS:
+        for hit in named:
+            fields = fields_for(hit.brand, sensitive)
+            if fields and domain not in hit.brand.official_domains:
+                found.append(Finding("SENSITIVE_FORM_BRAND", f"page.json#forms[{_form_index(facts, fields)}]",
+                                     {"brand": hit.brand.name_en, "fields": sorted(fields)}))
+                impersonated = hit.brand.name_en
+                break
+    for i, form in enumerate(facts.forms):
+        target = registrable_domain(form.action) if form.action.startswith("http") else domain
+        if (form.sensitive() and target != domain
+                and not (brands.official_brand(target) or brands.gov_namespace(target))):
+            found.append(Finding("FORM_OFFSITE_POST", f"page.json#forms[{i}]", {"target": target}))
+            break
+    for target in exfiltration_targets(html):
+        found.append(Finding("FORM_OFFSITE_POST", "page.json#exfiltration", {"target": target}))
+    terms = urgency_terms(facts.text)
+    if len(terms) >= 2 or (terms and sensitive):
+        found.append(Finding("URGENCY_WORDING", "page.json#urgency_terms", {"terms": terms[:MAX_TERMS]}))
+    return found, impersonated
+
+
+def doorway_findings(chain: list[dict[str, Any]]) -> list[Finding]:
+    """DOORWAY: a near-empty page whose meta refresh or script (seen by the HTTP
+    fetch or the browser) sends the visitor to another registrable domain.
+    `chain` is the `redirects.json` chain; plain HTTP redirects never count."""
+    for i in range(1, len(chain)):
+        prev, hop = chain[i - 1], chain[i]
+        source, target = registrable_domain(prev["url"]), registrable_domain(hop["url"])
+        if (hop["via"] in ("meta", "script", "browser") and prev.get("text_len") is not None
+                and prev["text_len"] < DOORWAY_TEXT and source != target and source not in SHORTENERS):
+            return [Finding("DOORWAY", f"redirects.json#chain[{i}]", {"target": target})]
+    return []
+
+
+def is_challenge(title: str, text: str, html: str) -> bool:
+    """A bot check or block page instead of the site (Cloudflare, Incapsula and the like)."""
+    return bool(_CHALLENGE_TEXT.search(f"{title} {text[:500]}") or _CHALLENGE_HTML.search(html[:200_000]))
+
+
+def profile_view(res: Any, facts: PageFacts) -> dict[str, Any]:
+    """The `profiles.json` entry for one visitor profile's fetch (a `resolve.Resolution`)."""
+    html = res.html or ""
+    return {
+        "final_url": res.final_url,
+        "domain": registrable_domain(res.final_url),
+        "status": res.status_code,
+        "fetch_status": res.fetch_status,
+        "text_len": facts.text_len,
+        "title": facts.title[:200],
+        "redirected": any(h.via in ("meta", "script") for h in res.hops),
+        "redirect_code": bool(_REDIRECT_CODE.search(html)),
+        "empty_html": len(html.strip()) < CLOAK_EMPTY_HTML,
+        "challenge": is_challenge(facts.title, facts.text, html),
+    }
+
+
+def cloaking_findings(profiles: dict[str, dict[str, Any]]) -> list[Finding]:
+    """CLOAKING: visitor profiles land on different sites, or one gets a full
+    page while another gets an empty or redirecting one. Profiles that were
+    blocked or shown a bot check do not count (Cloudflare blocks fake crawlers
+    on real sites), and the same name under another suffix (a language or
+    country site) is not a different site."""
+    usable = {k: p for k, p in profiles.items()
+              if p["fetch_status"] == "ok" and not p["challenge"] and p["domain"] not in SHORTENERS}
+    if len(usable) < 2:
+        return []
+    label = {k: split_host(p["domain"])[1] or p["domain"] for k, p in usable.items()}
+    if len(set(label.values())) > 1:
+        ref = next(k for k in ("crawler", "desktop", "mobile_ar") if k in usable)
+        odd = [k for k in usable if label[k] != label[ref]]
+        return [Finding("CLOAKING", f"profiles.json#{odd[0]}", {"profiles": odd})]
+    full = [k for k, p in usable.items() if p["status"] == 200 and p["text_len"] >= CLOAK_FULL_TEXT]
+    empty = [k for k, p in usable.items()
+             if p["status"] and 200 <= p["status"] < 300 and p["text_len"] < CLOAK_EMPTY_TEXT
+             and (p["redirected"] or p["redirect_code"] or p["empty_html"])]
+    if full and empty:
+        return [Finding("CLOAKING", f"profiles.json#{empty[0]}", {"profiles": empty})]
+    return []

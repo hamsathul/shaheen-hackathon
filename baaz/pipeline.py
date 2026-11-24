@@ -1,24 +1,30 @@
 """`scan(url)`: the one pipeline the CLI, batch runner, watcher, dashboard
 and investigator all share.
 
-resolve -> allowlist -> intel -> render -> signals -> score -> reasons -> evidence -> store
+resolve -> render -> allowlist -> intel -> URL signals -> page signals and
+profiles -> storefront -> score -> reasons -> evidence -> store
 
-An allowlisted link (official or government domain all the way) skips the
-signal stages but still gets its evidence pack and stored result.
+An allowlisted link (official or government domain all the way, JavaScript
+redirects included) skips the signal stages but still gets its evidence pack
+and stored result. A stage that fails is recorded in `stage_errors` and the
+scan goes on to a verdict.
 """
 
 from __future__ import annotations
 
 import secrets
+from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from typing import Any
 
-from baaz import brands, intel, reasons, score, signals
+from baaz import brands, intel, page, reasons, score, signals
 from baaz.config import Settings, load_settings
 from baaz.domains import host_of, normalize_url, registrable_domain
 from baaz.evidence import write_pack
 from baaz.models import ScanContext, ScanOptions, ScanResult
-from baaz.resolve import SHORTENERS, make_clients, resolve
+from baaz.render import Rendered, render
+from baaz.resolve import PROFILES, SHORTENERS, make_clients, resolve, visible_text
 from baaz.store import Store
 
 
@@ -54,10 +60,25 @@ class Scanner:
             scanned_at=now,
             options=options or ScanOptions(),
         )
-        self._resolve(ctx)
-        if not self._allowlist(ctx):
-            signals.url_signals(ctx, self._intel(ctx))
+        ctx.final_url, ctx.redirect_chain = ctx.url, [ctx.url]
+        ctx.features["final_domain"] = registrable_domain(ctx.url)
+        ctx.features["rendered"] = False
+        self._stage(ctx, "resolve", self._resolve)
+        self._stage(ctx, "render", self._render)
+        if not self._stage(ctx, "allowlist", self._allowlist):
+            self._stage(ctx, "url_signals", lambda c: signals.url_signals(c, self._intel(c)))
+        self._stage(ctx, "page", self._page)
         return self._finish(ctx)
+
+    @staticmethod
+    def _stage(ctx: ScanContext, name: str, step: Callable[[ScanContext], Any]) -> Any:
+        """Run one stage; an unexpected error is recorded and the scan goes on."""
+        try:
+            return step(ctx)
+        except Exception as exc:  # always return a verdict
+            ctx.features.setdefault("stage_errors", []).append(
+                {"stage": name, "error": f"{type(exc).__name__}: {exc}"[:300]})
+            return None
 
     def _resolve(self, ctx: ScanContext) -> None:
         res = resolve(ctx.url, self.client, self.insecure_client)
@@ -92,6 +113,87 @@ class Scanner:
         ctx.artifacts["dns_hosting.json"] = facts["dns"]
         ctx.artifacts["cert.json"] = facts["cert"]
         return {domain: facts}
+
+    def _render(self, ctx: ScanContext) -> None:
+        """Render the landing page in the browser: its DOM replaces the fetched
+        HTML, and a JavaScript redirect to another site extends the chain."""
+        if not ctx.options.render or ctx.fetch_status == "dead":
+            return
+        rendered, error = render(ctx.final_url)
+        if rendered is None:
+            ctx.features["render_error"] = error
+            return
+        ctx.features["rendered"] = True
+        if rendered.screenshot:
+            ctx.artifacts["screenshot.png"] = rendered.screenshot
+        self._follow_browser(ctx, rendered)
+        if rendered.status and rendered.status < 400 and ctx.fetch_status != "ok":
+            ctx.fetch_status = "ok"
+            ctx.features["status_code"] = rendered.status
+        ctx.html = rendered.html
+        ctx.artifacts["page.html"] = rendered.html
+
+    @staticmethod
+    def _follow_browser(ctx: ScanContext, rendered: Rendered) -> None:
+        """Append the browser's navigations to another registrable domain to
+        the redirect chain (`via: browser`) and move the landing URL there."""
+        start = registrable_domain(ctx.final_url)
+        if registrable_domain(rendered.final_url) == start:
+            return
+        last_on_start = max((i for i, u in enumerate(rendered.chain) if registrable_domain(u) == start),
+                            default=-1)
+        hops = [u for u in rendered.chain[last_on_start + 1:] if u not in ctx.redirect_chain]
+        chain = ctx.artifacts["redirects.json"]["chain"]
+        chain[-1]["text_len"] = len(visible_text(ctx.html)) if ctx.html else None
+        for url in hops or [rendered.final_url]:
+            chain.append({"url": url, "status": None, "via": "browser", "text_len": None})
+            ctx.redirect_chain.append(url)
+        chain[-1]["status"] = rendered.status
+        ctx.artifacts["redirects.json"]["final_url"] = rendered.final_url
+        ctx.final_url = rendered.final_url
+        ctx.features["final_domain"] = registrable_domain(rendered.final_url)
+
+    def _page(self, ctx: ScanContext) -> None:
+        """Page facts for the evidence pack; for a link that is not allowlisted,
+        the page, doorway and cloaking signals too."""
+        allowlisted = ctx.official_brand is not None
+        if ctx.html:
+            facts = page.analyse(ctx.html, ctx.final_url)
+            named = signals.brands_on_page(facts, ctx.features["final_domain"])
+            ctx.artifacts["page.json"] = {
+                **facts.to_json(),
+                "brands_on_page": [{"brand": b.brand.name_en, "where": b.where, "term": b.term} for b in named],
+                "urgency_terms": signals.urgency_terms(facts.text),
+                "exfiltration": signals.exfiltration_targets(ctx.html),
+            }
+            ctx.features.update(
+                title=facts.title,
+                brands_on_page=[b.brand.name_en for b in named],
+                sensitive_fields=sorted(facts.sensitive_fields()),
+                form_targets=sorted({registrable_domain(f.action) for f in facts.forms
+                                     if f.action.startswith("http")}),
+            )
+            if not allowlisted:
+                found, brand = signals.page_findings(facts, ctx.final_url, ctx.html)
+                ctx.findings += found
+                ctx.impersonated_brand = ctx.impersonated_brand or brand
+        if allowlisted:
+            return
+        ctx.findings += signals.doorway_findings(ctx.artifacts.get("redirects.json", {}).get("chain", []))
+        if ctx.fetch_status == "ok":
+            profiles = self._profiles(ctx)
+            ctx.artifacts["profiles.json"] = profiles
+            ctx.findings += signals.cloaking_findings(profiles)
+
+    def _profiles(self, ctx: ScanContext) -> dict[str, dict[str, Any]]:
+        """Fetch the link as each visitor profile (phone in Arabic, desktop, crawler)."""
+        def view(headers: dict[str, str]) -> dict[str, Any]:
+            res = resolve(ctx.url, self.client, self.insecure_client, headers=headers)
+            return signals.profile_view(res, page.analyse(res.html, res.final_url))
+
+        with ThreadPoolExecutor(max_workers=len(PROFILES)) as pool:
+            views = {key: pool.submit(view, headers) for key, headers in PROFILES.items()}
+            return {key: future.result() for key, future in views.items()}
 
     def _finish(self, ctx: ScanContext) -> ScanResult:
         result = self._verdict(ctx)

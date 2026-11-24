@@ -10,6 +10,7 @@ from urllib.parse import urljoin
 
 import httpx
 
+from baaz.config import DESKTOP_UA
 from baaz.domains import registrable_domain
 
 MAX_HOPS = 10
@@ -32,6 +33,21 @@ _JS_REDIRECT = re.compile(
 )
 _TAGS = re.compile(r"<script.*?</script>|<style.*?</style>|<[^>]+>", re.I | re.S)
 
+# Visitor profiles for the cloaking check: the same link fetched as a phone in
+# Arabic, a desktop browser and a search crawler.
+PROFILES: dict[str, dict[str, str]] = {
+    "mobile_ar": {
+        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 "
+                      "(KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1",
+        "Accept-Language": "ar-AE,ar;q=0.9,en;q=0.8",
+    },
+    "desktop": {"User-Agent": DESKTOP_UA, "Accept-Language": "en-US,en;q=0.9"},
+    "crawler": {
+        "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+        "Accept-Language": "en-US,en;q=0.9",
+    },
+}
+
 BLOCKED_CODES = frozenset({401, 403, 429, 503})
 DEAD_CODES = frozenset({404, 410, 500, 502, 504, 520, 521, 522, 523, 525, 526, 530})
 
@@ -40,7 +56,8 @@ DEAD_CODES = frozenset({404, 410, 500, 502, 504, 520, 521, 522, 523, 525, 526, 5
 class Hop:
     url: str
     status: int | None
-    via: str  # start | http | meta | script
+    via: str  # start | http | meta | script | browser
+    text_len: int | None = None  # visible text of a page that redirected by meta refresh or script
 
 
 @dataclass
@@ -67,7 +84,8 @@ class Resolution:
             "tls_verified": self.tls_verified,
             "shortener": self.shortener,
             "error": self.error,
-            "chain": [{"url": h.url, "status": h.status, "via": h.via} for h in self.hops],
+            "chain": [{"url": h.url, "status": h.status, "via": h.via, "text_len": h.text_len}
+                      for h in self.hops],
         }
 
 
@@ -135,6 +153,7 @@ def resolve(url: str, client: httpx.Client, insecure_client: httpx.Client | None
         if target and len(res.hops) <= MAX_HOPS:
             nxt = urljoin(current, target[0])
             if nxt != current:
+                res.hops[-1].text_len = len(visible_text(body))
                 res.hops.append(Hop(nxt, None, target[1]))
                 current = nxt
                 continue
