@@ -1,0 +1,201 @@
+url,truth,label,risk_score,verdict,fetch_status,fraud_type,top_reason
+hxxps://www[.]belepes-telekom-hu[.]vh22325[.]vh[.]net[.]pl/,fraud,legitimate,0,legitimate,ok,,The site's TLS certificate was issued 0 days ago.
+hxxp://id2140[.]business-support-partner[.]com/,fraud,legitimate,10,legitimate,dead,,The domain uses words meant to look official or urgent: support.
+hxxp://dan-san2006[.]github[.]io/Netflix_gt,fraud,legitimate,10,legitimate,ok,,The site is hosted on the free or site-builder platform github[.]io.
+hxxps://ephemeral-squirrel-f84ee4[.]netlify[.]app/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform netlify[.]app.
+hxxps://www[.]instagramloginpassword[.]blogspot[.]com/,fraud,legitimate,20,legitimate,dead,,The domain uses words meant to look official or urgent: login.
+hxxp://hotelbs[.]websiteseguro[.]com/css/outl0ok/true/login/aces[.]php,fraud,legitimate,0,legitimate,ok,,The domain has been registered for 21 years.
+hxxps://sso-auth[.]com/E[.]bGYjM2SvWMNs4g?/facebook_secure_account?id=759347502378427672987349826578129038123807394,fraud,legitimate,0,legitimate,dead,,
+hxxps://www[.]madethis[.]website/s/35ejwgy8/#tanum@f96bf19569d402cd21ad3f3e989b16c183b7[.]com,fraud,legitimate,35,legitimate,ok,,The page is an empty doorway that sends visitors on to microsoftonline[.]com.
+hxxp://raeward-mymidasbuy[.]de5[.]net/,fraud,legitimate,15,legitimate,ok,,"The page presents itself as Meta / Facebook and asks for a password, but it is not on an official Meta / Facebook domain."
+hxxp://ifps62-458rn4tdu-arcadawebapps2[.]vercel[.]app/,fraud,fraud,40,suspicious,ok,phishing,"The page presents itself as Instagram and asks for a password, but it is not on an official Instagram domain."
+hxxp://netflix-clonepractice[.]vercel[.]app/,fraud,fraud,50,suspicious,dead,phishing,netflix-clonepractice[.]vercel[.]app imitates the official domain netflix[.]com (brand name with extra words).
+hxxp://c1t77f-kehr8a7q8-arcadawebapps2[.]vercel[.]app/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform vercel[.]app.
+hxxps://www[.]notflix-azure[.]vercel[.]app/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform vercel[.]app.
+hxxp://ifps62-ag1rcrr19-arcadawebapps2[.]vercel[.]app/,fraud,fraud,40,suspicious,ok,phishing,"The page presents itself as Instagram and asks for a password, but it is not on an official Instagram domain."
+hxxp://netflix-clone-update-brown[.]vercel[.]app/,fraud,fraud,60,suspicious,ok,phishing,netflix-clone-update-brown[.]vercel[.]app imitates the official domain netflix[.]com (brand name with extra words).
+hxxps://www[.]b35r[.]com/fish/61,fraud,legitimate,0,legitimate,dead,,The domain has been registered for 2 years.
+hxxp://squeeth-uniswap[.]netlify[.]app/,fraud,legitimate,10,legitimate,ok,,The site is hosted on the free or site-builder platform netlify[.]app.
+hxxp://facebook-ic[.]blogspot[.]com/?m=1,fraud,fraud,50,suspicious,ok,phishing,facebook-ic[.]blogspot[.]com imitates the official domain facebook[.]com (brand name with extra words).
+hxxps://klonex-ploko-b8c210-wplm-hfbb[.]pages[.]dev/,fraud,legitimate,25,legitimate,ok,,The page is an empty doorway that sends visitors on to facebook[.]com.
+hxxp://interface-4sv[.]pages[.]dev/,fraud,legitimate,20,legitimate,blocked,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://www[.]ivana-alawijosjis[.]blogspot[.]com/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform blogspot[.]com.
+hxxps://f006[.]backblazeb2[.]com/file/uitavm/index[.]html,fraud,legitimate,20,legitimate,ok,,The site is hosted on the free or site-builder platform backblazeb2[.]com.
+hxxps://urlz[.]li/B2McG0BJ,fraud,legitimate,20,legitimate,ok,,The site is hosted on the free or site-builder platform backblazeb2[.]com.
+hxxp://jstjgc[.]com/,fraud,legitimate,0,legitimate,ok,,The site's TLS certificate was issued 1 days ago.
+hxxp://www[.]review102-account-activity286[.]weebly[.]com/,fraud,legitimate,20,legitimate,dead,,The domain uses words meant to look official or urgent: account.
+hxxps://mekucoinlogon[.]gitbook[.]io/us,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform gitbook[.]io.
+hxxp://s3[.]dualstack[.]us-east-1[.]amazonaws[.]com/anydo-user-uploads/wbEmfWOk9i49CpNMrttmoQ_e432b2891c874ce8967ec32fc71d5db5_login[.]htm,fraud,fraud,60,suspicious,ok,phishing,"A form on the page sends what you type to another domain, api[.]telegram[.]org."
+hxxps://vmi3716826[.]contaboserver[.]net/gles/oyo/gles/msg[.]php,fraud,legitimate,10,legitimate,ok,,The site is hosted on the free or site-builder platform contaboserver[.]net.
+hxxps://jahus882nb44s-99dk7snbvd1jdh-772772hhwjjedbhhgc[.]s3[.]eu-central-1[.]amazonaws[.]com/csdu-sok[.]html?token=YmFyYmFyYS5zdWxzZXJAY2FiYi1jaGVtaWNhbHMuY29t,fraud,legitimate,10,legitimate,ok,,The site is hosted on the free or site-builder platform amazonaws[.]com.
+hxxps://didianeensing-fft-oshehun[.]pages[.]dev/help/con/appeals/submit-appeal-form/return/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://www[.]eebazzars[.]com/,fraud,legitimate,30,legitimate,dead,,The domain was registered only 0 days ago (2026-11-24).
+hxxps://sia0126[.]github[.]io/Netflix/,fraud,legitimate,10,legitimate,ok,,The site is hosted on the free or site-builder platform github[.]io.
+hxxps://my-business-105356-106518[.]square[.]site/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform square[.]site.
+hxxp://mylogenkucon[.]webflow[.]io/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform webflow[.]io.
+hxxp://gleaming-play-986869[.]framer[.]app/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform framer[.]app.
+hxxp://1eq37-bsq-fpw7-6pici-29-09-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://zrxmk82pla-4w7n2xt-9j3d5g-vq618c[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://1141y-maq-4a7n-th3jc-01-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://wqzmt829-5k3p7xn-4j8d2g-vr61[.]pages[.]dev/,fraud,legitimate,20,legitimate,blocked,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://uuzce-s1g-gyur-43mm8-30-09-2026-aa[.]pages[.]dev/,fraud,legitimate,20,legitimate,blocked,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://xvptq82-6m3w9zk-4j7d2g-rn618[.]pages[.]dev/,fraud,legitimate,20,legitimate,blocked,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://sp28ct11-lazruni-biz-kormvako[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://sp28ct11-dazkaro-biz-vunmelo[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://sp28ct11-zulvoro-biz-kelmari[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://vqnxt8bskra-kldzpwur-9e0f5c-yp000a[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://sp28ct11-melzuni-biz-dorkavi[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://sp28ct11-melruni-biz-zorkavo[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://wvwcx-emf-1nx7-n0duw-29-09-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://sp28ct11-vemkaro-biz-kuzrani[.]pages[.]dev/,fraud,legitimate,20,legitimate,blocked,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://lx016-yny-g2u5-qkkzc-24-09-2026-hh[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://ajort-fym-sax6-bhu62-24-09-2026-hh[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://769x7-l41-xrra-38ld5-01-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://2u19d-hhl-bmem-2gl0a-30-09-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://qavnero-mpt-zulfami-p5r3xe79[.]pages[.]dev/,fraud,legitimate,20,legitimate,blocked,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://ptvd9-f5v-857a-15vyc-29-09-2026-aa-4t1[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://sp28ct11-nuvkaro-biz-vemzilo[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://aj0po-v8p-tg2g-iwhdc-01-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://69c5r-2ka-vkd9-wvyae-30-09-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://tf1hm-va6-286x-ndmtn-24-09-2026-hh[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://xw5et-j6w-nhj5-hm71m-30-09-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://mybtmailweb[.]weeblysite[.]com/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform weeblysite[.]com.
+hxxp://sp25ct11-kavreko-biz-dazvuni[.]pages[.]dev/,fraud,legitimate,20,legitimate,blocked,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://plashiki[.]com/p234/renews[.]html#user%2540example[.]com,fraud,legitimate,0,legitimate,ok,,
+hxxps://sindikat[.]cc/shared/95796[.]html,fraud,legitimate,0,legitimate,ok,,"The page uses urgency or payment-pressure wording: Account Suspended, Account has been suspended."
+hxxp://www[.]info-shopeebrands99[.]blogspot[.]com/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform blogspot[.]com.
+hxxps://www[.]frontdeskportal[.]icu/,fraud,fraud,90,fraud,ok,phishing,"A form on the page sends what you type to another domain, api[.]telegram[.]org."
+hxxp://mail[.]valterbuscarili1795448156981[.]1510100[.]meusitehostgator[.]com[.]br/,fraud,legitimate,0,legitimate,dead,,meusitehostgator[.]com[.]br is among the most visited sites on the web (rank 9877).
+hxxps://www[.]aegtecnoservice[.]it/public/buchershoerling2023/metahbcha/recovery[.]html,fraud,legitimate,0,legitimate,dead,,The domain has been registered for 16 years.
+hxxps://www[.]roblox[.]com[.]pt/users/898385753150/profile,fraud,legitimate,0,legitimate,dead,,
+hxxps://g5[.]lu/ge2uu,fraud,legitimate,0,legitimate,dead,,
+hxxps://dhl-deliverylogistic7876[.]s3[.]us-east-2[.]amazonaws[.]com/index+(32)[.]html,fraud,legitimate,35,legitimate,dead,,dhl-deliverylogistic7876[.]s3[.]us-east-2[.]amazonaws[.]com contains the brand name DHL but is not an official DHL domain.
+hxxp://moonstarter-earn[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://supportcrpt-client[.]pro/,fraud,fraud,40,suspicious,dead,phishing,The domain was registered only 1 days ago (2026-11-23).
+hxxp://aktiffkan-paylatterz[.]jmm[.]my[.]id/,fraud,legitimate,0,legitimate,dead,,
+hxxps://zhouxiaoka[.]github[.]io/autoclip_intro/?lang=en,fraud,legitimate,10,legitimate,ok,,The site is hosted on the free or site-builder platform github[.]io.
+hxxps://www[.]login-password-five[.]vercel[.]app/,fraud,legitimate,20,legitimate,dead,,The domain uses words meant to look official or urgent: login.
+hxxp://www[.]complianceguides[.]org/,fraud,legitimate,30,legitimate,dead,,The domain was registered only 2 days ago (2026-11-22).
+hxxp://cryby[.]xchhx[.]biz[.]id/,fraud,legitimate,0,legitimate,dead,,
+hxxp://danaa-iindonesiaa[.]hvv[.]my[.]id/,fraud,legitimate,0,legitimate,dead,,
+hxxps://bauha-30p-wqj6-76l5s-26-10-2026-aa[.]pages[.]dev/qaz-wsx-edc-rfv,fraud,legitimate,25,legitimate,ok,,The page is an empty doorway that sends visitors on to facebook[.]com.
+hxxps://8ovys-p8s-7vc7-rw9nt-23-10-2026-aa[.]pages[.]dev/qaz-wsx-edc-rfv,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://9l0w9-xin-fxu4-9hc7b-22-10-2026-aa[.]pages[.]dev/qaz-wsx-edc-rfv,fraud,legitimate,25,legitimate,ok,,The page is an empty doorway that sends visitors on to facebook[.]com.
+hxxps://as7sh-162-rocv-hckc5-22-10-2026-aa[.]pages[.]dev/qaz-wsx-edc-rfv,fraud,legitimate,25,legitimate,ok,,The page is an empty doorway that sends visitors on to facebook[.]com.
+hxxps://9lrdg-ymi-m8fj-92v4t-18-10-2026-aa[.]pages[.]dev/qaz-wsx-edc-rfv,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://b4gpg-w01-6siw-0xlm2-18-10-2026-aa[.]pages[.]dev/qaz-wsx-edc-rfv,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://8gtts-5rq-sfbu-9vtjn-18-10-2026-aa[.]pages[.]dev/qaz-wsx-edc-rfv,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://xfinity-106534[.]square[.]site/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform square[.]site.
+hxxps://stepflow2mt[.]swedencentral[.]cloudapp[.]azure[.]com/ch/ch_css_mkit/,fraud,legitimate,20,legitimate,ok,,The site is hosted on the free or site-builder platform cloudapp[.]azure[.]com.
+hxxps://234[.]158[.]66[.]148[.]host[.]secureserver[.]net/swissss/login[.]php?sessionid=sess_249f2c77ac4002188fd5d6b6d9db4c3d&tokenid=8580a9b028813f512c08fb86&uid=B408218B3E,fraud,fraud,45,suspicious,ok,doorway,The page is an empty doorway that sends visitors on to java[.]com.
+hxxp://lingesh077[.]github[.]io/wepage,fraud,legitimate,10,legitimate,ok,,The site is hosted on the free or site-builder platform github[.]io.
+hxxps://8s7q0g-qw999agreg-5m2k9p1z8x-qwxk[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://www[.]cb-apple-pay-hackathon-uniswap[.]vercel[.]app/,fraud,legitimate,25,legitimate,dead,,The domain uses words meant to look official or urgent: pay.
+hxxps://joensahkopojatfi[.]weupdaa[.]workers[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform workers[.]dev.
+hxxp://qa-amex[.]ourvacationcenter[.]com/,fraud,legitimate,0,legitimate,dead,,The domain has been registered for 25 years.
+hxxps://security-server-stat-9egk[.]bolt[.]host/?naps,fraud,fraud,80,fraud,ok,phishing,"A form on the page sends what you type to another domain, api[.]telegram[.]org."
+hxxps://about-blank-b9l[.]pages[.]dev/robots[.]txt/2606%3A4700%3A310c%3A%3Aac42%3A2f59/appeals/submit-appeal-form/returnappeals/submit-appeal-formappeals/submit-appeal-form/return/,fraud,legitimate,20,legitimate,dead,,The link is unusually long (174 characters).
+hxxps://u[.]to/XbPiIg,fraud,legitimate,0,legitimate,dead,,The link was shortened with u[.]to; Baaz followed it to the real destination.
+hxxps://track[.]assistance-ui[.]info/help?AZK,fraud,legitimate,20,legitimate,dead,,The domain was registered 15 days ago (2026-11-09).
+hxxp://www[.]airbnb-web-clone[.]vercel[.]app/,fraud,legitimate,10,legitimate,ok,,The site is hosted on the free or site-builder platform vercel[.]app.
+hxxp://sp28ct11-zemkuni-biz[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://k460n-5lb-tz16-zlocm-19-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://cjy6s-x3t-r6ix-9mof3-17-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://h0709-87q-g5zf-5xr8n-18-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://3q5r8-nqn-a97p-zmylm-28-09-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://kngsc-93y-rnal-4sks6-19-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://sp28ct11-mavkaro-biz-velzuni[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://6hh6x-6rr-mvef-c86gz-19-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://rm36q-sbx-b68r-8dmvb-18-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://lh4ml-gco-36ng-wsd06-17-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://clyed-pem-2dik-gw5ul-19-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://m0cbt-uhx-o0au-c62vj-17-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://diand-lxb-dp5p-z0dtd-17-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://ytjf7-81n-b6j1-ugdjc-17-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://sp33ct-turavo-biz-zumeki-parelo[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://shopi60[.]com/,fraud,legitimate,0,legitimate,dead,,
+hxxps://meta-fuzaro-biz-nimelo-kavuki[.]pages[.]dev/,fraud,legitimate,15,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://sp33ct-mavuni-biz-pareko-zudelo[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://xj0ai-1dx-b9eu-cr1ev-16-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://grh99-1aw-e90t-2qgko-16-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://vup4t-kca-8435-a67de-17-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://b45q1-ayl-y57x-zkp5a-16-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://bn0fg-2x2-g5m9-ym4cq-17-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://4cc17-eia-lvos-8383k-16-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://hledk-cr0-yihy-sq5fd-17-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://sp28ct11-davzuni-biz[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://g19v0-nje-2ezd-60d1l-17-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://sp28ct11-melzaro-biz-nuvkuni[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://ybmgc-1kl-8atg-jvyy1-23-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://sp28ct11-kelzaro-biz-nuvdani[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://3hhkn-j2p-eo14-6dyko-18-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://u2kh0-2nj-joh5-mcox7-19-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://ixgrm-b3t-o2es-zqxyf-19-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://sp11ct-kolvar-biz8-drasik-hemlor[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://kluaa-1nx-9sh3-j8xfz-17-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://x1vsw-w1x-13qb-pz2w4-19-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://294ma-vn4-8z5u-lod5c-16-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://880vy-vpt-efsb-jekuw-19-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://58u2n-mnw-nd0y-d4ph0-16-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://84e3c-p7t-xtor-q2ajw-18-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://lemqeni-mpt-vurqalo-h4d8ka61[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://s9bl9-w9u-pcp0-nx47g-18-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://xavqelo-mpt-rumzani-k6x8me51[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://stjld-0wb-1p58-moayp-19-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://lhd78-1q6-69i9-yt6t5-29-09-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://mt5fh-4qc-zo6m-syfg6-17-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://l6iu5-ogv-fkwk-z9qp9-16-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://s7liw-lzn-xs1u-r68d1-29-09-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://c6vl9-hbw-vmvs-d6rp0-19-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://e858o-a8k-s3ix-sqmvu-16-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://nhdh9-2b6-emfa-9tguz-01-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://yb81n-yjw-yr7i-50vvd-19-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://70kdk-wea-v5o2-yu30i-16-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://uugkl-l8u-aqhz-yuami-16-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://site-6kj7l45ix[.]godaddysites[.]com/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform godaddysites[.]com.
+hxxp://lokeshgoud15[.]github[.]io/Insta-clone,fraud,legitimate,10,legitimate,ok,,The site is hosted on the free or site-builder platform github[.]io.
+hxxps://metamask-docs-ctqr7yuof-consensys-ddffed67[.]vercel[.]app/embedded-wallets/sdk/unreal,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform vercel[.]app.
+hxxps://flyn[.]co/www-roblox-coms-users-2610432075-profiles,fraud,legitimate,15,legitimate,ok,,The site shows different content to different visitors (search crawler).
+hxxp://att-103444-106506[.]square[.]site/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform square[.]site.
+hxxps://aramex[.]a-track-au[.]com/,fraud,fraud,69,suspicious,dead,phishing,The domain was registered only 1 days ago (2026-11-23).
+hxxps://aramex[.]i-track-au[.]com/,fraud,fraud,69,suspicious,dead,phishing,The domain was registered only 1 days ago (2026-11-23).
+hxxps://aramex[.]s-track-au[.]com/,fraud,fraud,69,suspicious,dead,phishing,The domain was registered only 1 days ago (2026-11-23).
+hxxps://aramex[.]p-track-au[.]com/,fraud,fraud,69,suspicious,dead,phishing,The domain was registered only 1 days ago (2026-11-23).
+hxxps://filesxonmnasonorderpdfdocumentsprdlrxszmn[.]pages[.]dev/second[.]htm?email=belen1@26d669fdd13f9b52011ec719714d302802a1[.]org&&fstryfeybewv?tyweguykd6*0$!734bkewjybnggs%23hsh%3C%3E2%@%5E32,fraud,fraud,40,suspicious,ok,phishing,"The page presents itself as Adobe and asks for a password, but it is not on an official Adobe domain."
+hxxp://ynilerineskisiym[.]com/,fraud,legitimate,30,legitimate,dead,,The domain was registered only 2 days ago (2026-11-22).
+hxxps://roses53[.]github[.]io/phish-site-,fraud,legitimate,10,legitimate,ok,,The site is hosted on the free or site-builder platform github[.]io.
+hxxps://teachschool[.]up[.]railway[.]app/wp-content/plugins/Seurnation/seur/page/index[.]php/,fraud,legitimate,10,legitimate,ok,,The site is hosted on the free or site-builder platform up[.]railway[.]app.
+hxxp://c3t4k-kp0nfree[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://alkhalidtours[.]com/login/ycs/login[.]php,fraud,legitimate,0,legitimate,ok,,The domain has been registered for 20 years.
+hxxps://sh0pify15[.]com/,fraud,legitimate,0,legitimate,dead,,
+hxxp://sjhskmn[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://member084[.]agencyconnectnetwork[.]com/,fraud,legitimate,30,legitimate,dead,,The domain was registered only 2 days ago (2026-11-22).
+hxxp://7bz5f-g8m-64td-qbcbx-19-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://u8zkk-vva-2jg8-kalrm-18-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://ainuq-t60-cnpz-mtqoa-16-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://je6ig-60f-teyy-65rzc-21-09-2026-hh[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://veii-kynygs-jc9x-y7com-3fr[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://h6ckc-42y-croo-4smka-23-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://ejo3a-wfj-g9zg-ngnc0-20-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://izjaz-eud-5bxg-835a2-27-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://ohw11-kt9-kmqw-zhrp7-23-09-2026-hh[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://sp28ct11-nuvrako-biz-zemvani[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://0yrlm-px5-b12s-tpgya-20-10-2026-aa[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxp://zoomconnect-cr5[.]pages[.]dev/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://auth[.]properties/E[.]Y-SlLj4KI86yrQ?/microsoftonline/mailbox/upgrade&userid=75468973984785978212312307887543,fraud,legitimate,0,legitimate,dead,,
+hxxp://member157[.]metaagencypartner[.]com/,fraud,legitimate,30,legitimate,dead,,The domain was registered only 4 days ago (2026-11-20).
+hxxp://ynilerineskisiym[.]net/,fraud,legitimate,30,legitimate,dead,,The domain was registered only 2 days ago (2026-11-22).
+hxxp://inboxmailapp[.]com/,fraud,legitimate,0,legitimate,dead,,
+hxxp://mylogonkucon[.]webflow[.]io/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform webflow[.]io.
+hxxp://kukkinlognn[.]webflow[.]io/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform webflow[.]io.
+hxxps://sp30ct10-zanvemi-biz-kunelo[.]pages[.]dev/send_appeal_request,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform pages[.]dev.
+hxxps://royacloudnat[.]github[.]io/zhwuwhru/,fraud,fraud,50,suspicious,ok,phishing,"A form on the page sends what you type to another domain, api[.]telegram[.]org."
+hxxps://netflix-clone-react-1[.]vercel[.]app/,fraud,fraud,50,suspicious,dead,phishing,netflix-clone-react-1[.]vercel[.]app imitates the official domain netflix[.]com (brand name with extra words).
+hxxps://hequicom[.]com/infiniteroadstrucking/download[.]html,fraud,legitimate,0,legitimate,ok,,The domain has been registered for 7 years.
+hxxps://ac20s[.]lat/,fraud,legitimate,20,legitimate,dead,,The domain was registered 15 days ago (2026-11-09).
+hxxps://web-nickkoutrelakos-eco-178-unblock-permissioned-f27a9b-uniswap[.]vercel[.]app/?intro=true,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform vercel[.]app.
+hxxp://www[.]oodqyhjbys[.]com/,fraud,legitimate,30,legitimate,dead,,The domain was registered only 0 days ago (2026-11-24).
+hxxps://roblox[.]com[.]kz/users/667126232/profile,fraud,legitimate,0,legitimate,dead,,
+hxxps://sharemyhtml[.]com/p/kfVPiGQvY9/,fraud,legitimate,0,legitimate,dead,,
+hxxps://www[.]365kor[.]site/,fraud,legitimate,0,legitimate,dead,,
+hxxps://www[.]pemenangshopee557[.]blogspot[.]com/,fraud,legitimate,10,legitimate,dead,,The site is hosted on the free or site-builder platform blogspot[.]com.

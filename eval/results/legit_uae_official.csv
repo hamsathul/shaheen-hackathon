@@ -1,0 +1,35 @@
+url,truth,label,risk_score,verdict,fetch_status,fraud_type,top_reason
+https://adcb.com/,legitimate,legitimate,0,legitimate,ok,,adcb.com is an official domain of Abu Dhabi Commercial Bank (ADCB).
+https://addc.ae/,legitimate,legitimate,0,legitimate,dead,,addc.ae is an official domain of Abu Dhabi Distribution Company (ADDC).
+https://adib.ae/,legitimate,legitimate,0,legitimate,blocked,,adib.ae is an official domain of Abu Dhabi Islamic Bank (ADIB).
+https://adib.com/,legitimate,legitimate,0,legitimate,ok,,adib.ae is an official domain of Abu Dhabi Islamic Bank (ADIB).
+https://adpolice.gov.ae/,legitimate,legitimate,0,legitimate,ok,,adpolice.gov.ae is an official domain of Abu Dhabi Police.
+https://aramex.com/,legitimate,legitimate,0,legitimate,blocked,,aramex.com is an official domain of Aramex.
+https://bankfab.com/,legitimate,legitimate,0,legitimate,ok,,bankfab.com is an official domain of First Abu Dhabi Bank (FAB).
+https://centralbank.ae/,legitimate,legitimate,0,legitimate,ok,,centralbank.ae is an official domain of Central Bank of the UAE.
+https://dewa.gov.ae/,legitimate,legitimate,0,legitimate,ok,,dewa.gov.ae is an official domain of Dubai Electricity and Water Authority (DEWA).
+https://dib.ae/,legitimate,legitimate,0,legitimate,ok,,dib.ae is an official domain of Dubai Islamic Bank.
+https://du.ae/,legitimate,legitimate,0,legitimate,ok,,du.ae is an official domain of du.
+https://dubaipolice.gov.ae/,legitimate,legitimate,0,legitimate,ok,,dubaipolice.gov.ae is an official domain of Dubai Police.
+https://eand.ae/,legitimate,legitimate,0,legitimate,ok,,eand.ae is an official domain of e& (Etisalat).
+https://eand.com/,legitimate,legitimate,0,legitimate,ok,,eand.com is an official domain of e& (Etisalat).
+https://emirates.com/,legitimate,legitimate,0,legitimate,blocked,,emirates.com is an official domain of Emirates.
+https://emiratesnbd.com/,legitimate,legitimate,0,legitimate,ok,,emiratesnbd.com is an official domain of Emirates NBD.
+https://emiratespost.ae/,legitimate,legitimate,0,legitimate,ok,,emiratespost.ae is an official domain of Emirates Post.
+https://emiratespostshop.ae/,legitimate,legitimate,0,legitimate,ok,,emiratespostshop.ae is an official domain of Emirates Post.
+https://etihad.com/,legitimate,legitimate,0,legitimate,timeout,,etihad.com is an official domain of Etihad Airways.
+https://etisalat.ae/,legitimate,legitimate,0,legitimate,ok,,eand.ae is an official domain of e& (Etisalat).
+https://icp.gov.ae/,legitimate,legitimate,0,legitimate,ok,,"icp.gov.ae is an official domain of Federal Authority for Identity, Citizenship, Customs and Port Security (ICP)."
+https://mashreq.com/,legitimate,legitimate,0,legitimate,ok,,mashreq.com is an official domain of Mashreq.
+https://mashreqbank.com/,legitimate,legitimate,0,legitimate,ok,,mashreq.com is an official domain of Mashreq.
+https://mohre.gov.ae/,legitimate,legitimate,0,legitimate,ok,,mohre.gov.ae is an official domain of Ministry of Human Resources and Emiratisation (MOHRE).
+https://moi.gov.ae/,legitimate,legitimate,0,legitimate,ok,,moi.gov.ae is an official domain of Ministry of Interior (UAE).
+https://noon.com/,legitimate,legitimate,0,legitimate,timeout,,noon.com is an official domain of noon.
+https://rakbank.ae/,legitimate,legitimate,0,legitimate,ok,,rakbank.ae is an official domain of RAKBANK.
+https://rta.ae/,legitimate,legitimate,0,legitimate,ok,,rta.ae is an official domain of Roads and Transport Authority (Dubai RTA).
+https://rta.gov.ae/,legitimate,legitimate,0,legitimate,dead,,rta.gov.ae is an official domain of Roads and Transport Authority (Dubai RTA).
+https://salik.ae/,legitimate,legitimate,0,legitimate,ok,,salik.ae is an official domain of Salik.
+https://tamm.abudhabi/,legitimate,legitimate,0,legitimate,ok,,tamm.abudhabi is an official domain of TAMM.
+https://taqadistribution.com/,legitimate,legitimate,0,legitimate,ok,,taqadistribution.com is an official domain of Abu Dhabi Distribution Company (ADDC).
+https://tax.gov.ae/,legitimate,legitimate,0,legitimate,ok,,tax.gov.ae is an official domain of Federal Tax Authority.
+https://uaepass.ae/,legitimate,legitimate,0,legitimate,ok,,uaepass.ae is an official domain of UAE PASS.

@@ -3,7 +3,7 @@ anker-gr[.]com,fraud,fraud,100,fraud,ok,fake_storefront_skimmer,"Checkout uses t
 ankerczech[.]com,fraud,fraud,100,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'yhp', seen only on card-skimming fake stores."
 ankerhu[.]com,fraud,fraud,70,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'yhp', seen only on card-skimming fake stores."
 ankernl[.]com,fraud,fraud,70,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'yhp', seen only on card-skimming fake stores."
-beatsuae[.]com,fraud,fraud,100,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
+beatsuae[.]com,fraud,fraud,85,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
 bose-ar[.]com,fraud,fraud,100,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
 bose-colombia[.]com,fraud,fraud,100,fraud,blocked,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
 bose-egypt[.]com,fraud,fraud,100,fraud,blocked,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
@@ -41,46 +41,46 @@ bosesksa[.]com,fraud,fraud,90,fraud,blocked,fake_storefront_skimmer,"Checkout us
 bosesmalaysia[.]com,fraud,fraud,90,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
 bosesmexico[.]com,fraud,fraud,90,fraud,blocked,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
 bosespain[.]com,fraud,fraud,100,fraud,ok,fake_storefront_skimmer,Shares a site administrator account with confirmed fraud cluster A-be0c7081.
-bosesthailand[.]com,fraud,fraud,90,fraud,blocked,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
+bosesthailand[.]com,fraud,fraud,100,fraud,blocked,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
 bosesuruguay[.]com,fraud,fraud,100,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
 boseswitzerland[.]com,fraud,fraud,100,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
 bosetr[.]com,fraud,fraud,90,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
 boseturkey[.]com,fraud,fraud,100,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
 dreameaustralia[.]com,fraud,fraud,100,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
 dreameireland[.]com,fraud,fraud,100,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
-harmankardon-indonesia[.]com,fraud,fraud,100,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
-harmankardon-ireland[.]com,fraud,fraud,100,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
-harmankardonargentina[.]com,fraud,fraud,100,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
-harmankardonaustralia[.]com,fraud,fraud,100,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
-harmankardonbelgium[.]com,fraud,fraud,100,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
-harmankardoncanada[.]com,fraud,fraud,100,fraud,ok,fake_storefront_skimmer,harmankardoncanada[.]com imitates the official domain harmankardon[.]com (brand name with extra words).
-harmankardonchile[.]com,fraud,fraud,100,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
-harmankardoncolombia[.]com,fraud,fraud,100,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
-harmankardonecuador[.]com,fraud,fraud,100,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
-harmankardonegypt[.]com,fraud,fraud,100,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
-harmankardonfrance[.]com,fraud,fraud,100,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
-harmankardonhungary[.]com,fraud,fraud,100,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
-harmankardonkuwait[.]com,fraud,fraud,100,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
-harmankardonmalaysia[.]com,fraud,fraud,100,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
-harmankardonnz[.]com,fraud,fraud,90,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
-harmankardonperu[.]com,fraud,fraud,100,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
-harmankardonphilippines[.]com,fraud,fraud,100,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
-harmankardonqatar[.]com,fraud,fraud,100,fraud,blocked,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
-harmankardonsaudiarabia[.]com,fraud,fraud,100,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
-harmankardonsingapore[.]com,fraud,fraud,100,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
-harmankardonuae[.]com,fraud,fraud,100,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
-jbl-netherlands[.]com,fraud,fraud,60,suspicious,timeout,phishing,"jbl-netherlands[.]com combines the brand JBL with the place name 'netherlands', a pattern used by fake local stores."
+harmankardon-indonesia[.]com,fraud,fraud,69,suspicious,timeout,phishing,harmankardon-indonesia[.]com imitates the official domain harmankardon[.]com (brand name with extra words).
+harmankardon-ireland[.]com,fraud,fraud,65,suspicious,timeout,phishing,harmankardon-ireland[.]com imitates the official domain harmankardon[.]com (brand name with extra words).
+harmankardonargentina[.]com,fraud,fraud,65,suspicious,timeout,phishing,harmankardonargentina[.]com imitates the official domain harmankardon[.]com (brand name with extra words).
+harmankardonaustralia[.]com,fraud,fraud,65,suspicious,timeout,phishing,harmankardonaustralia[.]com imitates the official domain harmankardon[.]com (brand name with extra words).
+harmankardonbelgium[.]com,fraud,fraud,65,suspicious,timeout,phishing,harmankardonbelgium[.]com imitates the official domain harmankardon[.]com (brand name with extra words).
+harmankardoncanada[.]com,fraud,fraud,65,suspicious,timeout,phishing,harmankardoncanada[.]com imitates the official domain harmankardon[.]com (brand name with extra words).
+harmankardonchile[.]com,fraud,fraud,65,suspicious,timeout,phishing,harmankardonchile[.]com imitates the official domain harmankardon[.]com (brand name with extra words).
+harmankardoncolombia[.]com,fraud,fraud,65,suspicious,timeout,phishing,harmankardoncolombia[.]com imitates the official domain harmankardon[.]com (brand name with extra words).
+harmankardonecuador[.]com,fraud,fraud,65,suspicious,timeout,phishing,harmankardonecuador[.]com imitates the official domain harmankardon[.]com (brand name with extra words).
+harmankardonegypt[.]com,fraud,fraud,65,suspicious,timeout,phishing,harmankardonegypt[.]com imitates the official domain harmankardon[.]com (brand name with extra words).
+harmankardonfrance[.]com,fraud,fraud,65,suspicious,timeout,phishing,harmankardonfrance[.]com imitates the official domain harmankardon[.]com (brand name with extra words).
+harmankardonhungary[.]com,fraud,fraud,65,suspicious,timeout,phishing,harmankardonhungary[.]com imitates the official domain harmankardon[.]com (brand name with extra words).
+harmankardonkuwait[.]com,fraud,fraud,65,suspicious,timeout,phishing,harmankardonkuwait[.]com imitates the official domain harmankardon[.]com (brand name with extra words).
+harmankardonmalaysia[.]com,fraud,fraud,65,suspicious,timeout,phishing,harmankardonmalaysia[.]com imitates the official domain harmankardon[.]com (brand name with extra words).
+harmankardonnz[.]com,fraud,legitimate,0,legitimate,timeout,,
+harmankardonperu[.]com,fraud,fraud,65,suspicious,timeout,phishing,harmankardonperu[.]com imitates the official domain harmankardon[.]com (brand name with extra words).
+harmankardonphilippines[.]com,fraud,fraud,65,suspicious,timeout,phishing,harmankardonphilippines[.]com imitates the official domain harmankardon[.]com (brand name with extra words).
+harmankardonqatar[.]com,fraud,fraud,65,suspicious,blocked,phishing,harmankardonqatar[.]com imitates the official domain harmankardon[.]com (brand name with extra words).
+harmankardonsaudiarabia[.]com,fraud,fraud,65,suspicious,timeout,phishing,harmankardonsaudiarabia[.]com imitates the official domain harmankardon[.]com (brand name with extra words).
+harmankardonsingapore[.]com,fraud,fraud,65,suspicious,timeout,phishing,harmankardonsingapore[.]com imitates the official domain harmankardon[.]com (brand name with extra words).
+harmankardonuae[.]com,fraud,fraud,65,suspicious,timeout,phishing,harmankardonuae[.]com imitates the official domain harmankardon[.]com (brand name with extra words).
+jbl-netherlands[.]com,fraud,fraud,100,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
 jbl-uae[.]com,fraud,fraud,100,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
 jbldubai[.]com,fraud,fraud,100,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
 jblgermany[.]com,fraud,fraud,100,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'yhp', seen only on card-skimming fake stores."
 marshallegypt[.]com,fraud,fraud,60,suspicious,ok,fake_storefront_skimmer,Shares a site administrator account with confirmed fraud cluster A-be0c7081.
 marshalllebanon[.]com,fraud,fraud,60,suspicious,ok,fake_storefront_skimmer,Shares a site administrator account with confirmed fraud cluster A-be0c7081.
 marshallmalta[.]com,fraud,fraud,60,suspicious,ok,fake_storefront_skimmer,Shares a site administrator account with confirmed fraud cluster A-be0c7081.
-marshallromania[.]com,fraud,fraud,90,fraud,ok,fake_storefront_skimmer,Shares a site administrator account with confirmed fraud cluster A-be0c7081.
+marshallromania[.]com,fraud,fraud,80,fraud,ok,fake_storefront_skimmer,Shares a site administrator account with confirmed fraud cluster A-be0c7081.
 marshallslovenia[.]com,fraud,fraud,100,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
 marshallsuae[.]com,fraud,fraud,100,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
 sennheisernetherlands[.]com,fraud,fraud,100,fraud,blocked,fake_storefront_skimmer,"Checkout uses the private payment gateway 'sankee', seen only on card-skimming fake stores."
-shark-uae[.]com,fraud,fraud,90,fraud,ok,fake_storefront_skimmer,"The page presents itself as Ministry of Interior (UAE) and asks for a password, but it is not on an official Ministry of Interior (UAE) domain."
+shark-uae[.]com,fraud,fraud,60,suspicious,ok,fake_storefront_skimmer,Shares a site administrator account with confirmed fraud cluster A-2f0c74f7.
 sharkfrance[.]com,fraud,fraud,60,suspicious,blocked,fake_storefront_skimmer,Shares a site administrator account with confirmed fraud cluster A-2f0c74f7.
 skullcandy-mexico[.]com,fraud,fraud,65,suspicious,dead,phishing,skullcandy-mexico[.]com imitates the official domain skullcandy[.]com (brand name with extra words).
 skullcandysweden[.]com,fraud,fraud,100,fraud,ok,fake_storefront_skimmer,"Checkout uses the private payment gateway 'yhp', seen only on card-skimming fake stores."
