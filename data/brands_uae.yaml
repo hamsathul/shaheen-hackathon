@@ -1,0 +1,342 @@
+# Official domains of UAE government, police, bank, telecom, utility, logistics, airline and retail brands that scammers impersonate.
+brands:
+  - id: tamm
+    name_en: TAMM
+    name_ar: ""
+    category: government
+    official_domains:
+      - tamm.abudhabi
+    keywords: [tamm]
+    tokens: []
+    phones: []
+    sources:
+      - https://www.tamm.abudhabi/
+      - https://www.adpolice.gov.ae/   # links to tamm.abudhabi
+
+  - id: uae_pass
+    name_en: UAE PASS
+    name_ar: ""
+    category: government
+    official_domains:
+      - uaepass.ae
+    keywords: [uaepass]
+    tokens: []
+    phones: []
+    sources:
+      - https://uaepass.ae/
+      - https://tax.gov.ae/en/default.aspx   # links to selfcare.uaepass.ae
+
+  - id: abu_dhabi_police
+    name_en: Abu Dhabi Police
+    name_ar: شرطة أبوظبي
+    category: police
+    official_domains:
+      - adpolice.gov.ae
+    keywords: [adpolice]
+    tokens: []
+    phones: ["999", "8002626"]
+    sources:
+      - https://www.adpolice.gov.ae/
+
+  - id: dubai_police
+    name_en: Dubai Police
+    name_ar: ""
+    category: police
+    official_domains:
+      - dubaipolice.gov.ae
+    keywords: [dubaipolice]
+    tokens: []
+    phones: []
+    sources:
+      - https://www.dubaipolice.gov.ae/app/home
+
+  - id: ministry_of_interior
+    name_en: Ministry of Interior (UAE)
+    name_ar: ""
+    category: government
+    official_domains:
+      - moi.gov.ae
+    keywords: [ministryofinterior]
+    tokens: [moi]
+    phones: []
+    sources:
+      - https://www.moi.gov.ae/
+
+  - id: icp
+    name_en: Federal Authority for Identity, Citizenship, Customs and Port Security (ICP)
+    name_ar: ""
+    category: government
+    official_domains:
+      - icp.gov.ae
+    keywords: []
+    tokens: [icp]
+    phones: ["600522222"]
+    sources:
+      - https://icp.gov.ae/
+      - https://icp.gov.ae/en/contact-us/
+
+  - id: mohre
+    name_en: Ministry of Human Resources and Emiratisation (MOHRE)
+    name_ar: وزارة الموارد البشرية والتوطين
+    category: government
+    official_domains:
+      - mohre.gov.ae
+    keywords: [mohre]
+    tokens: []
+    phones: ["600590000", "80084"]
+    sources:
+      - https://mohre.gov.ae/ar/home
+      - https://mohre.gov.ae/en/contact-us
+
+  - id: federal_tax_authority
+    name_en: Federal Tax Authority
+    name_ar: ""
+    category: government
+    official_domains:
+      - tax.gov.ae
+    keywords: [federaltaxauthority]
+    tokens: [fta]
+    phones: ["80082923"]
+    sources:
+      - https://tax.gov.ae/en/default.aspx
+
+  - id: central_bank_uae
+    name_en: Central Bank of the UAE
+    name_ar: ""
+    category: government
+    official_domains:
+      - centralbank.ae
+    keywords: [cbuae]
+    tokens: []
+    phones: []
+    sources:
+      - https://centralbank.ae/en/   # bot-blocked (HTTP 403); confirmed via search index only
+
+  - id: emirates_post
+    name_en: Emirates Post
+    name_ar: بريد الإمارات
+    category: logistics
+    official_domains:
+      - emiratespost.ae
+      - emiratespostshop.ae
+    keywords: [emiratespost]
+    tokens: []
+    phones: []
+    sources:
+      - https://www.emiratespost.ae/
+      - https://www.emiratespost.ae/ar
+
+  - id: salik
+    name_en: Salik
+    name_ar: ""
+    category: government
+    official_domains:
+      - salik.ae
+    keywords: [salik]
+    tokens: []
+    phones: []
+    sources:
+      - https://www.salik.ae/en   # bot-blocked (HTTP 403); confirmed via search index only
+
+  - id: dubai_rta
+    name_en: Roads and Transport Authority (Dubai RTA)
+    name_ar: ""
+    category: government
+    official_domains:
+      - rta.ae
+      - rta.gov.ae
+    keywords: []
+    tokens: [rta]
+    phones: []
+    sources:
+      - https://rta.ae/
+
+  - id: dewa
+    name_en: Dubai Electricity and Water Authority (DEWA)
+    name_ar: ""
+    category: utility
+    official_domains:
+      - dewa.gov.ae
+    keywords: [dewa]
+    tokens: []
+    phones: []
+    sources:
+      - https://www.dewa.gov.ae/en   # bot-blocked (HTTP 403); confirmed via search index only
+
+  - id: addc
+    name_en: Abu Dhabi Distribution Company (ADDC)
+    name_ar: ""
+    category: utility
+    official_domains:
+      - addc.ae
+      - taqadistribution.com
+    keywords: [taqadistribution, addc]
+    tokens: []
+    phones: []
+    sources:
+      - https://www.addc.ae/   # redirects to https://taqadistribution.com/addc/en-us/residential/overview
+
+  - id: eand
+    name_en: e& (Etisalat)
+    name_ar: اتصالات
+    category: telecom
+    official_domains:
+      - eand.ae
+      - eand.com
+      - etisalat.ae
+    keywords: [etisalat]
+    tokens: [eand]
+    phones: []
+    sources:
+      - https://www.eand.ae/en/index.html
+      - https://www.eand.ae/ar/index.html
+      - https://www.eand.com/en/index.html
+
+  - id: du
+    name_en: du
+    name_ar: ""
+    category: telecom
+    official_domains:
+      - du.ae
+    keywords: []
+    tokens: [du]
+    phones: []
+    sources:
+      - https://www.du.ae/personal
+      - https://www.du.ae/ar/personal
+
+  - id: fab
+    name_en: First Abu Dhabi Bank (FAB)
+    name_ar: ""
+    category: bank
+    official_domains:
+      - bankfab.com
+    keywords: [bankfab, firstabudhabibank]
+    tokens: [fab]
+    phones: []
+    sources:
+      - https://www.bankfab.com/en-ae/personal
+
+  - id: adcb
+    name_en: Abu Dhabi Commercial Bank (ADCB)
+    name_ar: ""
+    category: bank
+    official_domains:
+      - adcb.com
+    keywords: [adcb]
+    tokens: []
+    phones: []
+    sources:
+      - https://www.adcb.com/en/   # bot-blocked (HTTP 403); confirmed via search index only
+
+  - id: emirates_nbd
+    name_en: Emirates NBD
+    name_ar: ""
+    category: bank
+    official_domains:
+      - emiratesnbd.com
+    keywords: [emiratesnbd, enbd]
+    tokens: []
+    phones: ["600540000"]
+    sources:
+      - https://www.emiratesnbd.com/en/contact-us
+
+  - id: adib
+    name_en: Abu Dhabi Islamic Bank (ADIB)
+    name_ar: مصرف أبوظبي الإسلامي
+    category: bank
+    official_domains:
+      - adib.ae
+      - adib.com
+    keywords: [adib]
+    tokens: []
+    phones: []
+    sources:
+      - https://www.adib.ae/
+      - https://www.adib.ae/ar
+
+  - id: mashreq
+    name_en: Mashreq
+    name_ar: ""
+    category: bank
+    official_domains:
+      - mashreq.com
+      - mashreqbank.com
+    keywords: [mashreq]
+    tokens: []
+    phones: []
+    sources:
+      - https://www.mashreq.com/en/uae/neo/   # mashreqbank.com redirects here
+
+  - id: dubai_islamic_bank
+    name_en: Dubai Islamic Bank
+    name_ar: دبي الإسلامي
+    category: bank
+    official_domains:
+      - dib.ae
+    keywords: [dubaiislamicbank]
+    tokens: [dib]
+    phones: []
+    sources:
+      - https://dib.ae/
+      - https://dib.ae/ar
+
+  - id: rakbank
+    name_en: RAKBANK
+    name_ar: ""
+    category: bank
+    official_domains:
+      - rakbank.ae
+    keywords: [rakbank]
+    tokens: []
+    phones: ["600544049", "600540044"]
+    sources:
+      - https://www.rakbank.ae/en/contact-us
+
+  - id: aramex
+    name_en: Aramex
+    name_ar: ""
+    category: logistics
+    official_domains:
+      - aramex.com
+    keywords: [aramex]
+    tokens: []
+    phones: []
+    sources:
+      - https://www.aramex.com/ae/en/home   # bot-blocked (HTTP 403); confirmed via search index only
+
+  - id: emirates_airline
+    name_en: Emirates
+    name_ar: ""
+    category: airline
+    official_domains:
+      - emirates.com
+    keywords: []
+    tokens: [emirates]
+    phones: ["600555555"]
+    sources:
+      - https://www.emirates.com/help   # phone seen in search index of this page; site not directly fetchable
+
+  - id: etihad
+    name_en: Etihad Airways
+    name_ar: ""
+    category: airline
+    official_domains:
+      - etihad.com
+    keywords: [etihad]
+    tokens: []
+    phones: []
+    sources:
+      - https://www.etihad.com/en-ae/help   # etihad.com redirected from https://etihad.com
+
+  - id: noon
+    name_en: noon
+    name_ar: ""
+    category: retail
+    official_domains:
+      - noon.com
+    keywords: []
+    tokens: [noon]
+    phones: []
+    sources:
+      - https://www.noon.com/uae-en/return-policy/

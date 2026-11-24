@@ -1,0 +1,152 @@
+# Official domains of consumer-electronics brands impersonated by a fake-storefront network; only domains the brand itself links to.
+brands:
+  - id: bose
+    name_en: Bose
+    name_ar: ""
+    category: electronics
+    official_domains:
+      - bose.com
+      - bose.ca
+    keywords: []
+    tokens: [bose]
+    phones: []
+    sources:
+      - https://www.bose.com/home
+      - https://www.bose.com/support/international
+
+  - id: harman_kardon
+    name_en: Harman Kardon
+    name_ar: ""
+    category: electronics
+    official_domains:
+      - harmankardon.com
+    keywords: [harmankardon]
+    tokens: []
+    phones: []
+    sources:
+      - https://global.harmankardon.com/   # harmankardon.com redirects here
+
+  - id: soundcore
+    name_en: Soundcore
+    name_ar: ""
+    category: electronics
+    official_domains:
+      - soundcore.com
+    keywords: [soundcore]
+    tokens: []
+    phones: []
+    sources:
+      - https://www.soundcore.com/
+
+  - id: anker
+    name_en: Anker
+    name_ar: ""
+    category: electronics
+    official_domains:
+      - anker.com
+    keywords: []
+    tokens: [anker]
+    phones: []
+    sources:
+      - https://www.anker.com/   # country selector links UAE to https://www.store.anker.com/ae (subdomain of anker.com)
+
+  - id: marshall
+    name_en: Marshall
+    name_ar: ""
+    category: electronics
+    official_domains:
+      - marshall.com
+    keywords: []
+    tokens: [marshall]
+    phones: []
+    sources:
+      - https://www.marshall.com/ae/en
+
+  - id: jbl
+    name_en: JBL
+    name_ar: ""
+    category: electronics
+    official_domains:
+      - jbl.com
+    keywords: []
+    tokens: [jbl]
+    phones: []
+    sources:
+      - https://global.jbl.com/   # jbl.com redirects here; page behind captcha, not read
+
+  - id: skullcandy
+    name_en: Skullcandy
+    name_ar: ""
+    category: electronics
+    official_domains:
+      - skullcandy.com
+      - skullcandy.ae
+      - skullcandy.eu
+      - skullcandy.co.uk
+      - skullcandy.ca
+      - skullcandy.jp
+      - skullcandy.com.br
+      - skullcandy.com.au
+      - skullcandy.co
+    keywords: [skullcandy]
+    tokens: []
+    phones: []
+    sources:
+      - https://www.skullcandy.com/   # country menu links all the regional domains above
+
+  - id: shark
+    name_en: Shark (SharkNinja)
+    name_ar: ""
+    category: electronics
+    official_domains:
+      - sharkninja.com
+      - sharkclean.com
+    keywords: [sharkninja, sharkclean]
+    tokens: [shark]
+    phones: []
+    sources:
+      - https://www.sharkninja.com/   # bot-blocked (HTTP 403); not read
+      - https://newsroom.sharkninja.com/sharkninja-makes-waves-in-dubai-with-first-ever-middle-east-showcase-and-regional-launch-of-innovative-new-products/
+
+  - id: dreame
+    name_en: Dreame
+    name_ar: ""
+    category: electronics
+    official_domains:
+      - dreametech.com
+      - dreame.tech
+      - dreametech.jp
+      - dreametech.com.tr
+      - dreametech.kz
+    keywords: [dreame, dreametech]
+    tokens: []
+    phones: []
+    sources:
+      - https://www.dreametech.com/   # country selector links ae.dreametech.com for UAE and the domains above
+
+  - id: sennheiser
+    name_en: Sennheiser
+    name_ar: ""
+    category: electronics
+    official_domains:
+      - sennheiser.com
+      - sennheiser-hearing.com
+    keywords: [sennheiser]
+    tokens: []
+    phones: []
+    sources:
+      - https://www.sennheiser.com/en-ae
+      - https://global.sennheiser-hearing.com/
+
+  - id: beats
+    name_en: Beats
+    name_ar: ""
+    category: electronics
+    official_domains:
+      - beatsbydre.com
+    keywords: [beatsbydre]
+    tokens: [beats]
+    phones: []
+    sources:
+      - https://www.beatsbydre.com/
+      - https://www.beatsbydre.com/ae

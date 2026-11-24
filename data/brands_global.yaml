@@ -1,0 +1,201 @@
+# Core official domains of global brands most often impersonated in phishing (not exhaustive; no country domains except amazon.ae).
+brands:
+  - id: paypal
+    name_en: PayPal
+    name_ar: ""
+    category: payments
+    official_domains: [paypal.com]
+    keywords: [paypal]
+    tokens: []
+    phones: []
+    sources: [https://www.paypal.com/ae/home]
+
+  - id: apple
+    name_en: Apple
+    name_ar: ""
+    category: tech
+    official_domains: [apple.com, icloud.com]
+    keywords: [icloud, appleid]
+    tokens: [apple]
+    phones: []
+    sources: [https://www.apple.com/ae/, https://www.icloud.com/]
+
+  - id: microsoft
+    name_en: Microsoft (Outlook, Office 365)
+    name_ar: ""
+    category: tech
+    official_domains: [microsoft.com, live.com, office.com, microsoftonline.com, outlook.com, microsoft365.com]
+    keywords: [microsoft, office365, microsoft365]
+    tokens: [outlook, office]
+    phones: []
+    sources: [https://www.microsoft.com/, https://outlook.live.com/mail/, https://m365.cloud.microsoft/]
+
+  - id: google
+    name_en: Google
+    name_ar: ""
+    category: tech
+    official_domains: [google.com, gmail.com]
+    keywords: [google, gmail]
+    tokens: []
+    phones: []
+    sources: [https://www.google.com/, https://accounts.google.com/]
+
+  - id: amazon
+    name_en: Amazon
+    name_ar: ""
+    category: retail
+    official_domains: [amazon.com, amazon.ae]
+    keywords: [amazon]
+    tokens: []
+    phones: []
+    sources: [https://www.amazon.com/, https://www.amazon.ae/]
+
+  - id: netflix
+    name_en: Netflix
+    name_ar: ""
+    category: tech
+    official_domains: [netflix.com]
+    keywords: [netflix]
+    tokens: []
+    phones: []
+    sources: [https://www.netflix.com/]
+
+  - id: meta_facebook
+    name_en: Meta / Facebook
+    name_ar: ""
+    category: tech
+    official_domains: [facebook.com, fb.com, meta.com, messenger.com]
+    keywords: [facebook, messenger]
+    tokens: [meta, fb]
+    phones: []
+    sources: [https://www.facebook.com/, https://www.meta.com/]
+
+  - id: instagram
+    name_en: Instagram
+    name_ar: ""
+    category: tech
+    official_domains: [instagram.com]
+    keywords: [instagram]
+    tokens: []
+    phones: []
+    sources: [https://www.instagram.com/]
+
+  - id: whatsapp
+    name_en: WhatsApp
+    name_ar: ""
+    category: tech
+    official_domains: [whatsapp.com]
+    keywords: [whatsapp]
+    tokens: []
+    phones: []
+    sources: [https://www.whatsapp.com/]
+
+  - id: dhl
+    name_en: DHL
+    name_ar: ""
+    category: logistics
+    official_domains: [dhl.com]
+    keywords: []
+    tokens: [dhl]
+    phones: []
+    sources: [https://www.dhl.com/]
+
+  - id: fedex
+    name_en: FedEx
+    name_ar: ""
+    category: logistics
+    official_domains: [fedex.com]
+    keywords: [fedex]
+    tokens: []
+    phones: []
+    sources: [https://www.fedex.com/]
+
+  - id: ups
+    name_en: UPS
+    name_ar: ""
+    category: logistics
+    official_domains: [ups.com]
+    keywords: []
+    tokens: [ups]
+    phones: []
+    sources: [https://www.ups.com/]
+
+  - id: binance
+    name_en: Binance
+    name_ar: ""
+    category: crypto
+    official_domains: [binance.com]
+    keywords: [binance]
+    tokens: []
+    phones: []
+    sources: [https://www.binance.com/]
+
+  - id: coinbase
+    name_en: Coinbase
+    name_ar: ""
+    category: crypto
+    official_domains: [coinbase.com]
+    keywords: [coinbase]
+    tokens: []
+    phones: []
+    sources: [https://www.coinbase.com/]
+
+  - id: linkedin
+    name_en: LinkedIn
+    name_ar: ""
+    category: tech
+    official_domains: [linkedin.com]
+    keywords: [linkedin]
+    tokens: []
+    phones: []
+    sources: [https://www.linkedin.com/]
+
+  - id: adobe
+    name_en: Adobe
+    name_ar: ""
+    category: tech
+    official_domains: [adobe.com]
+    keywords: [adobe]
+    tokens: []
+    phones: []
+    sources: [https://www.adobe.com/]
+
+  - id: dropbox
+    name_en: Dropbox
+    name_ar: ""
+    category: tech
+    official_domains: [dropbox.com]
+    keywords: [dropbox]
+    tokens: []
+    phones: []
+    sources: [https://www.dropbox.com/]
+
+  - id: docusign
+    name_en: DocuSign
+    name_ar: ""
+    category: tech
+    official_domains: [docusign.com]
+    keywords: [docusign]
+    tokens: []
+    phones: []
+    sources: [https://www.docusign.com/]
+
+  - id: visa
+    name_en: Visa
+    name_ar: ""
+    category: payments
+    official_domains: [visa.com]
+    keywords: []
+    tokens: [visa]
+    phones: []
+    sources: [https://www.visa.com/]
+
+  - id: mastercard
+    name_en: Mastercard
+    name_ar: ""
+    category: payments
+    official_domains: [mastercard.com]
+    keywords: [mastercard]
+    tokens: []
+    phones: []
+    sources: [https://www.mastercard.com/]
