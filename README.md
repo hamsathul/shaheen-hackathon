@@ -98,6 +98,8 @@ Weights and the EN/AR reason text are in `baaz/score.py` and `baaz/reasons.py`. 
 
 **Evidence pack.** Each scan writes `evidence/<id>/`: the redirect chain, WHOIS, DNS, certificate, page HTML and text, screenshot, storefront facts, a printable `report.html` and a `manifest.json` with the SHA-256 of every file. `baaz verify` recomputes the hashes, and `baaz confirm` refuses a pack that fails.
 
+**Reports.** The dashboard's Reports page lists every case's evidence report, newest first, filtered by verdict, brand, scan date and domain, with links to the case, its `report.html` and its zip. It also opens the threat summary for the police, for today, the last 24 hours or the last 7 days (UAE days), in English or Arabic, printable on A4. The summary covers the links checked and flagged, the new fraud sites with the AI investigator's one-line summary, the brands hit, and the sites that share an administrator account, a product catalogue or a skimmer gateway. It also lists suggested takedowns grouped by registrar, and the Google Maps leads. `baaz summary` writes the same report as one self-contained HTML file to email.
+
 **Investigator.** For each flagged case, Baaz writes a private pi configuration that declares only two MCP servers: Baaz's own case tools (`get_case`, `get_page_text`, `domain_intel`, `find_related`, `scan_url`, `propose_candidates`, `submit_report`) and a headless Playwright browser in a throwaway profile. After the run Baaz checks the tool list pi actually sent the model, audits every browser action, and adds the trace and browser session to the evidence pack. Details: [docs/agent.md](docs/agent.md).
 
 ## Run it
@@ -154,6 +156,7 @@ uv run baaz dashboard                    # http://127.0.0.1:8000/
 uv run baaz confirm <case-id> --analyst "Name" --note "..."
 uv run baaz export <case-id>             # evidence zip
 uv run baaz verify <case-id>             # recompute every SHA-256
+uv run baaz summary --period 7d --lang ar   # threat summary as one HTML file in evidence/reports/
 
 # Fixed demo cases plus dashboard (and the watcher with --watch)
 uv run baaz demo
