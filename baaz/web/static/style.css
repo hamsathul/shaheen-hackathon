@@ -340,6 +340,7 @@ input::placeholder { color: var(--muted); }
 .mw-map .pin { position: absolute; margin: 0; transform: translate(-50%, -50%); cursor: default; }
 .mw-map .pin.lead { z-index: 2; width: 14px; height: 14px; outline: 2px solid var(--paper); }
 .mw-map .pin.brand_ok { z-index: 1; width: 14px; height: 14px; }
+.mw-map .pin.past { z-index: 0; opacity: .35; }
 .mw-map-note { margin-block-end: 10px; }
 .mw-log td:first-child, .mw-log th:first-child { padding-inline-start: 8px; }
 .mw-log td.time { color: var(--muted); font: 13px/1.5 var(--mono); white-space: nowrap; }

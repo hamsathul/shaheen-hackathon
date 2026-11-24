@@ -245,7 +245,7 @@
   var gmap = null;
   var api = null;  // the Google classes the map uses, once loaded
   var marks = null;  // the overlay of the search on the map
-  var shown = null;  // which search is on the map
+  var shown = null;  // which searches are on the map, and which one is in focus
   var latest = null;  // the last maps object, drawn once the map is ready
   var pressing = false;
 
@@ -272,24 +272,24 @@
   function marksClass(OverlayView, LatLng) {
     // Fixed-size marks in a custom overlay: no Map ID needed and none of the deprecated Marker class.
     return class extends OverlayView {
-      constructor(listings) {
+      constructor(items) {  // {listing, past}: past marks belong to an earlier search of the round under way
         super();
-        this.listings = listings;
+        this.items = items;
         this.nodes = [];
       }
       onAdd() {
         var pane = this.getPanes().overlayMouseTarget;
-        this.nodes = this.listings.map(function (l) {
-          var node = el("span", "pin " + l.outcome);
-          node.title = l.name;
+        this.nodes = this.items.map(function (item) {
+          var node = el("span", "pin " + item.listing.outcome + (item.past ? " past" : ""));
+          node.title = item.listing.name;
           pane.appendChild(node);
           return node;
         });
       }
       draw() {
         var projection = this.getProjection();
-        this.listings.forEach(function (l, i) {
-          var point = projection.fromLatLngToDivPixel(new LatLng(l.lat, l.lng));
+        this.items.forEach(function (item, i) {
+          var point = projection.fromLatLngToDivPixel(new LatLng(item.listing.lat, item.listing.lng));
           this.nodes[i].style.left = point.x + "px";
           this.nodes[i].style.top = point.y + "px";
         }, this);
@@ -316,29 +316,34 @@
     if (latest) renderWatch(latest);
   }
 
-  function onMap(m) {  // the newest answered search
-    for (var i = m.searches.length - 1; i >= 0; i--) {
-      if (m.searches[i].state === "done") return m.searches[i];
-    }
-    return null;
-  }
-
   function drawSearch(m) {
-    var s = onMap(m);
-    var key = s ? s.time + " " + s.query : null;
+    // Every listing of the searches kept. While a round runs, the newest answered search
+    // is in focus and framed, and the earlier ones are dimmed; when idle, the whole round.
+    var done = m.searches.filter(function (s) { return s.state === "done"; });
+    var focus = m.state === "searching" && done.length ? done[done.length - 1] : null;
+    var key = done.map(function (s) { return s.time + " " + s.query; }).join("|") + (focus ? " (focus)" : "");
     if (key === shown) return;
     shown = key;
     if (marks) marks.setMap(null);
     marks = null;
-    if (!s) return;
-    var located = s.listings.filter(function (l) { return l.lat !== null && l.lng !== null; });
-    located.sort(function (a, b) { return DRAW_ORDER[a.outcome] - DRAW_ORDER[b.outcome]; });
-    marks = new api.Marks(located);
+    var items = [];
+    done.forEach(function (s) {
+      s.listings.forEach(function (l) {
+        if (l.lat !== null && l.lng !== null) items.push({ listing: l, past: focus !== null && s !== focus });
+      });
+    });
+    if (!items.length) return;
+    items.sort(function (a, b) {
+      return (b.past - a.past) || DRAW_ORDER[a.listing.outcome] - DRAW_ORDER[b.listing.outcome];
+    });
+    marks = new api.Marks(items);
     marks.setMap(gmap);
+    var framed = items.filter(function (item) { return !item.past; });
+    var located = (framed.length ? framed : items).map(function (item) { return item.listing; });
     if (located.length === 1) {
       gmap.panTo({ lat: located[0].lat, lng: located[0].lng });
       gmap.setZoom(13);
-    } else if (located.length > 1) {
+    } else {
       var bounds = new api.LatLngBounds();
       located.forEach(function (l) { bounds.extend({ lat: l.lat, lng: l.lng }); });
       gmap.fitBounds(bounds, 56);
