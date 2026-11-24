@@ -32,7 +32,8 @@ def refang(text: str) -> str:
 
 
 def defang(url: str) -> str:
-    return url.replace("http", "hxxp", 1).replace(".", "[.]")
+    """`https://a.b/c` -> `hxxps://a[.]b/c`; a bare host only gets its dots bracketed."""
+    return re.sub(r"^http(s?)://", r"hxxp\1://", url, flags=re.I).replace(".", "[.]")
 
 
 def normalize_url(raw: str) -> str:
