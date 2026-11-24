@@ -16,8 +16,8 @@ COPY baaz ./baaz
 COPY data ./data
 RUN uv sync --frozen --no-dev && playwright install chromium
 
-RUN useradd --create-home baaz && mkdir -p /app/evidence /app/var && chown baaz /app/evidence /app/var
-USER baaz
+RUN mkdir -p /app/evidence /app/var && chmod 1777 /app/evidence /app/var
+ENV HOME=/tmp
 
 ENTRYPOINT ["baaz"]
 CMD ["--help"]

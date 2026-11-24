@@ -1,6 +1,7 @@
 services:
   baaz:
     build: .
+    user: "${BAAZ_UID:-1000}:${BAAZ_GID:-1000}"
     env_file:
       - path: .env
         required: false

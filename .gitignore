@@ -8,3 +8,5 @@ evidence/
 var/
 *.egg-info/
 dist/
+CLAUDE.md
+PLAN.md
