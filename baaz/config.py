@@ -14,6 +14,8 @@ DESKTOP_UA = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
 )
+# Top-level domains the watcher's storefront sweep tries, in order.
+STOREFRONT_TLDS = ("com", "shop", "store", "online", "net", "co")
 
 
 def _load_dotenv(path: Path) -> None:
@@ -36,6 +38,9 @@ class Settings:
     llm_api_key: str
     http_timeout: float
     user_agent: str
+    reporter_name: str = "Baaz analyst"
+    reporter_email: str = ""
+    storefront_tlds: tuple[str, ...] = STOREFRONT_TLDS
 
     @property
     def llm_enabled(self) -> bool:
@@ -52,4 +57,10 @@ def load_settings() -> Settings:
         llm_api_key=os.environ.get("LLM_API_KEY", "local"),
         http_timeout=float(os.environ.get("BAAZ_HTTP_TIMEOUT", "10")),
         user_agent=os.environ.get("BAAZ_USER_AGENT", DESKTOP_UA),
+        reporter_name=os.environ.get("BAAZ_REPORTER_NAME") or "Baaz analyst",
+        reporter_email=os.environ.get("BAAZ_REPORTER_EMAIL", ""),
+        storefront_tlds=tuple(
+            t.strip().lstrip(".").lower()
+            for t in os.environ.get("BAAZ_STOREFRONT_TLDS", ",".join(STOREFRONT_TLDS)).split(",") if t.strip()
+        ),
     )

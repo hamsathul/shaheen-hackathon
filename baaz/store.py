@@ -202,6 +202,16 @@ class Store:
             ).fetchone()
         return row is not None
 
+    def first_seen(self, domain: str) -> str | None:
+        """When Baaz first met `domain`: as a queued candidate or a scan's landing domain."""
+        with self._conn() as db:
+            row = db.execute(
+                "SELECT MIN(seen) FROM (SELECT MIN(added_at) AS seen FROM candidates WHERE domain = ?"
+                " UNION ALL SELECT MIN(scanned_at) FROM scans WHERE domain = ?)",
+                (domain, domain),
+            ).fetchone()
+        return row[0]
+
     # fingerprints (raw values stay in this local database only)
 
     def add_fingerprints(self, scan_id: str, domain: str, items: list[tuple[str, str]]) -> None:

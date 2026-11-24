@@ -5,8 +5,10 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from pathlib import Path
 
-from baaz import __version__
+from baaz import __version__, evidence
+from baaz.config import load_settings
 from baaz.models import ScanOptions, ScanResult
 from baaz.pipeline import Scanner
 
@@ -30,6 +32,43 @@ def cmd_scan(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_verify(args: argparse.Namespace) -> int:
+    folder = evidence.pack_folder(args.case)
+    problems = evidence.verify(folder)
+    for problem in problems:
+        print(f"FAIL  {problem}")
+    if problems:
+        print(f"{folder}: {len(problems)} problem(s)")
+        return 1
+    print(f"OK  {folder}: every file matches manifest.json (manifest sha256 {evidence.manifest_sha256(folder)})")
+    return 0
+
+
+def cmd_confirm(args: argparse.Namespace) -> int:
+    settings = load_settings()
+    try:
+        takedown = evidence.confirm_case(args.id, args.analyst or settings.reporter_name, args.note,
+                                         settings=settings)
+    except evidence.EvidenceError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    print(f"confirmed {args.id}; takedown request: {takedown}")
+    return 0
+
+
+def cmd_export(args: argparse.Namespace) -> int:
+    settings = load_settings()
+    try:
+        out = evidence.export_pack(args.id, args.out, settings)
+    except evidence.EvidenceError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    if problems := evidence.verify(settings.evidence_dir / args.id):
+        print(f"warning: the pack fails verification: {'; '.join(problems)}", file=sys.stderr)
+    print(out)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="baaz", description=__doc__)
     parser.add_argument("--version", action="version", version=f"baaz {__version__}")
@@ -41,6 +80,21 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--no-render", action="store_true", help="skip the headless browser")
     p.add_argument("--no-storefront", action="store_true", help="skip WooCommerce storefront checks")
     p.set_defaults(func=cmd_scan)
+
+    p = sub.add_parser("verify", help="recompute an evidence pack's hashes against its manifest")
+    p.add_argument("case", help="scan ID or evidence folder path")
+    p.set_defaults(func=cmd_verify)
+
+    p = sub.add_parser("confirm", help="mark a case analyst-confirmed and draft its takedown request")
+    p.add_argument("id")
+    p.add_argument("--analyst", help="the confirming analyst (default: BAAZ_REPORTER_NAME)")
+    p.add_argument("--note", default="", help="a note kept with the confirmation")
+    p.set_defaults(func=cmd_confirm)
+
+    p = sub.add_parser("export", help="zip a case's evidence pack")
+    p.add_argument("id")
+    p.add_argument("--out", type=Path, help="zip path (default: evidence/<id>.zip)")
+    p.set_defaults(func=cmd_export)
 
     return parser
 

@@ -34,6 +34,7 @@ SOCKET_TIMEOUT = 4.0  # each connect, read or TLS handshake step
 DNS_TIMEOUT = 3.0  # one DNS query, retries included
 BOOTSTRAP_URL = "https://data.iana.org/rdap/dns.json"
 RDAP_FALLBACK = "https://rdap.org/domain/{}"
+RDAP_IP = "https://rdap.org/ip/{}"
 IANA_WHOIS = "whois.iana.org"
 MAX_WHOIS_BYTES = 256_000
 
@@ -323,6 +324,24 @@ def asn_lookup(ip: str) -> dict[str, Any]:
         "asn_name": name_fields[4].strip() if len(name_fields) > 4 else None,
         "country": fields[2] if len(fields) > 2 and fields[2] else None,
     }
+
+
+def ip_abuse_contact(ip: str) -> str | None:
+    """The abuse email of the network holding `ip`, from its regional registry's
+    RDAP record (the entity with the `abuse` role); None when unknown."""
+    try:
+        return _abuse_email((_get_json(RDAP_IP.format(ip)) or {}).get("entities") or [])
+    except Exception:  # noqa: BLE001 - intel must fail soft
+        return None
+
+
+def _abuse_email(entities: list[dict[str, Any]]) -> str | None:
+    for entity in entities:
+        if "abuse" in entity.get("roles", []) and (email := _vcard(entity, "email")):
+            return email
+        if email := _abuse_email(entity.get("entities") or []):
+            return email
+    return None
 
 
 # TLS certificate
