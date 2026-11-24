@@ -581,7 +581,7 @@ def choose_mode(settings: Settings) -> str:
     return "pi" if tool_calling and pi_command() is not None else "oneshot"
 
 
-def investigate(scan_id: str, mode: str = "auto", timeout_s: float = 600,
+def investigate(scan_id: str, mode: str = "auto", timeout_s: float = 900,
                 settings: Settings | None = None, store: Store | None = None) -> dict[str, Any]:
     """Investigate one stored case; returns the record written to investigation.json."""
     settings = settings or load_settings()
@@ -676,7 +676,7 @@ def _investigate(settings: Settings, store: Store, scan_id: str, mode: str, chos
     return record
 
 
-def investigate_queue(loop: bool = False, timeout_s: float = 600, mode: str = "auto",
+def investigate_queue(loop: bool = False, timeout_s: float = 900, mode: str = "auto",
                       idle_s: float = 30) -> Iterator[dict[str, Any]]:
     """Work queued cases one at a time, fraud before suspicious."""
     settings = load_settings()

@@ -210,7 +210,7 @@ def _add_agent_commands(sub: argparse._SubParsersAction) -> None:
     p = sub.add_parser("investigate", help="have the local model investigate a flagged case")
     p.add_argument("id", nargs="?", help="case (scan) id")
     p.add_argument("--mode", choices=("auto", "pi", "oneshot"), default="auto")
-    p.add_argument("--timeout", type=float, default=600, help="seconds per case (default 600)")
+    p.add_argument("--timeout", type=float, default=900, help="seconds per case (default 900)")
     p.add_argument("--queue", action="store_true", help="work the investigation queue")
     p.add_argument("--loop", action="store_true", help="with --queue: keep waiting for new cases")
     p.add_argument("--bench", action="store_true", help="measure the model's tokens per second")
