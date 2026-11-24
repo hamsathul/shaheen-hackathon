@@ -13,7 +13,9 @@ suffixes: [
   onrender.com, fly.dev, glitch.me, repl.co, replit.app, replit.dev, surge.sh,
   codesandbox.io, csb.app, stackblitz.io, amplifyapp.com, azurewebsites.net,
   blob.core.windows.net, web.core.windows.net, amazonaws.com, ngrok.io, ngrok-free.app,
-  ngrok.app, loca.lt, deno.dev,
+  ngrok.app, loca.lt, deno.dev, up.railway.app, bolt.host,
+  # host names a cloud or hosting provider gives its customers' servers
+  cloudapp.azure.com, contaboserver.net, secureserver.net, backblazeb2.com,
   # site builders and blogs
   blogspot.com, wordpress.com, wpcomstaging.com, wixsite.com, wixstudio.io, weebly.com,
   weeblysite.com, square.site, myshopify.com, webflow.io, framer.app, framer.website,

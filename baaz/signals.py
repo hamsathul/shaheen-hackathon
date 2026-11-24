@@ -25,7 +25,7 @@ from baaz.domains import host_of, is_ip, registrable_domain, split_host
 from baaz.models import Finding, ScanContext
 from baaz.page import PageFacts
 from baaz.resolve import SHORTENERS
-from baaz.score import COMMON_TOKEN_WEIGHTS, TLD_SWAP_WEIGHT, weight_of
+from baaz.score import COMMON_TOKEN_WEIGHTS, TELEGRAM_EXFIL_WEIGHT, TLD_SWAP_WEIGHT, weight_of
 
 # Deceptive words (data/domain_words.yaml) of this many letters also count
 # inside a longer token (adcblogin); shorter ones only as a whole token.
@@ -396,7 +396,7 @@ def page_findings(facts: PageFacts, final_url: str, html: str) -> tuple[list[Fin
             found.append(Finding("FORM_OFFSITE_POST", f"page.json#forms[{i}]", {"target": target}))
             break
     for target in exfiltration_targets(html):
-        found.append(Finding("FORM_OFFSITE_POST", "page.json#exfiltration", {"target": target}))
+        found.append(Finding("FORM_OFFSITE_POST", "page.json#exfiltration", {"target": target}, TELEGRAM_EXFIL_WEIGHT))
     terms = urgency_terms(facts.text)
     if len(terms) >= 2 or (terms and sensitive):
         found.append(Finding("URGENCY_WORDING", "page.json#urgency_terms", {"terms": terms[:MAX_TERMS]}))

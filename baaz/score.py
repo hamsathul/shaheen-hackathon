@@ -40,6 +40,7 @@ WEIGHTS: dict[str, int] = {
     "URGENCY_WORDING": 10,
     "DECEPTIVE_DOMAIN_WORDS": 10,
     "TOP_SITE": -25,
+    "NO_PAGE_EVIDENCE": 0,
     "DOMAIN_OLD": -15,
 }
 
@@ -52,6 +53,17 @@ COMMON_TOKEN_WEIGHTS: dict[str, int] = {"BRAND_IN_DOMAIN": 5, "BRAND_GEO_DOMAIN"
 # often an unrelated owner of many years, so it weighs less than a typo or
 # homoglyph and, as a reduced finding, does not cancel DOMAIN_OLD.
 TLD_SWAP_WEIGHT = 25
+
+# Data sent to a Telegram bot from a page is a phishing kit's drop box.
+TELEGRAM_EXFIL_WEIGHT = 40
+
+# Signals that come from seeing the scam itself: its page, its checkout or a
+# fingerprint shared with known fraud. Without one, the name, registration and
+# certificate alone make a link suspicious at most (NO_PAGE_EVIDENCE).
+CONTENT = frozenset({
+    "SKIMMER_GATEWAY", "CARD_FORM_NO_PROCESSOR", "SENSITIVE_FORM_BRAND", "SHARED_FINGERPRINT",
+    "DEEP_DISCOUNTS", "WEAK_GATEWAY", "DOORWAY", "CLOAKING", "FORM_OFFSITE_POST", "URGENCY_WORDING",
+})
 
 # A new domain always has a new certificate: one fact, counted once.
 NEW_DOMAIN = frozenset({"NEW_DOMAIN_7D", "NEW_DOMAIN_30D"})
@@ -137,6 +149,9 @@ def score(findings: list[Finding], fetch_status: str) -> Score:
     if codes & NEW_DOMAIN:
         kept = [f for f in kept if f.code != "NEW_TLS_CERT"]
     total = sum(weight_of(f) for f in kept)
+    if total >= FRAUD_THRESHOLD and not codes & CONTENT:
+        kept.append(Finding("NO_PAGE_EVIDENCE", "redirects.json#final_url", {}, FRAUD_THRESHOLD - 1 - total))
+        total = FRAUD_THRESHOLD - 1
     risk = max(0, min(100, total))
     forced = bool(codes & FORCE_FRAUD)
     if forced:

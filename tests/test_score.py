@@ -9,9 +9,17 @@ def f(code: str, weight: int | None = None) -> Finding:
 def test_thresholds_map_to_verdicts():
     assert score([f("LOOKALIKE_DOMAIN")], "ok").verdict == "suspicious"  # 40
     assert score([f("LOOKALIKE_DOMAIN"), f("NEW_DOMAIN_30D")], "ok").verdict == "suspicious"  # 60
-    assert score([f("LOOKALIKE_DOMAIN"), f("NEW_DOMAIN_7D")], "ok").verdict == "fraud"  # 70
+    assert score([f("LOOKALIKE_DOMAIN"), f("NEW_DOMAIN_7D"), f("URGENCY_WORDING")], "ok").verdict == "fraud"  # 80
     assert score([f("LOOKALIKE_DOMAIN"), f("SENSITIVE_FORM_BRAND"), f("NEW_DOMAIN_30D")], "ok").verdict == "fraud"
     assert score([f("NEW_TLS_CERT")], "ok").verdict == "legitimate"
+
+
+def test_fraud_needs_evidence_from_the_scam_itself():
+    s = score([f("LOOKALIKE_DOMAIN"), f("NEW_DOMAIN_7D"), f("BRAND_GEO_DOMAIN")], "dead")  # 95 from the name alone
+    assert (s.verdict, s.risk_score) == ("suspicious", 69)
+    note = s.findings[-1]
+    assert note.code == "NO_PAGE_EVIDENCE" and sum(x.weight if x.weight is not None else WEIGHTS[x.code]
+                                                   for x in s.findings) == 69
 
 
 def test_same_code_counts_once_at_its_largest_weight():

@@ -122,6 +122,12 @@ TEMPLATES: dict[str, tuple[str, str]] = {
         "{domain} is among the most visited sites on the web (rank {rank}).",
         "{domain} من أكثر المواقع زيارة على الإنترنت (الترتيب {rank}).",
     ),
+    "NO_PAGE_EVIDENCE": (
+        "Baaz has not seen the scam itself (a page, a checkout or a fingerprint shared with known fraud), "
+        "so the address and registration alone make this suspicious, not fraud.",
+        "لم يرصد باز عملية الاحتيال نفسها (صفحة أو صفحة دفع أو بصمة مشتركة مع احتيال معروف)، "
+        "لذلك يكفي العنوان والتسجيل وحدهما لتصنيفه «مشبوهًا» لا «احتيالًا».",
+    ),
     "DOMAIN_OLD": (
         "The domain has been registered for {years} years.",
         "النطاق مسجّل منذ {years} سنوات.",
