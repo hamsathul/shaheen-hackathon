@@ -1,0 +1,12 @@
+services:
+  baaz:
+    build: .
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - ./evidence:/app/evidence
+      - baaz-var:/app/var
+
+volumes:
+  baaz-var:
