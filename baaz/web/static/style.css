@@ -587,3 +587,121 @@ pre.takedown {
   .reason { grid-template-columns: 1.6rem minmax(0, 1fr); row-gap: 8px; }
   .reason-ar { grid-column: 2; }
 }
+
+/* Simple view and statistics. The header switch is a pair of links, the chosen one solid.
+   Charts keep the verdict colours: fraud solid red, suspicious a lighter red, legitimate
+   green, with a gap between touching marks; their numbers stay in ink. */
+
+.top nav .modes { display: inline-flex; border: 1px solid var(--ink); }
+.top nav .modes a { padding: 3px 10px 2px; border: 0; font-size: 13.5px; }
+.top nav .modes a[aria-current] { background: var(--ink); color: #fff; }
+
+.headline {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0 0 18px;
+  border-block-start: 2px solid var(--ink);
+}
+.headline > div { display: flex; flex-direction: column; padding: 12px 16px 14px; border-block-end: 1px solid var(--rule); }
+.headline > div + div { border-inline-start: 1px solid var(--rule); }
+.headline > div:first-child { padding-inline-start: 0; }
+.headline dd { order: -1; margin: 0; font: 300 72px/1 var(--numeral); }
+.headline .scams dd:not(.headline-sub) { color: var(--red); }
+.headline dt { margin-block-start: 6px; color: var(--ink-2); font-size: 15px; line-height: 1.35; }
+.headline .headline-sub { order: 1; margin-block-start: 4px; color: var(--ink-2); font: 400 14px/1.4 var(--sans); }
+.watch-line { margin: 0; padding-block: 7px; border-block-end: 1px solid var(--rule); color: var(--ink-2); font-size: 15px; }
+
+.found { margin-block-start: 36px; padding-block-start: 14px; border-block-start: 2px solid var(--ink); }
+.found-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; }
+.found-head h2 { margin: 0; font: 600 21px/1.2 var(--sans); }
+.found-count { margin: 0; color: var(--muted); font-size: 14px; }
+.sites { margin: 10px 0 0; padding: 0; list-style: none; border-block-start: 1px solid var(--ink); }
+.site {
+  display: grid;
+  grid-template-columns: 5.4rem minmax(0, 1fr);
+  column-gap: 14px;
+  padding-block: 12px 13px;
+  border-block-end: 1px solid var(--rule);
+}
+.site > * { grid-column: 2; }
+.site-when { grid-column: 1; grid-row: 1 / span 3; margin: 0; color: var(--muted); font: 12px/1.4 var(--mono); }
+.site-when span { display: block; color: var(--ink); font-size: 15px; }
+html[dir="rtl"] .site-when { text-align: right; }
+.site-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+.site-domain { font: 600 16px/1.35 var(--mono); text-decoration: none; word-break: break-all; }
+.site-domain:hover { text-decoration: underline; }
+.site-what { display: flex; flex-wrap: wrap; gap: 2px 14px; margin: 4px 0 0; color: var(--ink-2); font-size: 14.5px; }
+.site-what b { color: var(--ink); }
+.site-say { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: var(--gutter); margin-block-start: 6px; }
+.site-say p { margin: 0; font-size: 15px; line-height: 1.5; }
+.site-say [lang="ar"] { font-size: 16.5px; line-height: 1.6; }
+html[dir="rtl"] .site-say [lang="ar"] { order: -1; }
+.site-none { padding-block: 16px; color: var(--muted); }
+
+.verdict-says { font: 600 26px/1.2 var(--sans); }
+.lede { max-width: 72ch; margin: 0 0 16px; color: var(--ink-2); font-size: 17px; line-height: 1.5; }
+.simple-case .confirmed-line { margin-block-end: 16px; }
+.found-list { margin: 0; padding: 0; list-style: none; border-block-start: 1px solid var(--ink); }
+.found-list li {
+  display: grid;
+  grid-template-columns: 1.6rem minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: var(--gutter);
+  padding-block: 12px;
+  border-block-end: 1px solid var(--rule);
+}
+.found-list p { margin: 0; line-height: 1.5; }
+.found-list [lang="ar"] { font-size: 17px; line-height: 1.6; }
+html[dir="rtl"] .found-list .reason-n { order: -2; }
+html[dir="rtl"] .found-list [lang="ar"] { order: -1; }
+.todo { margin: 0; color: var(--ink-2); font-size: 14px; line-height: 1.45; }
+
+.stats { --red-light: #e36b7e; }
+.stats-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 20px; padding-block-end: 18px; }
+.stats-head h1 { margin: 0; font: 600 28px/1.1 var(--sans); }
+.caption { margin: 0; font: 600 16px/1.35 var(--sans); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 22px; margin: 0 0 12px; padding: 0; list-style: none; color: var(--ink-2); font-size: 14px; }
+.legend.counts { margin: 12px 0 0; }
+.legend b { margin-inline-start: 4px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.swatch { display: inline-block; width: 10px; height: 10px; margin-inline-end: 7px; }
+.swatch.fraud { background: var(--red); }
+.swatch.suspicious { background: var(--red-light); }
+.swatch.legitimate { background: var(--green); }
+
+.stats svg { display: block; overflow: visible; direction: ltr; }
+.seg.fraud { fill: var(--red); }
+.seg.suspicious { fill: var(--red-light); }
+.seg.legitimate { fill: var(--green); }
+.grid { stroke: var(--rule); stroke-width: 1; shape-rendering: crispEdges; }
+.grid.base { stroke: var(--ink); }
+.tick, .hour { fill: var(--muted); font: 12px var(--sans); font-variant-numeric: tabular-nums; }
+.hit { fill: transparent; }
+.col:hover .hit { fill: var(--tint); }
+text.in { fill: #fff; font: 600 12.5px var(--sans); }
+text.in.suspicious { fill: var(--ink); }
+
+.bars { table-layout: fixed; }
+.bars td { vertical-align: middle; }
+.bars th:first-child { width: 30%; }
+.bars .bar-col { width: 42%; }
+.bars .bar-name { font-weight: 600; }
+.strong { font-weight: 600; }
+
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); margin: 0 0 10px; border-block-start: 2px solid var(--ink); }
+.tiles > div { display: flex; flex-direction: column; padding-block: 10px 12px; padding-inline: 0 14px; border-block-end: 1px solid var(--rule); }
+.tiles dd { order: -1; margin: 0; font: 300 46px/1 var(--numeral); }
+.tiles dt { margin-block-start: 4px; color: var(--ink-2); font-size: 13.5px; line-height: 1.35; }
+
+details.numbers { margin-block-start: 12px; }
+details.numbers summary { color: var(--ink-2); font-size: 14px; cursor: pointer; }
+details.numbers > :not(summary) { margin-block-start: 10px; }
+
+@media (max-width: 1180px) {
+  .headline { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .headline > div:nth-child(3) { padding-inline-start: 0; border-inline-start: 0; }
+}
+
+@media (max-width: 860px) {
+  .site-say, .found-list li { grid-template-columns: minmax(0, 1fr); row-gap: 6px; }
+  .found-list li > * { grid-column: 1; }
+  .bars .bar-col { width: 30%; }
+}

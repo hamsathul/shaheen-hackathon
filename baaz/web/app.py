@@ -12,6 +12,11 @@ Google's Maps JavaScript API, loaded on the feed only when
 GOOGLE_MAPS_BROWSER_KEY is set. Suspect addresses are always defanged and
 never links; page content from suspect sites is escaped like any other text.
 The only outside links are Google Maps listing links on google.com.
+
+A header switch, kept in a cookie like the language, picks the Analyst view
+(all of the above) or the Simple view: headline numbers, the likely scams with
+one plain sentence each in English and Arabic, and case pages without scores,
+hashes or tool calls. /stats charts the store in either view's words.
 """
 
 from __future__ import annotations
@@ -41,7 +46,7 @@ from baaz.evidence import GST, defang_text
 from baaz.models import ScanResult
 from baaz.pipeline import Scanner
 from baaz.store import Store, utcnow
-from baaz.web import i18n
+from baaz.web import charts, i18n, stats
 from baaz.web.trace import read_trace
 
 WEB_DIR = PACKAGE_DIR / "web"
@@ -71,6 +76,9 @@ SECURITY_HEADERS = {
     "X-Frame-Options": "DENY",
 }
 MAP_REFERRER = "strict-origin-when-cross-origin"
+MODE_COOKIE = "baaz_mode"
+MODES = ("analyst", "simple")
+SIMPLE_LIMITS = {"fraud": 30, "suspicious": 15}  # newest sites listed per verdict in the Simple feed
 
 
 def _map_headers(nonce: str) -> dict[str, str]:
@@ -281,10 +289,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def lang_of(request: Request) -> str:
         return i18n.lang_of(request.cookies.get(i18n.COOKIE))
 
+    def simple_of(request: Request) -> bool:
+        return request.cookies.get(MODE_COOKIE) == "simple"
+
     def page(request: Request, name: str, **context: Any) -> Response:
         lang = lang_of(request)
         return templates.TemplateResponse(request, name, {
             "t": i18n.STRINGS[lang], "lang": lang, "dir": "rtl" if lang == "ar" else "ltr",
+            "mode": "simple" if simple_of(request) else "analyst",
             "js_strings": {k: i18n.STRINGS[lang][k] for k in i18n.JS_KEYS},
             "verdicts": i18n.VERDICTS[lang], "fraud_types": i18n.FRAUD_TYPES[lang], "here": request.url.path,
             **context,
@@ -305,7 +317,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             raise HTTPException(404, "no such case")
         return result, folder
 
-    def feed(lang: str, verdict: str | None) -> dict[str, Any]:
+    def feed(lang: str, verdict: str | None, simple: bool = False) -> dict[str, Any]:
         scans = store.list_scans((verdict,) if verdict in FILTERS else (), FEED_LIMIT)
         sources = store.scan_sources([r.id for r in scans])
         ai = store.investigation_states([r.id for r in scans])
@@ -328,8 +340,61 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 "confirmed": r.analyst_confirmed,
                 "ai": ai.get(r.id, ""),
             })
-        return {"counters": store.counters(), "running_since": _gst(started), "uptime": _uptime(started),
+        data = {"counters": store.counters(), "running_since": _gst(started), "uptime": _uptime(started),
                 "rows": rows, "activity": activity(lang), "maps": maps_watch()}
+        if simple:
+            data["simple"] = simple_feed(lang, data)
+        return data
+
+    def simple_feed(lang: str, data: dict[str, Any]) -> dict[str, Any]:
+        """The Simple feed: the newest likely scams and sites that need checking, each with
+        one plain sentence in English and Arabic, and the AI and Maps watches in a line each."""
+        t = i18n.STRINGS[lang]
+        counters = data["counters"]
+        totals = {"fraud": counters["fraud"], "suspicious": counters["flagged"] - counters["fraud"]}
+        scans = {v: store.list_scans((v,), limit) for v, limit in SIMPLE_LIMITS.items()}
+        with stats.connect(settings.db_path) as db:
+            said = stats.summaries(db, [r.id for found in scans.values() for r in found])
+        lists = {}
+        for verdict, found in scans.items():
+            total = totals[verdict]
+            count = (t["simple_newest"].format(shown=len(found), total=total) if len(found) < total
+                     else t["simple_all"].format(total=total) if total else "")
+            lists[verdict] = {"count": count, "rows": [site_row(r, said.get(r.id), t) for r in found]}
+        return {"suspicious_total": totals["suspicious"], "ai": ai_line(t, data["activity"]),
+                "maps": maps_line(t, data["maps"], counters["maps_leads"], lang), **lists}
+
+    def site_row(r: ScanResult, said: tuple[str, str] | None, t: dict[str, str]) -> dict[str, Any]:
+        """A flagged site in plain words: the first sentence of its AI summary, or else its top reason."""
+        top = max(r.reasons, key=lambda reason: reason.weight, default=None)
+        en, ar = [investigator.first_sentence(s) for s in said] if said else (top.en, top.ar) if top else ("", "")
+        return {
+            "id": r.id, "verdict": r.verdict, "label": t[f"simple_{r.verdict}"],
+            "date": _gst(r.scanned_at, "%Y-%m-%d"), "time": _gst(r.scanned_at, "%H:%M"),
+            "domain": defang_text(host_of(r.final_url or r.url)),
+            "brand": t["simple_pretends"].format(brand=r.impersonated_brand) if r.impersonated_brand else "",
+            "kind": t.get(f"simple_type_{r.fraud_type}", "") if r.fraud_type and r.verdict == "fraud" else "",
+            "en": _defang(en), "ar": _defang(ar),
+        }
+
+    def ai_line(t: dict[str, str], live: dict[str, Any]) -> str:
+        """The AI investigator in one plain line, with its queue."""
+        if live["state"] == "running":
+            n = len(live["running"])
+            line = t[{1: "simple_ai_one", 2: "simple_ai_two"}.get(n, "simple_ai_many")].format(n=n)
+        else:
+            line = t[{"waiting": "simple_ai_paused", "idle": "simple_ai_idle"}.get(live["state"], "simple_ai_off")]
+        queued = sum(q["n"] for q in live["queue"])
+        return f"{line} {t['simple_ai_queue'].format(n=queued)}" if queued else line
+
+    def maps_line(t: dict[str, str], maps_state: dict[str, Any], leads: int, lang: str) -> str:
+        """The Google Maps watch in one plain line. The Arabic line isolates the time so it keeps its order."""
+        if maps_state["state"] == "searching":
+            return t["simple_maps_now"]
+        if maps_state["last_run"]:
+            time = f"\u2066{maps_state['last_run']}\u2069" if lang == "ar" else maps_state["last_run"]
+            return t["simple_maps_last"].format(time=time, n=leads)
+        return t["simple_maps_off"] if maps_state["off"] == "no_key" else t["simple_maps_never"]
 
     def maps_watch() -> dict[str, Any]:
         """The live Google Maps panel: the searches of the last round and the one under
@@ -359,12 +424,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 "verdict": row["verdict"], "verdict_label": i18n.label(i18n.VERDICTS, lang, row["verdict"]),
                 "score": row["risk_score"]}
 
+    def investigator_alive() -> bool:
+        """Whether the investigator's queue heartbeat is fresh."""
+        beat = _age_s(store.get_meta(investigator.HEARTBEAT_KEY))
+        return beat is not None and beat <= ALIVE_S
+
     def activity(lang: str) -> dict[str, Any]:
         """The investigator for the live panel: each run under way with its tool calls so
         far, the queue by verdict and the latest finished investigations. Runs count only
         while the queue's heartbeat is fresh, so a killed investigator shows as off."""
-        beat = _age_s(store.get_meta(investigator.HEARTBEAT_KEY))
-        alive = beat is not None and beat <= ALIVE_S
+        alive = investigator_alive()
         model_down = alive and bool(store.get_meta(investigator.MODEL_DOWN_KEY))
         running = []
         for run in store.running_investigations() if alive else []:
@@ -414,6 +483,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/")
     def index(request: Request, verdict: str | None = None, notice: str | None = None) -> Response:
         lang = lang_of(request)
+        if simple_of(request):
+            return page(request, "simple_feed.html", feed=feed(lang, None, simple=True), error=notice == "scan")
         key = settings.google_maps_browser_key
         nonce = secrets.token_urlsafe(18) if key else ""
         response = page(request, "feed.html", feed=feed(lang, verdict), verdict=verdict if verdict in FILTERS else None,
@@ -425,7 +496,20 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.get("/api/feed")
     def api_feed(request: Request, verdict: str | None = None) -> JSONResponse:
-        return JSONResponse(feed(lang_of(request), verdict))
+        return JSONResponse(feed(lang_of(request), verdict, simple=simple_of(request)))
+
+    @app.get("/stats")
+    def stats_page(request: Request) -> Response:
+        now = datetime.now(timezone.utc)
+        view = charts.view(settings.db_path, now, lang_of(request), simple_of(request), investigator_alive())
+        return page(request, "stats.html", stats=view, as_of=_gst(now.isoformat()))
+
+    @app.get("/mode/{code}")
+    def switch_mode(code: str, next: str | None = None) -> Response:
+        response = RedirectResponse(_safe_next(next), status_code=303)
+        response.set_cookie(MODE_COOKIE, code if code in MODES else MODES[0], max_age=365 * 24 * 3600,
+                            samesite="lax")
+        return response
 
     @app.get("/maps")
     def maps_leads(request: Request) -> Response:
@@ -466,7 +550,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         takedown = folder / evidence.TAKEDOWN
         leads = store.maps_leads_for_scans([case_id]).get(case_id, [])
         return page(
-            request, "case.html", r=result, host=host_of(result.final_url or result.url), chain=chain,
+            request, "simple_case.html" if simple_of(request) else "case.html",
+            r=result, host=host_of(result.final_url or result.url), chain=chain,
             signals=_rows(result.signals, SIGNAL_KEYS),
             storefront=_rows(_read_json(folder / "storefront.json") or {}, STOREFRONT_KEYS),
             screenshot=(folder / evidence.SCREENSHOT).is_file(),

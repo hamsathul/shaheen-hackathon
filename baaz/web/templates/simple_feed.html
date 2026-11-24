@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Baaz | {{ t.feed }}{% endblock %}
+{% block main %}
+{% macro site(row) %}
+<li class="site" data-id="{{ row.id }}">
+  <p class="site-when" dir="ltr"><span>{{ row.time }}</span>{{ row.date }}</p>
+  <div class="site-head">
+    <span class="mark {{ row.verdict }}">{{ row.label }}</span>
+    <a class="site-domain" dir="ltr" href="/case/{{ row.id }}">{{ row.domain }}</a>
+  </div>
+  {% if row.brand or row.kind %}<p class="site-what">{% if row.brand %}<b>{{ row.brand }}</b>{% endif %}{% if row.kind %}<span>{{ row.kind }}</span>{% endif %}</p>{% endif %}
+  <div class="site-say">
+    <p lang="en" dir="ltr">{{ row.en }}</p>
+    <p lang="ar" dir="rtl">{{ row.ar }}</p>
+  </div>
+</li>
+{% endmacro %}
+<div class="frame feed simple-feed">
+  <aside class="side">
+    <div class="since">
+      {% if feed.running_since %}
+      <p class="label"><span class="beat on" aria-hidden="true"></span>{{ t.running_since }}</p>
+      <p class="since-at"><bdi dir="ltr"><span data-field="running_since">{{ feed.running_since }}</span> GST</bdi></p>
+      <p class="since-up"><bdi dir="ltr" data-field="uptime">{{ feed.uptime }}</bdi></p>
+      {% else %}
+      <p class="label"><span class="beat" aria-hidden="true"></span><span data-field="running_since">{{ t.not_running }}</span></p>
+      {% endif %}
+    </div>
+    <form method="post" action="/scan" id="scan-form" class="check">
+      <label class="label" for="scan-url">{{ t.scan_title }}</label>
+      <input id="scan-url" type="text" name="url" autocomplete="off" spellcheck="false" dir="ltr" placeholder="{{ t.scan_placeholder }}">
+      <button type="submit" data-busy="{{ t.scanning }}">{{ t.scan_button }}</button>
+      {% if error %}<p class="error">{{ t.scan_error }}</p>{% endif %}
+      <p class="note">{{ t.scan_note }}</p>
+    </form>
+  </aside>
+
+  <div class="work" id="simple">
+    <dl class="headline">
+      <div><dt>{{ t.simple_checked }}</dt><dd data-counter="scanned">{{ feed.counters.scanned }}</dd></div>
+      <div class="scams"><dt>{{ t.simple_scams }}</dt><dd data-counter="fraud">{{ feed.counters.fraud }}</dd>
+        <dd class="headline-sub">{{ t.simple_need_check }}: <b data-simple="suspicious-total">{{ feed.simple.suspicious_total }}</b></dd></div>
+      <div><dt>{{ t.simple_ai_checked }}</dt><dd data-counter="investigated">{{ feed.counters.investigated }}</dd></div>
+      <div><dt>{{ t.simple_confirmed }}</dt><dd data-counter="confirmed">{{ feed.counters.confirmed }}</dd></div>
+    </dl>
+    <p class="watch-line" data-simple="ai">{{ feed.simple.ai }}</p>
+    <p class="watch-line" data-simple="maps">{{ feed.simple.maps }}</p>
+
+    {% for verdict in ("fraud", "suspicious") %}
+    {% set found = feed.simple[verdict] %}
+    <section class="found">
+      <header class="found-head">
+        <h2>{{ t["simple_" ~ verdict ~ "_title"] }}</h2>
+        <p class="found-count" data-simple="{{ verdict }}-count">{{ found.count }}</p>
+      </header>
+      <ol class="sites" data-simple="{{ verdict }}" data-empty="{{ t['simple_none_' ~ verdict] }}">
+        {% for row in found.rows %}{{ site(row) }}{% else %}<li class="site-none">{{ t["simple_none_" ~ verdict] }}</li>{% endfor %}
+      </ol>
+    </section>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/simple.js"></script>{% endblock %}

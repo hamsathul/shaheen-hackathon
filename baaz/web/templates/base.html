@@ -17,6 +17,8 @@
   <nav>
     <a href="/"{% if here == "/" %} aria-current="page"{% endif %}>{{ t.feed }}</a>
     <a href="/maps"{% if here == "/maps" %} aria-current="page"{% endif %}>{{ t.maps }}</a>
+    <a href="/stats"{% if here == "/stats" %} aria-current="page"{% endif %}>{{ t.stats }}</a>
+    <span class="modes" role="group" aria-label="{{ t.mode_label }}">{% for m in ("simple", "analyst") %}<a href="/mode/{{ m }}?next={{ here | urlencode }}"{% if mode == m %} aria-current="true"{% endif %}>{{ t["mode_" ~ m] }}</a>{% endfor %}</span>
     <a class="switch" lang="{{ 'en' if lang == 'ar' else 'ar' }}" href="/lang/{{ 'en' if lang == 'ar' else 'ar' }}?next={{ here | urlencode }}">{{ t.switch }}</a>
   </nav>
 </header>
