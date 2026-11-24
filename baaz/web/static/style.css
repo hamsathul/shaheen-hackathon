@@ -416,6 +416,7 @@ input::placeholder { color: var(--muted); }
 .pointer { margin-block-start: 4px; color: var(--muted); font: 12.5px/1.4 var(--mono); }
 html[dir="rtl"] .reason-n { order: -2; }
 html[dir="rtl"] .reason-ar { order: -1; }
+html[dir="rtl"] td[dir="ltr"] { text-align: right; }
 
 /* case: the screenshot, cropped and framed, beside the analyst's actions */
 
