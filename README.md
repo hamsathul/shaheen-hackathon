@@ -24,6 +24,8 @@ Three roles share one pipeline, `scan(url)`.
 
 An analyst works the results in the dashboard (`baaz dashboard`): live feed, case view with the AI investigation and its tool-call trace, confirm, takedown request, evidence download, English or Arabic interface.
 
+`baaz up` runs all of it in one process: the watcher finds and scores candidates, two investigators work the flagged cases in parallel (fraud first), and the dashboard shows each investigation's tool calls as they happen. If the model goes away, the investigators wait for it and claim nothing; a run cut off by a lost connection goes back in the queue.
+
 ### Design rules
 
 - **Deterministic first, AI second.** Weighted signals decide the verdict. The model explains, links cases and proposes new candidates. It may move a `suspicious` score by at most 20 points; it never changes a `fraud` or `legitimate` verdict and never overrides the official-domain allowlist.
@@ -114,9 +116,9 @@ The scorer, watcher, dashboard and evaluation need nothing else. For the investi
 
 1. **A local model** behind an OpenAI-compatible endpoint. On the demo box, llama.cpp (`winget install ggml.llamacpp`):
    ```sh
-   llama-server -m <model>.gguf --alias qwen3.8-flash --host 127.0.0.1 --port 8080 -ngl 99 -c 262144 -np 1 --jinja
+   llama-server -m <model>.gguf --alias qwen3.8-flash --host 127.0.0.1 --port 8080 -ngl 99 -c 262144 -np 2 --jinja
    ```
-   Then set `LLM_BASE_URL=http://127.0.0.1:8080/v1` and `LLM_MODEL=qwen3.8-flash` in `.env`.
+   `-np 2` gives the server two slots, one for each parallel investigation (each slot gets half the context). Then set `LLM_BASE_URL=http://127.0.0.1:8080/v1` and `LLM_MODEL=qwen3.8-flash` in `.env`.
 2. **pi 1.5** (`powershell -c "irm https://pi.dev/install.ps1 | iex"` on Windows, `curl -fsSL https://pi.dev/install.sh | sh` elsewhere; it needs Node.js 22.19+).
 3. **The browser server:** `npm install -g @playwright/mcp@0.0.86`.
 
@@ -125,6 +127,10 @@ Without pi, the investigator falls back to a one-shot report from the same model
 ### Commands
 
 ```sh
+# Everything at once: watcher, 2 investigators and the dashboard (http://127.0.0.1:8000/)
+uv run baaz up
+uv run baaz up --investigators 1 --no-render   # lighter machine
+
 # Score one link (add --json for one machine-readable object, --no-render to skip the browser)
 uv run baaz scan https://example.com/
 
@@ -140,7 +146,7 @@ uv run baaz enqueue suspects.txt --source tip-line
 
 # Investigate flagged cases with the local model
 uv run baaz investigate <case-id>
-uv run baaz investigate --queue --loop
+uv run baaz investigate --queue --loop --workers 2
 uv run baaz investigate --bench          # tokens per second of the model endpoint
 
 # Analyst workflow
@@ -188,9 +194,9 @@ What the numbers mean:
 
 ## The local model
 
-The investigator runs on the demo box (A10A: AMD Ryzen AI Max+ PRO 495 with Radeon 8065S graphics, Windows 11). The model is Qwen3.8-Flash, as a 3-bit IQ3_S GGUF (a community "abliterated" build), served by llama.cpp with every layer on the GPU and a 262k-token context.
+The investigator runs on the demo box (A10A: AMD Ryzen AI Max+ PRO 495 with Radeon 8065S graphics, Windows 11). The model is Qwen3.8-Flash, as a 3-bit IQ3_S GGUF (a community "abliterated" build), served by llama.cpp with every layer on the GPU and a 262k-token context split over two slots, so two investigations run at once.
 
-`uv run baaz investigate --bench` on the box: **24.2 tokens/s generation**, 103 tokens/s prompt processing (short prompt).
+`uv run baaz investigate --bench` on the box, measured with one slot: **24.2 tokens/s generation**, 103 tokens/s prompt processing (short prompt).
 
 Over the first 9 investigations on 2026-11-24 (from each case's `evidence/<id>/investigation.json`):
 
