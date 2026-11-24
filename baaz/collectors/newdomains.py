@@ -19,7 +19,7 @@ from datetime import date, datetime, timedelta, timezone
 import httpx
 
 from baaz import brands
-from baaz.collectors import Limits, enqueue_host, excluded, watched_brands
+from baaz.collectors import Limits, brand_terms, enqueue_host, excluded, watched_brands
 from baaz.store import Store
 
 SOURCE = "newdomains"
@@ -28,6 +28,8 @@ LIST_URL = "https://www.whoisds.com/whois-database/newly-registered-domains/{}/n
 TIMEOUT = 60.0
 MAX_ZIP_BYTES = 20_000_000
 UAE_TERMS = ("uae", "dubai", "abudhabi", "emirates", "sharjah", "ajman")
+# Words that contain a UAE term by accident (baidu + baike spells "dubai").
+NOT_UAE = ("baidu",)
 _UAE_SUFFIX = re.compile(r"(?:-ae|\.ae)$")
 
 log = logging.getLogger(__name__)
@@ -49,7 +51,7 @@ def matches(domains: Iterable[str]) -> list[tuple[str, str]]:
     token such as `du` is too common to count), then for domains carrying a
     UAE place name or an `ae` ending."""
     watched = {b.id for b in watched_brands()}
-    terms = {t for b in watched_brands() for t in (*b.keywords, *b.tokens)}
+    terms = {t for b in watched_brands() for t in brand_terms(b)}
     branded, local = [], []
     for domain in domains:
         if excluded(domain):
@@ -60,6 +62,8 @@ def matches(domains: Iterable[str]) -> list[tuple[str, str]]:
                 branded.append((domain, f"new domain naming {found[0].name_en}"))
                 continue
         name = domain.rsplit(".", 1)[0]
+        for word in NOT_UAE:
+            name = name.replace(word, "")
         if any(t in name for t in UAE_TERMS) or _UAE_SUFFIX.search(name) or domain.endswith(".ae"):
             local.append((domain, "new domain with a UAE name"))
     return branded + local

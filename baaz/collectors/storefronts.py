@@ -18,8 +18,8 @@ from functools import lru_cache
 
 import yaml
 
-from baaz.collectors import (Limits, Throttle, enqueue_host, excluded, is_registered, make_resolver, rotation,
-                             storefront_brands)
+from baaz.collectors import (Limits, Throttle, brand_terms, enqueue_host, excluded, is_registered, make_resolver,
+                             rotation, storefront_brands)
 from baaz.config import DATA_DIR, load_settings
 from baaz.store import Store
 
@@ -53,8 +53,8 @@ def names_for(term: str, place: str, is_code: bool) -> list[str]:
 
 
 def terms() -> list[tuple[str, str]]:
-    """(term, brand id) for every storefront brand keyword and token."""
-    pairs = {(t, b.id) for b in storefront_brands() for t in (*b.keywords, *b.tokens)}
+    """(term, brand id) for every string naming a storefront brand."""
+    pairs = {(t, b.id) for b in storefront_brands() for t in brand_terms(b)}
     return sorted(pairs, key=lambda pair: (pair[1], pair[0]))
 
 

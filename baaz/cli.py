@@ -74,7 +74,8 @@ def cmd_export(args: argparse.Namespace) -> int:
 
 
 def cmd_watch(args: argparse.Namespace) -> int:
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s", datefmt="%Y-%m-%d %H:%M:%S",
+                        stream=sys.stdout)
     logging.getLogger("httpx").setLevel(logging.WARNING)
     collectors = [c.strip() for c in args.collectors.split(",") if c.strip()] if args.collectors else None
     try:

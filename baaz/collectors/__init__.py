@@ -5,8 +5,8 @@ candidates it queued. Collectors are rate-limited, cap their work per run,
 respect their source's terms and fail soft: an unreachable source is logged
 and yields 0, never an exception the watcher has to survive.
 
-They watch the UAE brands and the storefront brands (`data/brands_uae.yaml`,
-`data/brands_storefront.yaml`); the global brands are left to the scorer.
+They watch the UAE brands and the storefront brands (scopes `uae` and
+`storefront`); the global brands are left to the scorer.
 """
 
 from __future__ import annotations
@@ -20,16 +20,13 @@ from typing import TypeVar
 
 import dns.exception
 import dns.resolver
-import yaml
 
 from baaz import brands, signals
 from baaz.brands import Brand
-from baaz.config import DATA_DIR
 from baaz.domains import registrable_domain
 from baaz.store import Store
 
-WATCHED_FILES = ("brands_uae.yaml", "brands_storefront.yaml")
-STOREFRONT_FILE = "brands_storefront.yaml"
+WATCHED_SCOPES = ("uae", "storefront")
 DNS_LIFETIME = 3.0
 
 T = TypeVar("T")
@@ -56,21 +53,19 @@ class Throttle:
         self.next_at = max(now, self.next_at) + self.interval
 
 
-def _brand_ids(*files: str) -> frozenset[str]:
-    return frozenset(b["id"] for name in files
-                     for b in yaml.safe_load((DATA_DIR / name).read_text(encoding="utf-8"))["brands"])
-
-
 @lru_cache(maxsize=1)
 def watched_brands() -> tuple[Brand, ...]:
-    ids = _brand_ids(*WATCHED_FILES)
-    return tuple(b for b in brands.load_brands() if b.id in ids)
+    return tuple(b for b in brands.load_brands() if b.scope in WATCHED_SCOPES)
 
 
 @lru_cache(maxsize=1)
 def storefront_brands() -> tuple[Brand, ...]:
-    ids = _brand_ids(STOREFRONT_FILE)
-    return tuple(b for b in brands.load_brands() if b.id in ids)
+    return tuple(b for b in brands.load_brands() if b.scope == "storefront")
+
+
+def brand_terms(brand: Brand) -> tuple[str, ...]:
+    """Every string that names `brand` in a host name: keywords, tokens and common tokens."""
+    return (*brand.keywords, *brand.tokens, *brand.common_tokens)
 
 
 def excluded(domain: str) -> bool:
