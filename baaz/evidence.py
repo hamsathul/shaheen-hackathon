@@ -12,11 +12,13 @@ Reason evidence pointers (`<file>#<field>`) name a file of the pack.
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 import re
 import zipfile
 from datetime import datetime, timedelta, timezone
+from functools import cache
 from pathlib import Path
 from typing import Any
 
@@ -44,6 +46,13 @@ COLLECTION_STATEMENT = (
 TOP_REASONS = 6
 _ARTIFACTS = ("redirects.json", "whois.json", "dns_hosting.json", "cert.json",
               "page.json", "profiles.json", "storefront.json")
+# The report is read from the pack, often on a machine with no network: the dashboard's
+# fonts travel inside it (family, weight range, file in web/static/fonts).
+REPORT_FONTS = (
+    ("IBM Plex Sans", "100 700", "ibm-plex-sans-latin.woff2"),
+    ("IBM Plex Mono", "400", "ibm-plex-mono-400-latin.woff2"),
+    ("IBM Plex Sans Arabic", "400", "ibm-plex-sans-arabic-400-arabic.woff2"),
+)
 _SCHEME = re.compile(r"\bhttp(s?)(?=://)", re.I)
 _HOST = re.compile(r"\b(?:[a-z0-9-]+\.)+[a-z][a-z0-9-]*[a-z]\b|\b\d{1,3}(?:\.\d{1,3}){3}\b", re.I)
 
@@ -171,6 +180,17 @@ def _short(value: Any, limit: int = 400) -> str:
     return defang_text(text if len(text) <= limit else text[:limit] + "...")
 
 
+@cache
+def _report_fonts() -> str:
+    """@font-face rules with each woff2 file inlined as a data URL."""
+    faces = []
+    for family, weight, name in REPORT_FONTS:
+        data = base64.b64encode((PACKAGE_DIR / "web" / "static" / "fonts" / name).read_bytes()).decode("ascii")
+        faces.append(f'@font-face {{ font-family: "{family}"; font-weight: {weight}; '
+                     f'src: url(data:font/woff2;base64,{data}) format("woff2"); }}')
+    return "\n".join(faces)
+
+
 def render_report(result: ScanResult, folder: Path, files: list[dict[str, Any]], generated: datetime) -> str:
     artifacts = {name: _read_json(folder / name) for name in _ARTIFACTS if (folder / name).is_file()}
     redirects = artifacts.get("redirects.json") or {}
@@ -190,6 +210,7 @@ def render_report(result: ScanResult, folder: Path, files: list[dict[str, Any]],
         generated=stamp(generated),
         version=__version__,
         collection=COLLECTION_STATEMENT,
+        fonts=_report_fonts(),
     )
 
 
