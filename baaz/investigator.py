@@ -348,11 +348,43 @@ def pi_argv(command: list[str], model: str, scan_id: str) -> list[str]:
     ]
 
 
+def _descendants(pid: int) -> list[int]:
+    try:
+        table = subprocess.run(["ps", "-A", "-o", "pid=,ppid="], capture_output=True, text=True,
+                               timeout=10, check=False).stdout
+    except (OSError, subprocess.SubprocessError):
+        return []
+    children: dict[int, list[int]] = {}
+    for line in table.splitlines():
+        parts = line.split()
+        if len(parts) == 2 and parts[0].isdigit() and parts[1].isdigit():
+            children.setdefault(int(parts[1]), []).append(int(parts[0]))
+    found, todo = [], [pid]
+    while todo:
+        for child in children.get(todo.pop(), []):
+            found.append(child)
+            todo.append(child)
+    return found
+
+
 def _kill_tree(proc: subprocess.Popen[bytes]) -> None:
+    """Kill pi and everything it started. pi starts each MCP server in a session of
+    its own, so killing pi's process group alone would leave the browser running."""
     if os.name == "nt":
         subprocess.run(["taskkill", "/F", "/T", "/PID", str(proc.pid)], capture_output=True, check=False)
     else:
-        os.killpg(proc.pid, signal.SIGKILL)
+        groups = {proc.pid}
+        for pid in _descendants(proc.pid):
+            try:
+                groups.add(os.getpgid(pid))
+            except OSError:
+                pass
+        groups.discard(os.getpgid(0))
+        for group in groups:
+            try:
+                os.killpg(group, signal.SIGKILL)
+            except OSError:
+                pass
     proc.wait()
 
 

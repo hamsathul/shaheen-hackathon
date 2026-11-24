@@ -76,7 +76,7 @@ pi -ne -e builtin:mcp --mode json --offline --no-session -ns -nc -np \
    --model local/<LLM_MODEL> --system-prompt <repo>/agent/investigator.md "Investigate case <id>"
 ```
 
-`--system-prompt` is given the file path; pi reads a path that exists. On Windows, `pi` is a batch wrapper (`pi.cmd`), and cmd.exe mangles complex arguments, so Baaz runs the wrapper's node script (`pi-launcher.js`) with node directly. A run is killed (with its process tree) after `--timeout` seconds. If pi ends without a submitted report, Baaz falls back to one-shot mode once and records why in `run.fallback_reason`.
+`--system-prompt` is given the file path; pi reads a path that exists. On Windows, `pi` is a batch wrapper (`pi.cmd`), and cmd.exe mangles complex arguments, so Baaz runs the wrapper's node script (`pi-launcher.js`) with node directly. A run is killed after `--timeout` seconds, with every process it started: pi starts each MCP server in a session of its own, so Baaz kills the process group of each descendant (`taskkill /T` on Windows). If pi ends without a submitted report, Baaz falls back to one-shot mode once and records why in `run.fallback_reason`.
 
 ### Thinking in pi mode
 
