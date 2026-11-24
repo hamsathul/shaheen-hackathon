@@ -1,12 +1,16 @@
-// Live feed: refresh the counters, the latest scans and the AI investigator
-// panel every 5 seconds from /api/feed. Everything is built with textContent
-// only, never innerHTML; addresses arrive defanged from the server.
+// Live feed: refresh the counters, the latest scans, the AI investigator
+// panel and the Google Maps watch from /api/feed, every 5 seconds (every 2
+// while a Maps round runs). Everything is built with textContent only, never
+// innerHTML; addresses arrive defanged from the server. With a browser key the
+// Maps watch loads Google's Maps JavaScript API, the one outside script.
 (function () {
   "use strict";
   var VERDICTS = ["fraud", "suspicious", "legitimate"];
   var T = JSON.parse(document.getElementById("strings").textContent);
+  var NONCE = document.currentScript ? document.currentScript.nonce : "";
   var body = document.getElementById("feed-rows");
   var live = document.getElementById("live");
+  var watch = document.getElementById("maps-watch");
   var seen = {};
   var calls = {};  // tool calls already shown per running case, to mark the new ones
   Array.prototype.forEach.call(body.querySelectorAll("tr[data-id]"), function (tr) {
@@ -210,17 +214,281 @@
     body.replaceChildren(rows);
     data.rows.forEach(function (r) { seen[r.id] = true; });
     renderLive(data.activity);
+    renderWatch(data.maps);
+  }
+
+  // Google Maps watch: the searches of the last round as a log and, with a
+  // browser key, on a Google map that moves to each search as its answer arrives.
+
+  var part = {};
+  ["state", "query", "wait", "now", "meta", "off", "split", "map-col", "map", "map-note", "log"].forEach(function (k) {
+    part[k] = watch.querySelector('[data-mw="' + k + '"]');
+  });
+  var NOW_LABEL = part.now.textContent;
+  // Quiet greyscale in the dashboard's paper and ink; no points of interest, so only Baaz's marks show.
+  var MAP_STYLES = [
+    { elementType: "geometry", stylers: [{ color: "#f0eee9" }] },
+    { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+    { elementType: "labels.text.fill", stylers: [{ color: "#67625b" }] },
+    { elementType: "labels.text.stroke", stylers: [{ color: "#fbfaf7" }] },
+    { featureType: "administrative", elementType: "geometry.stroke", stylers: [{ color: "#9f9b94" }] },
+    { featureType: "poi", stylers: [{ visibility: "off" }] },
+    { featureType: "transit", stylers: [{ visibility: "off" }] },
+    { featureType: "road", elementType: "geometry", stylers: [{ color: "#fbfaf7" }] },
+    { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#e3ded4" }] },
+    { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#9f9b94" }] },
+    { featureType: "water", elementType: "geometry", stylers: [{ color: "#d9d6d0" }] },
+    { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#9f9b94" }] }
+  ];
+  var DRAW_ORDER = { other: 0, brand_ok: 1, lead: 2 };  // leads drawn last, on top
+  var mapState = watch.hasAttribute("data-key") ? "unloaded" : "no_key";  // then loading, ready, failed or refused
+  var gmap = null;
+  var api = null;  // the Google classes the map uses, once loaded
+  var marks = null;  // the overlay of the search on the map
+  var shown = null;  // which search is on the map
+  var latest = null;  // the last maps object, drawn once the map is ready
+  var pressing = false;
+
+  function loadMap() {
+    mapState = "loading";
+    window.baazMapReady = function () {
+      Promise.all([google.maps.importLibrary("maps"), google.maps.importLibrary("core")])
+        .then(function (libs) { createMap(libs[0], libs[1]); })
+        .catch(function () { mapFailed("failed"); });
+    };
+    window.gm_authFailure = function () { mapFailed("refused"); };
+    var params = new URLSearchParams({
+      key: watch.getAttribute("data-key"), loading: "async", callback: "baazMapReady",
+      language: watch.getAttribute("data-lang")
+    });
+    var script = document.createElement("script");
+    script.src = "https://maps.googleapis.com/maps/api/js?" + params.toString();
+    script.async = true;
+    if (NONCE) script.nonce = NONCE;
+    script.onerror = function () { mapFailed("failed"); };
+    document.head.appendChild(script);
+  }
+
+  function marksClass(OverlayView, LatLng) {
+    // Fixed-size marks in a custom overlay: no Map ID needed and none of the deprecated Marker class.
+    return class extends OverlayView {
+      constructor(listings) {
+        super();
+        this.listings = listings;
+        this.nodes = [];
+      }
+      onAdd() {
+        var pane = this.getPanes().overlayMouseTarget;
+        this.nodes = this.listings.map(function (l) {
+          var node = el("span", "pin " + l.outcome);
+          node.title = l.name;
+          pane.appendChild(node);
+          return node;
+        });
+      }
+      draw() {
+        var projection = this.getProjection();
+        this.listings.forEach(function (l, i) {
+          var point = projection.fromLatLngToDivPixel(new LatLng(l.lat, l.lng));
+          this.nodes[i].style.left = point.x + "px";
+          this.nodes[i].style.top = point.y + "px";
+        }, this);
+      }
+      onRemove() {
+        this.nodes.forEach(function (node) { node.remove(); });
+        this.nodes = [];
+      }
+    };
+  }
+
+  function createMap(mapsLib, core) {
+    gmap = new mapsLib.Map(part.map, {
+      center: { lat: 24.6, lng: 54.7 }, zoom: 7, styles: MAP_STYLES, backgroundColor: "#f0eee9",
+      disableDefaultUI: true, zoomControl: true, clickableIcons: false, gestureHandling: "cooperative"
+    });
+    api = { Marks: marksClass(mapsLib.OverlayView, core.LatLng), LatLngBounds: core.LatLngBounds, event: core.event };
+    mapState = "ready";
+    if (latest) renderWatch(latest);
+  }
+
+  function mapFailed(reason) {
+    mapState = reason;
+    if (latest) renderWatch(latest);
+  }
+
+  function onMap(m) {  // the newest answered search
+    for (var i = m.searches.length - 1; i >= 0; i--) {
+      if (m.searches[i].state === "done") return m.searches[i];
+    }
+    return null;
+  }
+
+  function drawSearch(m) {
+    var s = onMap(m);
+    var key = s ? s.time + " " + s.query : null;
+    if (key === shown) return;
+    shown = key;
+    if (marks) marks.setMap(null);
+    marks = null;
+    if (!s) return;
+    var located = s.listings.filter(function (l) { return l.lat !== null && l.lng !== null; });
+    located.sort(function (a, b) { return DRAW_ORDER[a.outcome] - DRAW_ORDER[b.outcome]; });
+    marks = new api.Marks(located);
+    marks.setMap(gmap);
+    if (located.length === 1) {
+      gmap.panTo({ lat: located[0].lat, lng: located[0].lng });
+      gmap.setZoom(13);
+    } else if (located.length > 1) {
+      var bounds = new api.LatLngBounds();
+      located.forEach(function (l) { bounds.extend({ lat: l.lat, lng: l.lng }); });
+      gmap.fitBounds(bounds, 56);
+      api.event.addListenerOnce(gmap, "idle", function () {
+        if (gmap.getZoom() > 14) gmap.setZoom(14);
+      });
+    }
+  }
+
+  function query(text, language) {
+    var node = el("bdi", "mw-q", text);
+    node.dir = language === "ar" ? "rtl" : "ltr";
+    node.lang = language;
+    return node;
+  }
+
+  function clockOf(gst) {  // "YYYY-MM-DD HH:MM" shown as HH:MM, the full time on hover
+    var node = el("bdi", null, gst.slice(-5));
+    node.dir = "ltr";
+    node.title = gst + " GST";
+    return node;
+  }
+
+  function leadLine(l) {
+    var line = el("span", "listing mw-lead");
+    var link = el("a", null, l.name);
+    link.href = "/maps";
+    link.title = T.maps;
+    link.dir = "auto";
+    line.appendChild(link);
+    [[l.website, T.maps_kind_website], [l.phone, T.maps_kind_helpline]].forEach(function (pair) {
+      if (!pair[0]) return;
+      line.appendChild(el("span", "mw-kind", pair[1]));
+      var value = el("bdi", "mono", pair[0]);
+      value.dir = "ltr";
+      line.appendChild(value);
+    });
+    return line;
+  }
+
+  function searchRow(s) {
+    var tr = el("tr", s.current ? "current" : null);
+    var time = cell("", "time");
+    var at = el("bdi", null, s.time);
+    at.dir = "ltr";
+    time.appendChild(at);
+    tr.appendChild(time);
+    var what = cell("");
+    what.appendChild(query(s.query, s.language));
+    s.listings.forEach(function (l) { if (l.outcome === "lead") what.appendChild(leadLine(l)); });
+    tr.appendChild(what);
+    if (s.state === "pending") {
+      tr.appendChild(cell(T.mw_pending, "num muted"));
+      tr.appendChild(cell("", "num"));
+    } else if (s.state === "failed") {
+      var failed = cell("", "num");
+      failed.appendChild(el("span", "stamp dashed", T.mw_failed));
+      tr.appendChild(failed);
+      tr.appendChild(cell("", "num"));
+    } else {
+      tr.appendChild(cell(String(s.count), "num"));
+      tr.appendChild(cell(String(s.leads), "num" + (s.leads ? " hit" : "")));
+    }
+    return tr;
+  }
+
+  function metaItem(label, value) {
+    var item = el("span", null);
+    item.appendChild(el("span", "label", label));
+    item.appendChild(value);
+    return item;
+  }
+
+  function renderWatch(m) {
+    latest = m;
+    part.state.className = "state " + (m.state === "searching" ? "running" : m.state);
+    part.state.textContent = m.state === "searching" ? T.mw_searching : m.state === "idle" ? T.live_idle : T.live_off;
+    part.query.replaceChildren();
+    if (m.query) part.query.appendChild(query(m.query, m.language));
+
+    part.now.hidden = m.state === "off";
+    part.now.disabled = pressing || !m.can_search;
+    part.now.textContent = pressing ? part.now.getAttribute("data-busy") : NOW_LABEL;
+    part.wait.replaceChildren();
+    if (m.state === "searching") part.wait.textContent = T.mw_busy;
+    else if (m.state === "idle" && m.next_allowed) {
+      part.wait.append(T.mw_next_allowed + " ", clockOf(m.next_allowed));
+    }
+
+    var meta = document.createDocumentFragment();
+    if (m.last_run) meta.appendChild(metaItem(T.mw_last_round, clockOf(m.last_run)));
+    if (m.state !== "off") {
+      meta.appendChild(metaItem(T.mw_next_round, m.next_run ? clockOf(m.next_run) : el("span", null, T.mw_due)));
+    }
+    meta.appendChild(metaItem(T.mw_calls_today, el("b", null, String(m.calls_today))));
+    part.meta.replaceChildren(meta);
+
+    part.off.hidden = m.state !== "off";
+    part.off.textContent = m.off === "no_key" ? T.maps_off : T.mw_off_elsewhere;
+    part.split.hidden = m.state === "off";
+    if (m.state === "off") return;
+
+    if (mapState === "unloaded") loadMap();
+    var withMap = mapState === "loading" || mapState === "ready";
+    part["map-col"].hidden = !withMap;
+    part.split.className = "mw-split" + (withMap ? "" : " log-only");
+    part["map-note"].hidden = withMap;
+    part["map-note"].textContent = withMap ? "" : T["mw_map_" + mapState];
+    if (mapState === "ready") drawSearch(m);
+
+    var rows = document.createDocumentFragment();
+    m.searches.forEach(function (s) { rows.appendChild(searchRow(s)); });
+    if (!m.searches.length) {
+      var empty = cell(T.mw_none, "muted");
+      empty.colSpan = 4;
+      rows.appendChild(el("tr", "empty")).appendChild(empty);
+    }
+    part.log.replaceChildren(rows);
+  }
+
+  part.now.addEventListener("click", function () {
+    pressing = true;
+    part.now.disabled = true;
+    part.now.textContent = part.now.getAttribute("data-busy");
+    fetch("/maps/search", { method: "POST", credentials: "same-origin" })
+      .catch(function () {})
+      .then(function () {
+        pressing = false;
+        refresh();
+      });
+  });
+
+  var timer = null;
+
+  function schedule(data) {
+    clearTimeout(timer);
+    timer = setTimeout(refresh, data && data.maps.state === "searching" ? 2000 : 5000);
   }
 
   function refresh() {
     fetch("/api/feed" + window.location.search, { credentials: "same-origin" })
       .then(function (resp) { return resp.ok ? resp.json() : null; })
-      .then(function (data) { if (data) render(data); })
-      .catch(function () {});
+      .then(function (data) {
+        if (data) render(data);
+        schedule(data);
+      })
+      .catch(function () { schedule(null); });
   }
 
   refresh();
-  setInterval(refresh, 5000);
   setInterval(tickElapsed, 1000);
 
   var form = document.getElementById("scan-form");

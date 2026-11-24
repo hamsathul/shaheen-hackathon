@@ -1,24 +1,27 @@
-"""The dashboard: a live feed of scans with counters and the AI
-investigator's live panel (the runs under way with their tool calls so far,
-the queue, the latest reports), one page per case (reasons in English and
-Arabic, screenshot, AI investigation and its tool-call trace, followed live
-while the model works, analyst confirmation, evidence download and
-verification), the Google Maps leads, and a box to scan a pasted link.
+"""The dashboard: a live feed of scans with counters, the AI investigator's
+live panel (the runs under way with their tool calls so far, the queue, the
+latest reports) and the Google Maps watch (the searches of the last round,
+on a Google map when a browser key is set), one page per case (reasons in
+English and Arabic, screenshot, AI investigation and its tool-call trace,
+followed live while the model works, analyst confirmation, evidence download
+and verification), the Google Maps leads, and a box to scan a pasted link.
 
 Everything is served from this package, the IBM Plex fonts included (no
-CDN), so it works with the network unplugged. Suspect addresses are always
-defanged and never links; page content from suspect sites is escaped like
-any other text. The only outside links are Google Maps listing links on
-google.com.
+CDN), so it works with the network unplugged. The one outside script is
+Google's Maps JavaScript API, loaded on the feed only when
+GOOGLE_MAPS_BROWSER_KEY is set. Suspect addresses are always defanged and
+never links; page content from suspect sites is escaped like any other text.
+The only outside links are Google Maps listing links on google.com.
 """
 
 from __future__ import annotations
 
 import json
 import re
+import secrets
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
@@ -31,6 +34,7 @@ from jinja2 import Environment, FileSystemLoader
 from starlette.concurrency import run_in_threadpool
 
 from baaz import evidence, investigator, watch
+from baaz.collectors import maps
 from baaz.config import PACKAGE_DIR, Settings, load_settings
 from baaz.domains import host_of
 from baaz.evidence import GST, defang_text
@@ -66,10 +70,28 @@ SECURITY_HEADERS = {
     "Referrer-Policy": "same-origin",
     "X-Frame-Options": "DENY",
 }
+MAP_REFERRER = "strict-origin-when-cross-origin"
 
 
-def _gst(iso: str | None) -> str:
-    """An ISO-8601 time as `YYYY-MM-DD HH:MM` in UAE time."""
+def _map_headers(nonce: str) -> dict[str, str]:
+    """The feed's headers when it loads Google's map: the CSP Google documents for the
+    Maps JavaScript API, with a nonce for the scripts. Styles keep Google's allowlist
+    form, since the map nonces the style elements it inserts only when the page has a
+    `<style nonce>`. The referrer policy sends Google this dashboard's origin, which
+    the browser key's website restriction checks."""
+    policy = (
+        f"default-src 'self'; script-src 'nonce-{nonce}' 'strict-dynamic' https: 'unsafe-eval' blob:; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "img-src 'self' https://*.googleapis.com https://*.gstatic.com *.google.com *.googleusercontent.com data:; "
+        "connect-src 'self' https://*.googleapis.com *.google.com https://*.gstatic.com data: blob:; "
+        "font-src 'self' https://fonts.gstatic.com; frame-src *.google.com; worker-src blob:; "
+        "object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'"
+    )
+    return {"Content-Security-Policy": policy, "Referrer-Policy": MAP_REFERRER}
+
+
+def _gst(iso: str | None, fmt: str = "%Y-%m-%d %H:%M") -> str:
+    """An ISO-8601 time in UAE time, as `YYYY-MM-DD HH:MM` by default."""
     if not iso:
         return ""
     try:
@@ -77,7 +99,7 @@ def _gst(iso: str | None) -> str:
     except ValueError:
         return iso
     moment = moment if moment.tzinfo else moment.replace(tzinfo=timezone.utc)
-    return moment.astimezone(GST).strftime("%Y-%m-%d %H:%M")
+    return moment.astimezone(GST).strftime(fmt)
 
 
 def _defang(text: Any) -> str:
@@ -198,6 +220,23 @@ def _lead_view(row: dict[str, Any], lang: str) -> dict[str, Any]:
     }
 
 
+def _listing_view(listing: maps.Listing) -> dict[str, Any]:
+    """A listing for the live Maps panel, defanged like page content. A lead shows
+    what makes it one: its website, its helpline number, or both."""
+    lead = listing.lead
+    return {"name": _defang(listing.name), "lat": listing.lat, "lng": listing.lng, "outcome": listing.outcome,
+            "website": _defang(lead.website) if lead and "website" in lead.reasons else "",
+            "phone": lead.phone if lead and "helpline" in lead.reasons else ""}
+
+
+def _search_view(search: maps.Search, current: bool) -> dict[str, Any]:
+    listings = search.listings or ()
+    return {"time": _gst(search.sent_at, "%H:%M:%S"), "query": search.query.text, "language": search.query.language,
+            "state": "failed" if search.failed else "pending" if search.listings is None else "done",
+            "current": current, "count": len(listings), "leads": sum(x.outcome == "lead" for x in listings),
+            "listings": [_listing_view(x) for x in listings]}
+
+
 def _safe_next(target: str | None) -> str:
     """A local path to go back to; anything else (another site, `//host`) means the feed."""
     if target and target.startswith("/") and not target.startswith(("//", "/\\")):
@@ -235,7 +274,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if request.method == "POST" and not _same_origin(request):
             return Response("cross-site request refused", status_code=403)
         response = await call_next(request)
-        response.headers.update(SECURITY_HEADERS)
+        for name, value in SECURITY_HEADERS.items():
+            response.headers.setdefault(name, value)
         return response
 
     def lang_of(request: Request) -> str:
@@ -289,7 +329,30 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 "ai": ai.get(r.id, ""),
             })
         return {"counters": store.counters(), "running_since": _gst(started), "uptime": _uptime(started),
-                "rows": rows, "activity": activity(lang)}
+                "rows": rows, "activity": activity(lang), "maps": maps_watch()}
+
+    def maps_watch() -> dict[str, Any]:
+        """The live Google Maps panel: the searches of the last round and the one under
+        way, held in memory by the collector of this process (`baaz up`). Off, with the
+        reason, when no watcher here runs Maps: no Places key, or another process."""
+        searching, searches = maps.live.snapshot()
+        attached = maps.live.attached
+        last = watch.maps_last_round(store)
+        due = last + timedelta(hours=settings.maps_interval_hours) if last else None
+        allowed = watch.maps_allowed_at(store)
+        current = searches[-1].query if searching and searches else None
+        return {
+            "state": "searching" if searching else "idle" if attached else "off",
+            "off": "" if attached else "elsewhere" if settings.google_maps_api_key else "no_key",
+            "query": current.text if current else "",
+            "language": current.language if current else "",
+            "last_run": _gst(last.isoformat()) if last else "",
+            "next_run": _gst(due.isoformat()) if attached and due and due > datetime.now(timezone.utc) else "",
+            "next_allowed": _gst(allowed.isoformat()) if allowed else "",
+            "can_search": attached and not searching and allowed is None,
+            "calls_today": maps.calls_today(store),
+            "searches": [_search_view(s, searching and i == len(searches) - 1) for i, s in enumerate(searches)],
+        }
 
     def case_row(row: dict[str, Any], lang: str) -> dict[str, Any]:
         return {"id": row["scan_id"], "domain": defang_text(host_of(row["final_url"] or row["url"])),
@@ -351,8 +414,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/")
     def index(request: Request, verdict: str | None = None, notice: str | None = None) -> Response:
         lang = lang_of(request)
-        return page(request, "feed.html", feed=feed(lang, verdict), verdict=verdict if verdict in FILTERS else None,
-                    filters=FILTERS, error=notice == "scan")
+        key = settings.google_maps_browser_key
+        nonce = secrets.token_urlsafe(18) if key else ""
+        response = page(request, "feed.html", feed=feed(lang, verdict), verdict=verdict if verdict in FILTERS else None,
+                        filters=FILTERS, error=notice == "scan", map_key=key, nonce=nonce,
+                        referrer=MAP_REFERRER if key else "same-origin")
+        if key:
+            response.headers.update(_map_headers(nonce))
+        return response
 
     @app.get("/api/feed")
     def api_feed(request: Request, verdict: str | None = None) -> JSONResponse:
@@ -365,6 +434,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return page(request, "maps.html", leads=leads, enabled=bool(settings.google_maps_api_key),
                     last_run=_gst(store.get_meta(watch.last_run_key("maps"))),
                     kinds={kind: sum(kind in lead["reasons"] for lead in leads) for kind in ("website", "helpline")})
+
+    @app.post("/maps/search")
+    def maps_search_now() -> JSONResponse:
+        """The feed's "Search Maps now" button: one round in the watcher of this process."""
+        status = watch.search_maps_now(store)
+        return JSONResponse({"status": status}, status_code=202 if status == "started" else 409)
 
     @app.post("/scan")
     async def scan_form(url: str = Form("")) -> Response:

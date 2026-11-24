@@ -45,6 +45,42 @@
       <ol class="recent" data-live="recent"></ol>
     </section>
 
+    <section class="maps-watch" id="maps-watch" data-lang="{{ lang }}"{% if map_key %} data-key="{{ map_key }}"{% endif %}>
+      <header class="mw-head">
+        <h2>{{ t.mw_title }}</h2>
+        <span class="state" data-mw="state"></span>
+        <p class="mw-query" data-mw="query"></p>
+        <p class="mw-now">
+          <span data-mw="wait"></span>
+          <button type="button" class="quiet" data-mw="now" data-busy="{{ t.mw_starting }}" hidden>{{ t.mw_now }}</button>
+        </p>
+      </header>
+      <p class="mw-meta" data-mw="meta"></p>
+      <p class="note mw-off" data-mw="off" hidden></p>
+      <div class="mw-split log-only" data-mw="split" hidden>
+        <figure class="mw-map-col" data-mw="map-col" hidden>
+          <div class="mw-map" data-mw="map"></div>
+          <figcaption>
+            <ul class="mw-legend">
+              <li><span class="pin lead" aria-hidden="true"></span>{{ t.mw_legend_lead }}</li>
+              <li><span class="pin brand_ok" aria-hidden="true"></span>{{ t.mw_legend_brand }}</li>
+              <li><span class="pin other" aria-hidden="true"></span>{{ t.mw_legend_other }}</li>
+            </ul>
+          </figcaption>
+        </figure>
+        <div class="mw-log-col">
+          <p class="note mw-map-note" data-mw="map-note" hidden></p>
+          <table class="ledger mw-log">
+            <thead>
+              <tr><th>{{ t.time }}</th><th>{{ t.maps_search }}</th><th class="num">{{ t.mw_listings }}</th><th class="num">{{ t.maps_count }}</th></tr>
+            </thead>
+            <tbody data-mw="log"></tbody>
+          </table>
+          <p class="note mw-source">{{ t.mw_source }}</p>
+        </div>
+      </div>
+    </section>
+
     <section class="scans">
       <header class="scans-head">
         <h2>{{ t.latest }}</h2>
@@ -79,4 +115,4 @@
   </div>
 </div>
 {% endblock %}
-{% block scripts %}<script src="/static/feed.js"></script>{% endblock %}
+{% block scripts %}<script src="/static/feed.js"{% if nonce %} nonce="{{ nonce }}"{% endif %}></script>{% endblock %}

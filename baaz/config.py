@@ -45,6 +45,7 @@ class Settings:
     investigators: int = 2  # parallel investigations (one pi process each)
     google_maps_api_key: str = ""  # Places API (New); empty turns the Maps collector off
     google_maps_api_base: str = GOOGLE_MAPS_API_BASE
+    google_maps_browser_key: str = ""  # Maps JavaScript API, for the dashboard's map; empty shows the log alone
     maps_interval_hours: float = 6.0  # hours between Maps collector runs
 
     @property
@@ -71,5 +72,6 @@ def load_settings() -> Settings:
         investigators=max(1, int(os.environ.get("BAAZ_INVESTIGATORS") or 2)),
         google_maps_api_key=os.environ.get("GOOGLE_MAPS_API_KEY", "").strip(),
         google_maps_api_base=(os.environ.get("GOOGLE_MAPS_API_BASE") or GOOGLE_MAPS_API_BASE).rstrip("/"),
+        google_maps_browser_key=os.environ.get("GOOGLE_MAPS_BROWSER_KEY", "").strip(),
         maps_interval_hours=float(os.environ.get("BAAZ_MAPS_INTERVAL_HOURS") or 6),
     )
