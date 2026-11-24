@@ -56,9 +56,13 @@ INPUT_TOOLS = frozenset({"browser_type", "browser_fill_form", "browser_file_uplo
                          "browser_select_option", "browser_drop"})
 NAV_KEYS = frozenset({"PageDown", "PageUp", "Home", "End", "ArrowDown", "ArrowUp", "ArrowLeft",
                       "ArrowRight", "Escape", "Tab", "Space"})
-# Page scripts (browser_evaluate) that write to inputs, submit or send data are flagged too.
-SCRIPT_INPUT = re.compile(r"\.value\s*=(?!=)|submit\s*\(|fetch\s*\(|XMLHttpRequest|sendBeacon"
-                          r"|dispatchEvent|\.click\s*\(")
+# Page scripts (browser_evaluate) that write to inputs, submit, click or send data are
+# flagged too. Reading pages with a plain GET fetch is not.
+SCRIPT_INPUT = re.compile(
+    r"\.value\s*=(?!=)|submit\s*\(|sendBeacon|dispatchEvent|\.click\s*\("
+    r"|fetch\s*\([^)]*(method\s*:\s*['\"`](?!get)|body\s*:)|\.send\s*\(\s*[^)\s]",
+    re.IGNORECASE,
+)
 OWN_FILES = frozenset({"investigation.json", "agent_trace.jsonl", "agent_stderr.log"})
 PAGE_TEXT_LIMIT = 8000
 FALLBACK_MIN_S = 120
@@ -288,11 +292,19 @@ def allow_private_fetch() -> bool:
     return os.environ.get("BAAZ_ALLOW_PRIVATE_FETCH", "").strip() == "1"
 
 
+def browser_dir(folder: Path) -> Path:
+    """The browser's output and working directory: everything it writes, including a
+    file the model names, stays inside the case's evidence pack."""
+    path = (folder / "browser").resolve()
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
 def browser_args(settings: Settings, folder: Path) -> list[str]:
     args = ["--headless", "--isolated", "--ignore-https-errors", "--block-service-workers",
             "--image-responses", "omit", "--timeout-navigation", "20000",
             "--user-agent", settings.user_agent,
-            "--output-dir", str((folder / "browser").resolve()), "--save-session"]
+            "--output-dir", str(browser_dir(folder)), "--save-session"]
     return args if allow_private_fetch() else [*args, "--blocked-origins", BLOCKED_ORIGINS]
 
 
@@ -325,7 +337,7 @@ def pi_dir(settings: Settings, scan_id: str, folder: Path) -> Path:
         "browser": {
             "command": browser[0],
             "args": [*browser[1:], *browser_args(settings, folder)],
-            "cwd": str(root),
+            "cwd": str(browser_dir(folder)),
             "exposure": "direct",
             "timeout": 180,
             "description": "Headless browser for reading the suspect site's pages",
@@ -411,6 +423,7 @@ def run_pi(settings: Settings, scan_id: str, folder: Path, timeout_s: float) -> 
         except KeyboardInterrupt:
             _kill_tree(proc)
             raise
+    shutil.rmtree(root, ignore_errors=True)  # only config: the run's record is in the pack
     return {"exit_code": proc.returncode, "timed_out": timed_out,
             "wall_s": round(time.monotonic() - started, 1),
             **parse_trace(folder / "agent_trace.jsonl")}

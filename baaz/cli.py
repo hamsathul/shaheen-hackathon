@@ -170,7 +170,8 @@ def _print_investigation(record: dict) -> None:
     for action in record.get("browser_actions") or []:
         print(f"  browser: {action['tool']} {action['target']} -> {action['page_url'] or '-'}")
     if record.get("policy_violation"):
-        print("  POLICY VIOLATION: the model put input into a page (see policy_violations)")
+        print("  POLICY VIOLATION: a browser action may have put input into a page "
+              "(see policy_violations)")
     applied = run.get("applied")
     if applied:
         before, after = applied["before"], applied["after"]
