@@ -176,7 +176,19 @@ It needs a key for Google's Places API (New):
 
 Without a key the watcher logs one line and runs the other collectors. `uv run baaz watch --once --collectors maps` runs one Maps round and logs each lead.
 
-Each round sends 6 searches, one request each, and a round runs every 6 hours (`BAAZ_MAPS_INTERVAL_HOURS` in `.env`). The searches ask for each listing's website and phone, so Google bills them under its "Places API Text Search Enterprise" SKU. That SKU's free usage cap is 1,000 calls a month, then $35.00 per 1,000 calls ([Google Maps Platform pricing](https://developers.google.com/maps/billing-and-pricing/pricing), checked 2026-11-24). The default interval makes at most 24 searches a day, 744 in a 31-day month, which stays inside the free cap. A shorter interval costs more.
+Each round sends 6 searches, one request each, about 6 seconds apart, and a round runs every 6 hours (`BAAZ_MAPS_INTERVAL_HOURS` in `.env`). The searches ask for each listing's website, phone and location, so Google bills them under its "Places API Text Search Enterprise" SKU. That SKU's free usage cap is 1,000 calls a month, then $35.00 per 1,000 calls ([Google Maps Platform pricing](https://developers.google.com/maps/billing-and-pricing/pricing), checked 2026-11-24). The default interval makes at most 24 searches a day, 744 in a 31-day month, which stays inside the free cap. A shorter interval costs more, and so does each press of "Search Maps now" (6 searches).
+
+**The live Maps watch.** Under the AI investigator, the feed shows the Maps searches as they happen: each search's time, query, listing count and lead count, the search under way highlighted, and the lead listings linked to the Maps leads page (their websites defanged, never links). The header shows the last and next round and the searches sent today. "Search Maps now" starts a round at once, at most one every 10 minutes counted from the end of the last round. It continues the rotation, so each press runs new searches, and the watcher scans the websites it queues straight away. The panel is fed by the watcher in the same process, so it is live in `baaz up` (and `baaz demo --watch`). A dashboard started on its own with `baaz dashboard` says so and shows only the last round and today's count. Listing names and locations stay in the memory of the `baaz up` process and are never written to the database: Google's terms let Baaz keep place IDs, and coordinates for up to 30 days, but no other listing content. The panel keeps the last round and the search under way.
+
+With a second key the panel draws each search on a Google map: a solid red square for a lead, a green outline for a listing that names the brand and checks out, a small grey square for any other business. The map moves to each search as its answer arrives. Google's terms do not allow Places content on a non-Google map ([Service Specific Terms](https://cloud.google.com/maps-platform/terms/maps-service-terms), section 15.2), so this uses the Maps JavaScript API, the only script Baaz loads from outside. To create the key:
+
+1. In the same Google Cloud project, enable **Maps JavaScript API**.
+2. Under Google Maps Platform > Keys & Credentials, create an API key.
+3. Under Application restrictions choose **Websites** and add `http://127.0.0.1:8000/*` and `http://localhost:8000/*` (the dashboard's address; add another if you serve it on another host or port).
+4. Under API restrictions choose **Restrict key** and select only **Maps JavaScript API**.
+5. Put it in `.env` as `GOOGLE_MAPS_BROWSER_KEY=...`.
+
+This key is sent to the browser, which is why it is separate from `GOOGLE_MAPS_API_KEY`, which never leaves the server. Without it, or without a network, the panel shows the search log alone with one line saying why. Each load of the feed page is one "Dynamic Maps" map load (the 5-second refresh reuses the map). That SKU's free usage cap is 10,000 loads a month, then $7.00 per 1,000 ([Google Maps Platform pricing](https://developers.google.com/maps/billing-and-pricing/pricing), checked 2026-11-24).
 
 ## Evaluation
 
@@ -259,7 +271,7 @@ Candidates came from the lookalike generator (401), the storefront sweep (130), 
 
 ```text
 baaz/            pipeline: resolve, intel, render, page, storefront, signals, score, reasons, evidence, store
-baaz/web/        dashboard (FastAPI, server-rendered, no external assets)
+baaz/web/        dashboard (FastAPI, server-rendered; no external assets but Google's map script, with its key)
 baaz/watch.py    collectors and the 24/7 loop
 baaz/investigator.py, baaz/mcp_server.py, agent/   the local-model investigator
 data/            brand allowlists, gateways, TLDs, wording (EN/AR), Tranco top 100k
