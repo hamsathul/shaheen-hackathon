@@ -252,7 +252,10 @@ class Scanner:
         if ctx.options.write_evidence:
             write_pack(ctx, result, self.settings.evidence_dir, self.settings)
         self.store.save_scan(result, ctx.features["final_domain"])
-        if result.verdict in ("fraud", "suspicious") and not ctx.options.capture_dir:
+        # One investigation per domain: the investigator's own scan_url calls
+        # re-scan the domain it is working on and must not queue it again.
+        if (result.verdict in ("fraud", "suspicious") and not ctx.options.capture_dir
+                and not self.store.domain_investigated(ctx.features["final_domain"])):
             self.store.queue_investigation(result.id)
         return result
 

@@ -277,6 +277,15 @@ class Store:
             )
         return cur.rowcount == 1
 
+    def domain_investigated(self, domain: str) -> bool:
+        """Whether a case on this domain is already queued, under way or investigated."""
+        with self._conn() as db:
+            row = db.execute(
+                "SELECT 1 FROM investigations i JOIN scans s ON s.id = i.scan_id WHERE s.domain = ? LIMIT 1",
+                (domain,),
+            ).fetchone()
+        return row is not None
+
     def next_investigation(self) -> str | None:
         """Fraud before suspicious, oldest first."""
         with self._conn() as db:
