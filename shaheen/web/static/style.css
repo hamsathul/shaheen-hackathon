@@ -686,16 +686,22 @@ text.in.suspicious { fill: var(--ink); }
 .bars .bar-name { font-weight: 600; }
 .strong { font-weight: 600; }
 
-.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); margin: 0 0 10px; border-block-start: 2px solid var(--ink); }
-.tiles > div { display: flex; flex-direction: column; padding-block: 10px 12px; padding-inline: 0 14px; border-block-end: 1px solid var(--rule); }
-.tiles dd { order: -1; margin: 0; font: 300 46px/1 var(--numeral); }
-.tiles dt { margin-block-start: 4px; color: var(--ink-2); font-size: 13.5px; line-height: 1.35; }
+.row.figures { padding-block: 14px 6px; }
+.row.figures:first-of-type { border-block-start: 2px solid var(--ink); }
+.figs { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); margin: 0; }
+.figs > div { display: flex; flex-direction: column; padding-block: 0 12px; padding-inline: 0 12px; }
+.figs dd { order: -1; margin: 0; font: 300 40px/1 var(--numeral); font-variant-numeric: tabular-nums; }
+.figs dt { margin-block-start: 5px; color: var(--ink-2); font-size: 13px; line-height: 1.3; }
+.figs .fraud dd { color: var(--red); font-weight: 400; }
+.figs .legitimate dd { color: var(--green); }
+.figures-note { margin: 0 0 22px; }
 
 details.numbers { margin-block-start: 12px; }
 details.numbers summary { color: var(--ink-2); font-size: 14px; cursor: pointer; }
 details.numbers > :not(summary) { margin-block-start: 10px; }
 
 @media (max-width: 1180px) {
+  .figs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .headline { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .headline > div:nth-child(3) { padding-inline-start: 0; border-inline-start: 0; }
 }

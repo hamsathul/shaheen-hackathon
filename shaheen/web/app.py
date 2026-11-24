@@ -77,7 +77,7 @@ SECURITY_HEADERS = {
 }
 MAP_REFERRER = "strict-origin-when-cross-origin"
 MODE_COOKIE = "shaheen_mode"
-MODES = ("analyst", "simple")
+MODES = ("simple", "analyst")  # the first is the default
 SIMPLE_LIMITS = {"fraud": 30, "suspicious": 15}  # newest sites listed per verdict in the Simple feed
 
 
@@ -290,7 +290,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return i18n.lang_of(request.cookies.get(i18n.COOKIE))
 
     def simple_of(request: Request) -> bool:
-        return request.cookies.get(MODE_COOKIE) == "simple"
+        return request.cookies.get(MODE_COOKIE) != "analyst"
 
     def page(request: Request, name: str, **context: Any) -> Response:
         lang = lang_of(request)
@@ -501,7 +501,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/stats")
     def stats_page(request: Request) -> Response:
         now = datetime.now(timezone.utc)
-        view = charts.view(settings.db_path, now, lang_of(request), simple_of(request), investigator_alive())
+        view = charts.view(settings.db_path, now, lang_of(request), simple_of(request), investigator_alive(),
+                           watching_since=store.get_meta("watch_started_at"), searches_today=maps.calls_today(store))
         return page(request, "stats.html", stats=view, as_of=_gst(now.isoformat()))
 
     @app.get("/mode/{code}")

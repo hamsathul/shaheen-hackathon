@@ -10,6 +10,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from shaheen import storefront
 from shaheen.evidence import GST
 from shaheen.web import i18n, stats
 
@@ -99,11 +100,41 @@ def _bars(rows: list[dict[str, Any]], rtl: bool, label: Any = None) -> list[dict
             for r in rows]
 
 
-def view(path: Path, now: datetime, lang: str, simple: bool, alive: bool) -> dict[str, Any]:
+def _figures(h: dict[str, int], ai: dict[str, Any], names: dict[str, str], flagged: str, t: dict[str, str],
+              simple: bool, hours_on_watch: int, searches_today: int) -> list[dict[str, Any]]:
+    """The headline figures in three bands: everything checked, pace and links, the AI and Maps."""
+    def said(key: str) -> str:
+        return t.get(f"simple_{key}", t[key]) if simple else t[key]
+
+    def item(label: str, value: Any, tone: str = "") -> dict[str, Any]:
+        return {"label": label, "value": f"{value:,}" if isinstance(value, int) else value, "tone": tone}
+
+    ai_items = [item(said(f"stats_ai_{s}"), ai["counts"][s]) for s in ("done", "running", "queued")]
+    if ai["runs"]:
+        ai_items += [item(said("stats_ai_minutes"), ai["minutes"]), item(said("stats_ai_calls"), ai["calls"])]
+    return [
+        {"title": said("fig_checked_group"), "cells": [
+            item(said("fig_checked"), h["checked"]), item(said("fig_domains"), h["domains"]),
+            item(said("fig_candidates"), h["candidates"]), item(flagged, h["fraud"] + h["suspicious"]),
+            *(item(names[v], h[v], v) for v in stats.VERDICTS), item(said("fig_brands"), h["brands"])]},
+        {"title": said("fig_pace_group"), "cells": [
+            item(said("fig_last_hour"), h["last_hour"]), item(said("fig_last_day"), h["last_day"]),
+            item(said("fig_fraud_day"), h["fraud_day"], "fraud"), item(said("fig_hours"), hours_on_watch),
+            item(said("fig_links"), h["links"]), item(said("fig_linked_domains"), h["linked_domains"]),
+            item(said("fig_confirmed"), h["confirmed"])]},
+        {"title": said("fig_ai_group"), "cells": [
+            *ai_items, item(said("fig_maps_searches"), searches_today),
+            item(said("fig_maps_places"), h["maps_places"]), item(said("fig_maps_leads"), h["maps_leads"])]},
+    ]
+
+
+def view(path: Path, now: datetime, lang: str, simple: bool, alive: bool, *,
+         watching_since: str | None, searches_today: int) -> dict[str, Any]:
     """Everything the statistics page shows, in the words of the Simple or the Analyst view."""
     t = i18n.STRINGS[lang]
     rtl = lang == "ar"
     with stats.connect(path) as db:
+        head = stats.headline(db, now, sorted(storefront.gateway_lists()["strong"]))
         hours = stats.hourly(db, now)
         verdicts = stats.verdicts(db)
         brands = stats.brands(db)
@@ -112,10 +143,16 @@ def view(path: Path, now: datetime, lang: str, simple: bool, alive: bool) -> dic
         ai = stats.investigations(db, alive)
     names = {v: t[f"simple_{v}"] for v in stats.VERDICTS} if simple else i18n.VERDICTS[lang]
     total = sum(verdicts.values())
+    flagged = t["simple_stats_found" if simple else "flagged"]
+    hours_on_watch = int((now - datetime.fromisoformat(watching_since)).total_seconds() // 3600) if watching_since else 0
+    basis = (t[f"{'simple_' if simple else ''}stats_ai_basis"].format(n=ai["runs"]) if ai["runs"]
+             else t["stats_ai_none"])
     return {
         "prefix": "simple_" if simple else "",
         "names": names,
-        "heads": {"flagged": t["simple_stats_found" if simple else "flagged"],
+        "figures": _figures(head, ai, names, flagged, t, simple, hours_on_watch, searches_today),
+        "figures_note": f"{t['simple_fig_links_note' if simple else 'fig_links_note']} {basis}",
+        "heads": {"flagged": flagged,
                   "fraud": t["simple_fraud_title"] if simple else names["fraud"],
                   "scanned": t["simple_stats_checked" if simple else "scanned"]},
         "hourly": columns(hours, rtl),
@@ -125,5 +162,4 @@ def view(path: Path, now: datetime, lang: str, simple: bool, alive: bool) -> dic
         "brands": _bars(brands, rtl),
         "sources": _bars(sources, rtl, lambda key: _label("source", key, lang, simple)),
         "types": _bars(types, rtl, lambda key: _label("type", key, lang, simple)),
-        "ai": ai,
     }

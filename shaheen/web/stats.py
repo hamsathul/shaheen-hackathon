@@ -132,6 +132,40 @@ def investigations(db: sqlite3.Connection, alive: bool) -> dict[str, Any]:
     }
 
 
+def headline(db: sqlite3.Connection, now: datetime, gateways: list[str]) -> dict[str, int]:
+    """The figures across the top of the statistics page: scans by verdict, scans and fraud
+    in the last hour and day, the candidates collected, the operator links (two or more
+    domains sharing an administrator account, a product catalogue or a private skimmer
+    gateway, as in the threat summary) and the Google Maps listings looked at."""
+    hour, day = ((now - timedelta(hours=h)).astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") for h in (1, 24))
+    scans = db.execute(
+        "SELECT COUNT(*) AS checked, COUNT(DISTINCT domain) AS domains,"
+        " COALESCE(SUM(verdict = 'fraud'), 0) AS fraud, COALESCE(SUM(verdict = 'suspicious'), 0) AS suspicious,"
+        " COALESCE(SUM(verdict = 'legitimate'), 0) AS legitimate, COALESCE(SUM(analyst_confirmed), 0) AS confirmed,"
+        " COUNT(DISTINCT CASE WHEN verdict IN ('fraud', 'suspicious') AND impersonated_brand <> ''"
+        " THEN impersonated_brand END) AS brands,"
+        " COALESCE(SUM(scanned_at >= ?), 0) AS last_hour, COALESCE(SUM(scanned_at >= ?), 0) AS last_day,"
+        " COALESCE(SUM(scanned_at >= ? AND verdict = 'fraud'), 0) AS fraud_day FROM scans",
+        (hour, day, day),
+    ).fetchone()
+    linked = ("SELECT kind, value FROM fingerprints WHERE kind IN ('admin', 'catalogue')"
+              f" OR (kind = 'gateway' AND value IN ({','.join('?' * len(gateways))}))"
+              " GROUP BY kind, value HAVING COUNT(DISTINCT domain) > 1")
+    links = db.execute(f"SELECT COUNT(*) FROM ({linked})", gateways).fetchone()[0]
+    linked_domains = db.execute(
+        f"SELECT COUNT(DISTINCT f.domain) FROM fingerprints f JOIN ({linked}) l ON l.kind = f.kind AND l.value = f.value",
+        gateways,
+    ).fetchone()[0]
+    return {
+        **dict(scans),
+        "candidates": db.execute("SELECT COUNT(*) FROM candidates").fetchone()[0],
+        "links": links,
+        "linked_domains": linked_domains,
+        "maps_places": db.execute("SELECT COUNT(*) FROM maps_places").fetchone()[0],
+        "maps_leads": db.execute("SELECT COUNT(*) FROM maps_leads").fetchone()[0],
+    }
+
+
 def summaries(db: sqlite3.Connection, scan_ids: list[str]) -> dict[str, tuple[str, str]]:
     """The English and Arabic summaries of these cases' finished investigations, for those that have both."""
     if not scan_ids:

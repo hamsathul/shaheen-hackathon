@@ -46,6 +46,16 @@
     <p class="note">{{ asof }} &middot; {{ t.stats_refresh }}</p>
   </header>
 
+  {% for g in stats.figures %}
+  <section class="row figures">
+    <div class="side"><h2 class="caption">{{ g.title }}</h2></div>
+    <dl class="work figs">
+      {% for f in g.cells %}<div{% if f.tone %} class="{{ f.tone }}"{% endif %}><dt>{{ f.label }}</dt><dd>{{ f.value }}</dd></div>{% endfor %}
+    </dl>
+  </section>
+  {% endfor %}
+  <p class="note figures-note">{{ stats.figures_note }}</p>
+
   {% set h = stats.hourly %}
   <section class="row chart">
     {{ caption("stats_hourly") }}
@@ -124,22 +134,6 @@
     <div class="work">{{ bar_table(stats.types, t.type) }}</div>
   </section>
 
-  {% set ai = stats.ai %}
-  <section class="row chart">
-    {{ caption("stats_ai") }}
-    <div class="work">
-      <dl class="tiles">
-        {% for s in ("done", "running", "queued", "failed") %}
-        <div><dt>{{ t[p ~ "stats_ai_" ~ s] }}</dt><dd>{{ ai.counts[s] }}</dd></div>
-        {% endfor %}
-        {% if ai.runs %}
-        <div class="median"><dt>{{ t[p ~ "stats_ai_minutes"] }}</dt><dd>{{ ai.minutes }}</dd></div>
-        <div class="median"><dt>{{ t[p ~ "stats_ai_calls"] }}</dt><dd>{{ ai.calls }}</dd></div>
-        {% endif %}
-      </dl>
-      <p class="note">{{ t[p ~ "stats_ai_basis"].format(n=ai.runs) if ai.runs else t.stats_ai_none }}</p>
-    </div>
-  </section>
 </div>
 {% endblock %}
 {% block scripts %}<script src="/static/stats.js"></script>{% endblock %}
