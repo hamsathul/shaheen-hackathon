@@ -1,0 +1,36 @@
+# Official domains of UAE government entities, banks and services, from data/brands_uae.yaml.
+# label: legitimate
+https://adcb.com/
+https://addc.ae/
+https://adib.ae/
+https://adib.com/
+https://adpolice.gov.ae/
+https://aramex.com/
+https://bankfab.com/
+https://centralbank.ae/
+https://dewa.gov.ae/
+https://dib.ae/
+https://du.ae/
+https://dubaipolice.gov.ae/
+https://eand.ae/
+https://eand.com/
+https://emirates.com/
+https://emiratesnbd.com/
+https://emiratespost.ae/
+https://emiratespostshop.ae/
+https://etihad.com/
+https://etisalat.ae/
+https://icp.gov.ae/
+https://mashreq.com/
+https://mashreqbank.com/
+https://mohre.gov.ae/
+https://moi.gov.ae/
+https://noon.com/
+https://rakbank.ae/
+https://rta.ae/
+https://rta.gov.ae/
+https://salik.ae/
+https://tamm.abudhabi/
+https://taqadistribution.com/
+https://tax.gov.ae/
+https://uaepass.ae/

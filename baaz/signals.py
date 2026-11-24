@@ -326,12 +326,13 @@ def _own_name_shown(facts: PageFacts, domain: str) -> bool:
 def brands_on_page(facts: PageFacts, domain: str) -> list[BrandOnPage]:
     """Brands the page presents itself as: named in its title, `og:site_name`,
     h1 or logo, or in the first 1,500 characters of its own text (links,
-    buttons, menus and footers aside). The text only counts when the page does
-    not show its own domain's name, so a site that names a partner in passing
-    is not taken for that partner."""
+    buttons, menus and footers aside). The text only counts when the page
+    names no site of its own (neither its domain's name nor an `og:site_name`),
+    so a shop that mentions WhatsApp or Instagram in passing is not taken for
+    them."""
     places = [("title", facts.title), ("site_name", facts.site_name),
               ("h1", " | ".join(facts.h1)), ("logo", " | ".join(facts.logos))]
-    if not _own_name_shown(facts, domain):
+    if not facts.site_name and not _own_name_shown(facts, domain):
         places.append(("text", facts.lead))
     found: dict[str, BrandOnPage] = {}
     for where, text in places:

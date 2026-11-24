@@ -1,6 +1,9 @@
 # Legitimate WooCommerce stores: Tranco top-1000000 domains matching /(\.ae$|shop|store|boutique|mall|market)/ (first 25000),
 # whose /wp-json/ lists the wc/store namespace; skimmer ground-truth domains excluded.
 # Built 2026-11-24 with: eval/build_sets.py woo --ranks 1000000 --match '(\.ae$|shop|store|boutique|mall|market)' --cap 25000
+# Removed after the first evaluation: costoresuae[.]com. Its checkout lists only the skimmer gateway
+# 'sankee' and it shares a site administrator with a ground-truth skimmer cluster, so it is a skimmer
+# the Tranco filter let in, not a legitimate store (see README, Evaluation).
 # label: legitimate
 https://mythemeshop.com/
 https://metro-supermarket.com/
@@ -222,7 +225,6 @@ https://onlinemarketingguru.com.au/
 https://comicsense.store/
 https://mallforneeds.com/
 https://petzooshop.rs/
-https://costoresuae.com/
 https://akl.ae/
 https://hvshop.vn/
 https://eran.ae/

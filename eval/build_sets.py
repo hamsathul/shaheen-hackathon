@@ -109,7 +109,7 @@ def build_uae(_: argparse.Namespace) -> None:
 
 
 def build_phish(args: argparse.Namespace) -> None:
-    resp = httpx.get(OPENPHISH_FEED, timeout=20, headers={"User-Agent": DESKTOP_UA})
+    resp = httpx.get(OPENPHISH_FEED, timeout=20, headers={"User-Agent": DESKTOP_UA}, follow_redirects=True)
     resp.raise_for_status()
     seen: set[str] = set()
     urls: list[str] = []
