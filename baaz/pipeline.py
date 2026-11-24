@@ -224,7 +224,7 @@ class Scanner:
     def _finish(self, ctx: ScanContext) -> ScanResult:
         result = self._verdict(ctx)
         if ctx.options.write_evidence:
-            write_pack(ctx, result, self.settings.evidence_dir)
+            write_pack(ctx, result, self.settings.evidence_dir, self.settings)
         self.store.save_scan(result, ctx.features["final_domain"])
         return result
 
