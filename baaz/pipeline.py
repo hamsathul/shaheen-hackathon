@@ -252,7 +252,7 @@ class Scanner:
         if ctx.options.write_evidence:
             write_pack(ctx, result, self.settings.evidence_dir, self.settings)
         self.store.save_scan(result, ctx.features["final_domain"])
-        if result.verdict in ("fraud", "suspicious"):
+        if result.verdict in ("fraud", "suspicious") and not ctx.options.capture_dir:
             self.store.queue_investigation(result.id)
         return result
 

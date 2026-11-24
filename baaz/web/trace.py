@@ -11,15 +11,19 @@ breaks the case view.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any
 
 MAX_ARGS = 400
 MAX_RESULT = 700
 MAX_MESSAGE = 2000
+# Terminal colour codes that tool errors (Playwright's call log) carry.
+ANSI = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
 
 
 def _clip(text: str, limit: int) -> str:
+    text = ANSI.sub("", text)
     return text if len(text) <= limit else text[:limit].rstrip() + " ..."
 
 
