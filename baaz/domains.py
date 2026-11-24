@@ -11,7 +11,11 @@ import tldextract
 
 # Bundled Public Suffix List snapshot, private section included, so that
 # `foo.github.io` is its own registrable domain and lookups never touch the network.
-_extract = tldextract.TLDExtract(suffix_list_urls=(), include_psl_private_domains=True)
+# The reserved test and documentation TLDs (RFC 2606) count as suffixes too, so
+# that a made-up host such as `brand-shop.test` splits like `brand-shop.com`.
+RESERVED_TLDS = ("test", "example", "invalid")
+_extract = tldextract.TLDExtract(suffix_list_urls=(), include_psl_private_domains=True,
+                                 extra_suffixes=RESERVED_TLDS)
 
 _REFANG = [
     (re.compile(r"^hxxp", re.I), "http"),

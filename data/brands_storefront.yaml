@@ -9,6 +9,7 @@ brands:
       - bose.ca
     keywords: []
     tokens: [bose]
+    common_tokens: []
     phones: []
     sources:
       - https://www.bose.com/home
@@ -22,6 +23,7 @@ brands:
       - harmankardon.com
     keywords: [harmankardon]
     tokens: []
+    common_tokens: []
     phones: []
     sources:
       - https://global.harmankardon.com/   # harmankardon.com redirects here
@@ -34,6 +36,7 @@ brands:
       - soundcore.com
     keywords: [soundcore]
     tokens: []
+    common_tokens: []
     phones: []
     sources:
       - https://www.soundcore.com/
@@ -46,6 +49,7 @@ brands:
       - anker.com
     keywords: []
     tokens: [anker]
+    common_tokens: []
     phones: []
     sources:
       - https://www.anker.com/   # country selector links UAE to https://www.store.anker.com/ae (subdomain of anker.com)
@@ -57,7 +61,8 @@ brands:
     official_domains:
       - marshall.com
     keywords: []
-    tokens: [marshall]
+    tokens: []
+    common_tokens: [marshall]
     phones: []
     sources:
       - https://www.marshall.com/ae/en
@@ -70,6 +75,7 @@ brands:
       - jbl.com
     keywords: []
     tokens: [jbl]
+    common_tokens: []
     phones: []
     sources:
       - https://global.jbl.com/   # jbl.com redirects here; page behind captcha, not read
@@ -90,6 +96,7 @@ brands:
       - skullcandy.co
     keywords: [skullcandy]
     tokens: []
+    common_tokens: []
     phones: []
     sources:
       - https://www.skullcandy.com/   # country menu links all the regional domains above
@@ -102,7 +109,8 @@ brands:
       - sharkninja.com
       - sharkclean.com
     keywords: [sharkninja, sharkclean]
-    tokens: [shark]
+    tokens: []
+    common_tokens: [shark]
     phones: []
     sources:
       - https://www.sharkninja.com/   # bot-blocked (HTTP 403); not read
@@ -120,6 +128,7 @@ brands:
       - dreametech.kz
     keywords: [dreame, dreametech]
     tokens: []
+    common_tokens: []
     phones: []
     sources:
       - https://www.dreametech.com/   # country selector links ae.dreametech.com for UAE and the domains above
@@ -133,6 +142,7 @@ brands:
       - sennheiser-hearing.com
     keywords: [sennheiser]
     tokens: []
+    common_tokens: []
     phones: []
     sources:
       - https://www.sennheiser.com/en-ae
@@ -145,7 +155,8 @@ brands:
     official_domains:
       - beatsbydre.com
     keywords: [beatsbydre]
-    tokens: [beats]
+    tokens: []
+    common_tokens: [beats]
     phones: []
     sources:
       - https://www.beatsbydre.com/

@@ -1,12 +1,12 @@
 # Places for BRAND_GEO_DOMAIN: a brand joined to a country or city, as in
-# bose-uae, boseuae, bose-kuwait or jbldubai.
+# brand-uae, branduae, brand-kuwait or brandsharjah.
 #
 # Countries: every ISO 3166-1 alpha-2 code, from the IANA time zone database
 # file iso3166.tab (https://data.iana.org/time-zones/, public domain), with
 # names written the way they appear in host names: lower case, no spaces or
 # punctuation (saudiarabia), plus common short forms (uae, ksa, usa, uk).
-# `codes` are two-letter forms and match only as a whole token (bose-ae).
-# `names` also match when glued to the brand (boseuae, jbldubai) or split by
+# `codes` are two-letter forms and match only as a whole token (brand-ae).
+# `names` also match when glued to the brand (branduae, brandsharjah) or split by
 # hyphens (south-africa).
 # jersey is left out on purpose (a clothing word); emirates is left out because
 # it is a brand token (Emirates airline).
@@ -15,7 +15,7 @@
 # (al-, it-, my-, co-, hr-); they never count as a place.
 ambiguous_codes: [ad, ai, al, am, as, at, be, by, cd, co, cv, do, fm, gg, gm, hr, id, in, io, is, it, la, me, md, mo, my, no, pm, pr, re, so, st, tm, to, tv, vc, ws]
 
-# Codes that also count glued straight after a brand (boseae, jblqa). Only the
+# Codes that also count glued straight after a brand (brandae, brandqa). Only the
 # Gulf states: other codes glued to a word make ordinary words (meta+ls =
 # metals, visa+ge = visage, dewa+lt = dewalt).
 glued_codes: [ae, sa, qa, kw, bh, om]

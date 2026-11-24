@@ -2,10 +2,15 @@
 government namespaces, hosting platforms, and lookalike detection of a host
 against every brand's official domains, keywords and tokens.
 
-Each brand in `data/brands_*.yaml` lists `official_domains`, `keywords`
-(distinctive strings, matched anywhere inside a domain label) and `tokens`
-(short or common words, matched only as a whole token, or glued to a place
-name for BRAND_GEO_DOMAIN).
+Each brand in `data/brands_*.yaml` lists `official_domains` and three kinds
+of brand text:
+- `keywords`: distinctive strings, matched as a whole token or inside a longer
+  word whose other letters are all known domain words (adcbsecure, not
+  codewars);
+- `tokens`: short distinctive names (bose, jbl), matched only as a whole token
+  or glued to a place name;
+- `common_tokens`: ordinary words or very short names (noon, visa, du),
+  matched like tokens but counted at a reduced weight.
 """
 
 from __future__ import annotations
@@ -15,16 +20,19 @@ import unicodedata
 from dataclasses import dataclass
 from functools import lru_cache
 from typing import Any
-from urllib.parse import urlsplit
+from urllib.parse import parse_qsl, unquote, urlsplit
 
 import yaml
 from rapidfuzz.distance import OSA
 
 from baaz.config import DATA_DIR
-from baaz.domains import is_ip, registrable_domain, split_host
+from baaz.domains import host_of, is_ip, registrable_domain, split_host
 from baaz.resolve import SHORTENERS
 
-BRAND_FILES = ("brands_uae.yaml", "brands_global.yaml", "brands_storefront.yaml")
+# Brand files by scope. Global brands own many country domains (google.ae,
+# paypal.me), so their name under another suffix is only a mention, never a
+# tld_swap.
+BRAND_FILES = {"uae": "brands_uae.yaml", "global": "brands_global.yaml", "storefront": "brands_storefront.yaml"}
 
 # Lookalike methods (LOOKALIKE_DOMAIN), most specific first. Other match
 # methods: "mention" (BRAND_IN_DOMAIN) and "geo" (BRAND_GEO_DOMAIN).
@@ -43,20 +51,26 @@ _CONFUSABLES = str.maketrans({
     "ı": "i", "ł": "l", "ɑ": "a", "ɡ": "g", "0": "o", "1": "l",
 })
 _TOKEN_SPLIT = re.compile(r"[-.\d]+")
-# Keywords this long also match across hyphens (dubai-police for dubaipolice);
-# shorter ones would match by accident (code-wars for dewa).
-HYPHENATED_KEYWORD_MIN = 6
+_HYPHENS_AND_DIGITS = re.compile(r"[-\d]+")
+
+# Query parameters that commonly carry the address a link forwards to.
+REDIRECT_PARAMS = frozenset({"url", "u", "q", "redirect", "next", "target", "dest", "link", "goto"})
+_EMBEDDED_URL = re.compile(r"https?:/{1,2}([^/?#&\s\\]+)", re.I)
+_AMP_PATH = re.compile(r"/amp/s/([^/?#]+)")
+_BARE_HOST = re.compile(r"(?:[a-z0-9-]+\.)+[a-z0-9-]+(?=[:/?#]|$)", re.I)
 
 
 @dataclass(frozen=True)
 class Brand:
     id: str
+    scope: str  # a key of BRAND_FILES
     name_en: str
     name_ar: str
     category: str
     official_domains: tuple[str, ...]
     keywords: tuple[str, ...]
     tokens: tuple[str, ...]
+    common_tokens: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -66,6 +80,7 @@ class BrandMatch:
     official: str  # the official domain imitated; the brand's main domain for mention and geo
     matched: str  # the brand text found in the host
     place: str | None = None  # the country or city, for geo
+    common: bool = False  # matched through a common-word token, so it counts for less
 
 
 @dataclass(frozen=True)
@@ -89,16 +104,18 @@ def _read(name: str) -> Any:
 @lru_cache(maxsize=1)
 def load_brands() -> tuple[Brand, ...]:
     brands = []
-    for name in BRAND_FILES:
+    for scope, name in BRAND_FILES.items():
         for b in _read(name)["brands"]:
             brands.append(Brand(
                 id=b["id"],
+                scope=scope,
                 name_en=b["name_en"],
                 name_ar=b.get("name_ar") or "",
                 category=b["category"],
                 official_domains=tuple(dict.fromkeys(registrable_domain(d) for d in b["official_domains"])),
                 keywords=tuple(k.lower() for k in b.get("keywords") or ()),
                 tokens=tuple(t.lower() for t in b.get("tokens") or ()),
+                common_tokens=tuple(t.lower() for t in b.get("common_tokens") or ()),
             ))
     return tuple(brands)
 
@@ -135,6 +152,22 @@ def _places() -> _Places:
     return _Places(tuple(sorted(names, key=len, reverse=True)), frozenset(codes), frozenset(data["glued_codes"]))
 
 
+@lru_cache(maxsize=1)
+def deceptive_terms() -> tuple[str, ...]:
+    """Words that make a host look official or urgent (DECEPTIVE_DOMAIN_WORDS)."""
+    return tuple(_read("domain_words.yaml")["deceptive"])
+
+
+@lru_cache(maxsize=1)
+def _vocabulary() -> tuple[frozenset[str], int]:
+    """Known domain words and the length of the longest one."""
+    words = _read("domain_words.yaml")
+    places = _places()
+    vocabulary = {*words["deceptive"], *words["commerce"], *places.names, *places.glued_codes}
+    vocabulary |= {k for brand in load_brands() for k in brand.keywords}
+    return frozenset(vocabulary), max(map(len, vocabulary))
+
+
 def official_brand(domain: str) -> Brand | None:
     """The brand owning this URL, host or domain's registrable domain."""
     return _official_index().get(registrable_domain(domain))
@@ -168,9 +201,10 @@ def allowlist(chain: list[str]) -> Allowed | None:
     The landing domain must be official or in a government namespace, and every
     domain on the way must be official (any brand), in a government namespace,
     a URL shortener, or the landing brand's own name under another suffix (a
-    defensive registration). A URL on a hosting platform is never allowlisted.
+    defensive registration). A URL on a hosting platform, or one that carries
+    another site's address (an open redirect or a proxy), is never allowlisted.
     """
-    if any(hosting_platform(url) for url in chain):
+    if any(hosting_platform(url) or embedded_targets(url) for url in chain):
         return None
     final = registrable_domain(chain[-1])
     brand = official_brand(final)
@@ -186,6 +220,31 @@ def allowlist(chain: list[str]) -> Allowed | None:
     if brand:
         return Allowed("OFFICIAL_DOMAIN", brand.name_en, {"domain": final, "brand": brand.name_en})
     return Allowed("GOV_NAMESPACE", final, {"domain": final, "suffix": namespace})
+
+
+def embedded_targets(url: str) -> list[str]:
+    """Registrable domains of other sites a URL can forward the visitor to: an
+    http(s) URL in its path or query, a bare domain in a redirect parameter
+    (`?next=site.example`), or a Google AMP path (`/amp/s/site.example/`).
+    The URL's own domain, official domains and government namespaces are left
+    out, so `adcb.com/redirect?u=https://evil.example` gives `evil.example`."""
+    parts = urlsplit(url)
+    path = unquote(parts.path)
+    hosts = _EMBEDDED_URL.findall(path) + _AMP_PATH.findall(path)
+    for key, value in parse_qsl(parts.query):
+        value = unquote(value)
+        hosts += _EMBEDDED_URL.findall(value)
+        if key.lower() in REDIRECT_PARAMS and (bare := _BARE_HOST.match(value)):
+            hosts.append(bare.group(0))
+    own = registrable_domain(url)
+    targets: list[str] = []
+    for host in hosts:
+        domain = registrable_domain(host_of("http://" + host))
+        if not (is_ip(domain) or split_host(domain)[2]) or domain == own or domain in targets:
+            continue
+        if not (official_brand(domain) or gov_namespace(domain)):
+            targets.append(domain)
+    return targets
 
 
 def skeleton(text: str) -> str:
@@ -204,8 +263,29 @@ def _unicode_label(label: str) -> str:
         return label
 
 
-def _tokens(text: str) -> list[str]:
+def split_tokens(text: str) -> list[str]:
+    """The words of a host name or label, split at dots, hyphens and digits."""
     return [t for t in _TOKEN_SPLIT.split(text) if t]
+
+
+def _segments(text: str) -> bool:
+    """Whether `text` splits fully into known domain words (empty text does)."""
+    words, longest = _vocabulary()
+    ends = [True] + [False] * len(text)
+    for end in range(1, len(text) + 1):
+        ends[end] = any(ends[start] and text[start:end] in words for start in range(max(0, end - longest), end))
+    return ends[-1]
+
+
+def keyword_in(label: str, keyword: str) -> bool:
+    """A brand keyword in a domain label: as a whole token, or inside a longer
+    word when the letters before and after it are all known domain words
+    (adcbsecure, dubai-police-fines, dewabillpay; not codewars or dewalt)."""
+    if keyword in split_tokens(label):
+        return True
+    letters = _HYPHENS_AND_DIGITS.sub("", label)
+    at = letters.find(keyword)
+    return at >= 0 and _segments(letters[:at]) and _segments(letters[at + len(keyword):])
 
 
 @dataclass(frozen=True)
@@ -223,7 +303,7 @@ class _Host:
     def of(cls, host: str) -> _Host:
         sub, label, suffix = split_host(host)
         name = f"{sub}.{label}" if sub else label
-        runs = (tuple(_tokens(name)), tuple(_tokens(skeleton(name))))
+        runs = (tuple(split_tokens(name)), tuple(split_tokens(skeleton(name))))
         return cls(host, sub, label, suffix, skeleton(_unicode_label(label)), tuple(dict.fromkeys(runs)))
 
     @property
@@ -268,19 +348,14 @@ def _lookalike(brand: Brand, h: _Host) -> BrandMatch | None:
         if spoof.search(h.prefix):
             return BrandMatch("subdomain_spoof", brand, official, official)
         if h.label == label and h.suffix != suffix and any(k in label for k in brand.keywords):
-            return BrandMatch("tld_swap", brand, official, h.label)
-        if label not in brand.tokens and is_typo(h.label, label):
+            method = "mention" if brand.scope == "global" else "tld_swap"
+            return BrandMatch(method, brand, official, h.label)
+        if label not in brand.tokens + brand.common_tokens and is_typo(h.label, label):
             return BrandMatch("typo", brand, official, h.label)
     for keyword in brand.keywords:
-        if any(_contains(text, keyword) for text in (h.label, h.skeleton)):
+        if keyword_in(h.label, keyword) or keyword_in(h.skeleton, keyword):
             return BrandMatch("combo", brand, brand.official_domains[0], keyword)
     return None
-
-
-def _contains(label: str, keyword: str) -> bool:
-    if keyword in label:
-        return True
-    return len(keyword) >= HYPHENATED_KEYWORD_MIN and keyword in label.replace("-", "")
 
 
 def _place_among(tokens: tuple[str, ...]) -> str | None:
@@ -311,11 +386,11 @@ def _geo(brand: Brand, h: _Host) -> BrandMatch | None:
     """A brand keyword or token together with a country or city."""
     for run in h.token_runs:
         whole_place = _place_among(run)
-        for term in brand.keywords + brand.tokens:
+        for term in brand.keywords + brand.tokens + brand.common_tokens:
             is_keyword = term in brand.keywords
             for token in run:
                 at = token.find(term)
-                if at < 0:
+                if at < 0 or (is_keyword and not keyword_in(token, term)):
                     continue
                 before, after = token[:at], token[at + len(term):]
                 if not is_keyword and before and after:
@@ -324,7 +399,8 @@ def _geo(brand: Brand, h: _Host) -> BrandMatch | None:
                 if place is None and (token == term or is_keyword):
                     place = whole_place
                 if place:
-                    return BrandMatch("geo", brand, brand.official_domains[0], term, place)
+                    return BrandMatch("geo", brand, brand.official_domains[0], term, place,
+                                      common=term in brand.common_tokens)
     return None
 
 
@@ -336,10 +412,13 @@ def _mention(brand: Brand, h: _Host, geo: BrandMatch | None) -> BrandMatch | Non
         if token in tokens:
             return BrandMatch("mention", brand, main, token)
     for keyword in brand.keywords:
-        if keyword in h.sub:
+        if any(keyword_in(label, keyword) for label in h.sub.split(".") if label):
             return BrandMatch("mention", brand, main, keyword)
+    for token in brand.common_tokens:
+        if token in tokens:
+            return BrandMatch("mention", brand, main, token, common=True)
     if geo:
-        return BrandMatch("mention", brand, main, geo.matched)
+        return BrandMatch("mention", brand, main, geo.matched, common=geo.common)
     return None
 
 

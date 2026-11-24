@@ -11,6 +11,7 @@ from baaz.reasons import LABELS
 from baaz.resolve import SHORTENERS, Hop, Resolution
 from baaz.store import Store
 
+# Scam-looking hosts here are made up, mostly under the reserved .test TLD.
 UAE_OFFICIAL = [d for b in yaml.safe_load((DATA_DIR / "brands_uae.yaml").read_text(encoding="utf-8"))["brands"]
                 for d in b["official_domains"]]
 
@@ -59,11 +60,11 @@ def test_every_official_uae_domain_is_legitimate(scanner, domain):
 
 
 def test_official_domain_redirecting_elsewhere_is_not_allowlisted(scanner):
-    scanner.routes["https://www.adcb.com/go"] = ["https://www.adcb.com/go", "https://adcb-verify.top/"]
+    scanner.routes["https://www.adcb.com/go"] = ["https://www.adcb.com/go", "https://adcb-verify.test/"]
     result = scanner.scan("https://www.adcb.com/go")
     assert "OFFICIAL_DOMAIN" not in codes(result)
     assert result.verdict == "suspicious" and result.risk_score >= 40
-    assert scanner.gathered == ["adcb-verify.top"]
+    assert scanner.gathered == ["adcb-verify.test"]
 
 
 def test_shortener_landing_on_an_official_domain_is_legitimate(scanner):
@@ -75,8 +76,8 @@ def test_shortener_landing_on_an_official_domain_is_legitimate(scanner):
 
 
 def test_defensive_registration_redirecting_to_the_brand_is_legitimate(scanner):
-    scanner.routes["https://tamm.ae/"] = ["https://tamm.ae/", "https://www.tamm.abudhabi/"]
-    assert scanner.scan("https://tamm.ae/").verdict == "legitimate"
+    scanner.routes["https://tamm.test/"] = ["https://tamm.test/", "https://www.tamm.abudhabi/"]
+    assert scanner.scan("https://tamm.test/").verdict == "legitimate"
 
 
 def test_government_namespace_is_legitimate(scanner):
@@ -98,22 +99,22 @@ def test_user_content_on_an_official_domain_is_not_allowlisted(scanner, url, pla
 
 
 @pytest.mark.parametrize("url, method, brand", [
-    ("uaepas.ae", "typo", "UAE PASS"),
-    ("rakbnak.ae", "typo", "RAKBANK"),
-    ("rnashreq.com", "homoglyph", "Mashreq"),
-    ("et1had.com", "homoglyph", "Etihad Airways"),
-    ("xn--dcb-5cd.com", "punycode", "Abu Dhabi Commercial Bank (ADCB)"),
-    ("xn--slik-53d.ae", "punycode", "Salik"),  # Cyrillic а in salik
-    ("rakbank.co", "tld_swap", "RAKBANK"),
-    ("tamm.co", "tld_swap", "TAMM"),
-    ("adcb-secure-login.com", "combo", "Abu Dhabi Commercial Bank (ADCB)"),
-    ("dewa-gov.com", "combo", "Dubai Electricity and Water Authority (DEWA)"),
-    ("salik-pay.com", "combo", "Salik"),
-    ("emiratesnbdlogin.com", "combo", "Emirates NBD"),
-    ("etisalat-rewards.net", "combo", "e& (Etisalat)"),
-    ("adcb.com.verify-now.xyz", "subdomain_spoof", "Abu Dhabi Commercial Bank (ADCB)"),
-    ("www.tamm.abudhabi-gov.com", "subdomain_spoof", "TAMM"),
-    ("harmankardonkuwait.com", "combo", "Harman Kardon"),
+    ("uaepaas.test", "typo", "UAE PASS"),
+    ("rakbnak.test", "typo", "RAKBANK"),
+    ("rnashreq.test", "homoglyph", "Mashreq"),
+    ("et1had.test", "homoglyph", "Etihad Airways"),
+    ("xn--dcb-5cd.test", "punycode", "Abu Dhabi Commercial Bank (ADCB)"),
+    ("xn--slik-53d.test", "punycode", "Salik"),  # Cyrillic а in salik
+    ("rakbank.test", "tld_swap", "RAKBANK"),
+    ("tamm.example", "tld_swap", "TAMM"),
+    ("adcb-secure-login.test", "combo", "Abu Dhabi Commercial Bank (ADCB)"),
+    ("dewa-gov-portal.test", "combo", "Dubai Electricity and Water Authority (DEWA)"),
+    ("salik-topup.test", "combo", "Salik"),
+    ("emiratesnbdlogin.test", "combo", "Emirates NBD"),
+    ("etisalat-rewards.test", "combo", "e& (Etisalat)"),
+    ("adcb.com.verify-now.test", "subdomain_spoof", "Abu Dhabi Commercial Bank (ADCB)"),
+    ("www.tamm.abudhabi-gov.test", "subdomain_spoof", "TAMM"),
+    ("harmankardonbahrain.test", "combo", "Harman Kardon"),
 ])
 def test_lookalikes_are_flagged_without_a_page_fetch(scanner, url, method, brand):
     result = scanner.scan(url)
@@ -126,10 +127,10 @@ def test_lookalikes_are_flagged_without_a_page_fetch(scanner, url, method, brand
 
 
 @pytest.mark.parametrize("url, brand", [
-    ("bose-uae.com", "Bose"),
-    ("boseuae.com", "Bose"),
-    ("bose-kuwait.com", "Bose"),
-    ("jbldubai.com", "JBL"),
+    ("uae-bose-outlet.test", "Bose"),
+    ("boseuae.test", "Bose"),
+    ("kuwait-bose-store.test", "Bose"),
+    ("jblsharjah.test", "JBL"),
 ])
 def test_brand_with_a_country_or_city_is_suspicious(scanner, url, brand):
     result = scanner.scan(url)
@@ -146,12 +147,12 @@ def test_ordinary_domains_stay_legitimate(scanner, url):
 
 
 def test_intel_is_written_to_the_evidence_pack(scanner):
-    result = scanner.scan("https://www.adcb-verify.top/login")
+    result = scanner.scan("https://www.adcb-verify.test/login")
     folder = scanner.settings.evidence_dir / result.id
     for name in ("redirects.json", "whois.json", "dns_hosting.json", "cert.json", "report.json"):
         assert (folder / name).is_file(), name
     assert json.loads((folder / "whois.json").read_text(encoding="utf-8"))["source"] == "unknown"
-    assert scanner.gathered == ["adcb-verify.top"]
+    assert scanner.gathered == ["adcb-verify.test"]
     intel_features = {"domain_age_days", "registrar", "asn", "hosting_country", "cert_age_days", "nxdomain"}
     assert intel_features <= set(result.signals)
     assert scanner.store.get_scan(result.id).verdict == result.verdict

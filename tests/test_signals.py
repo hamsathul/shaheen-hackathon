@@ -57,9 +57,9 @@ def test_long_url_ignores_the_query():
 
 def test_deceptive_words():
     assert deceptive_words("secure-login.example.com") == ["login", "secure"]
-    assert deceptive_words("adcbsignin.com") == ["signin"]
-    assert deceptive_words("rta-fine-pay.com") == ["fine", "pay"]
-    assert deceptive_words("payroll-gov-portal.net") == ["gov", "portal"]  # pay inside payroll is too short
+    assert deceptive_words("adcbsignin.test") == ["signin"]
+    assert deceptive_words("rta-fine-pay.test") == ["fine", "pay"]
+    assert deceptive_words("payroll-gov-portal.test") == ["gov", "portal"]  # pay inside payroll is too short
     assert deceptive_words("refinery.com") == []
     assert deceptive_words("login.microsoftonline.com") == []  # official domain
     assert deceptive_words("portal.example.gov.ae") == []  # government namespace
@@ -69,7 +69,7 @@ def test_deceptive_words():
 
 
 def test_risky_tld_and_hosting():
-    assert codes(domain_findings("https://cheap-deals.top/", EV)) == {"RISKY_TLD": {"tld": "top"}}
+    assert codes(domain_findings("https://cheap-deals-example.top/", EV)) == {"RISKY_TLD": {"tld": "top"}}
     assert codes(domain_findings("https://shop.ae/", EV)) == {}
     assert codes(domain_findings("https://x.github.io/", EV)) == {"FREE_HOSTING": {"platform": "github.io"}}
 
@@ -123,7 +123,7 @@ def test_hosting_platform_never_gets_top_site():
 
 
 def test_popular_landing_domain_does_not_vouch_for_the_domain_before_it():
-    ctx = context(["https://adcb-verify.top/", "https://www.zendesk.com/"])
+    ctx = context(["https://adcb-verify.test/", "https://www.zendesk.com/"])
     url_signals(ctx, {"zendesk.com": facts(created="2007-01-01")})
     found = codes(ctx.findings)
     assert "TOP_SITE" not in found and "DOMAIN_OLD" not in found
@@ -132,26 +132,26 @@ def test_popular_landing_domain_does_not_vouch_for_the_domain_before_it():
 
 
 def test_signals_cover_every_hop_and_name_the_brand():
-    ctx = context(["https://bit.ly/x", "https://track.example.net/r", "https://adcb.com.verify-now.xyz/"])
+    ctx = context(["https://bit.ly/x", "https://track.example.net/r", "https://adcb.com.verify-now-example.xyz/"])
     url_signals(ctx, {})
     by_code = {f.code: f for f in ctx.findings}
     assert by_code["LOOKALIKE_DOMAIN"].evidence == "redirects.json#chain[2]"
     assert by_code["LOOKALIKE_DOMAIN"].params == {
-        "domain": "adcb.com.verify-now.xyz", "official": "adcb.com", "method": "subdomain_spoof"}
+        "domain": "adcb.com.verify-now-example.xyz", "official": "adcb.com", "method": "subdomain_spoof"}
     assert by_code["RISKY_TLD"].params == {"tld": "xyz"}
     assert ctx.impersonated_brand == "Abu Dhabi Commercial Bank (ADCB)"
     assert ctx.features["domain_age_days"] is None
 
 
 def test_strongest_brand_finding_names_the_impersonated_brand():
-    ctx = context(["https://noon-adcb-uae.com/"])
+    ctx = context(["https://noon-adcb-uae.test/"])
     url_signals(ctx, {})
     assert {"LOOKALIKE_DOMAIN", "BRAND_IN_DOMAIN", "BRAND_GEO_DOMAIN"} <= {f.code for f in ctx.findings}
     assert ctx.impersonated_brand == "Abu Dhabi Commercial Bank (ADCB)"
 
 
 def test_repeated_hops_add_each_finding_once():
-    ctx = context(["http://login-verify.top/", "https://login-verify.top/"])
+    ctx = context(["http://login-verify.test/", "https://login-verify.test/"])
     url_signals(ctx, {})
     assert [f.code for f in ctx.findings].count("DECEPTIVE_DOMAIN_WORDS") == 1
 

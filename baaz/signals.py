@@ -8,7 +8,6 @@ Each `*_findings` function is pure and returns the findings it would add;
 
 from __future__ import annotations
 
-import re
 from datetime import date, datetime
 from functools import lru_cache
 from typing import Any
@@ -21,15 +20,10 @@ from baaz.config import DATA_DIR
 from baaz.domains import host_of, is_ip, registrable_domain, split_host
 from baaz.models import Finding, ScanContext
 from baaz.resolve import SHORTENERS
-from baaz.score import weight_of
+from baaz.score import COMMON_TOKEN_WEIGHTS, weight_of
 
-# Words that make a host look official or urgent. Words of 5+ letters also
-# count inside a longer token (adcblogin); shorter ones only as a whole token.
-DECEPTIVE_WORDS = (
-    "login", "signin", "verify", "secure", "account", "update", "confirm", "wallet", "refund",
-    "fine", "fines", "gov", "portal", "reward", "claim", "unlock", "support", "payment",
-    "pay", "otp", "kyc",
-)
+# Deceptive words (data/domain_words.yaml) of this many letters also count
+# inside a longer token (adcblogin); shorter ones only as a whole token.
 SUBSTRING_MIN = 5
 MANY_SUBDOMAINS = 4
 LONG_URL = 100
@@ -37,8 +31,6 @@ NEW_DOMAIN_7D_DAYS = 7
 NEW_DOMAIN_30D_DAYS = 30
 OLD_DOMAIN_DAYS = 2 * 365
 NEW_CERT_DAYS = 14
-
-_TOKEN_SPLIT = re.compile(r"[-.\d]+")
 
 
 @lru_cache(maxsize=1)
@@ -64,8 +56,8 @@ def deceptive_words(host: str) -> list[str]:
         return []
     sub, label, _ = split_host(host)
     name = f"{sub}.{label}" if sub else label
-    tokens = set(_TOKEN_SPLIT.split(name))
-    return [w for w in DECEPTIVE_WORDS if w in tokens or (len(w) >= SUBSTRING_MIN and w in name)]
+    tokens = set(brands.split_tokens(name))
+    return [w for w in brands.deceptive_terms() if w in tokens or (len(w) >= SUBSTRING_MIN and w in name)]
 
 
 def lexical_findings(url: str, evidence: str) -> list[Finding]:
@@ -102,20 +94,23 @@ def domain_findings(url: str, evidence: str) -> list[Finding]:
     return found
 
 
-def brand_findings(host: str, evidence: str) -> list[tuple[Finding, str]]:
+def brand_findings(host: str, evidence: str) -> list[tuple[Finding, str | None]]:
     """LOOKALIKE_DOMAIN, BRAND_IN_DOMAIN and BRAND_GEO_DOMAIN for one host,
-    each paired with the name of the brand behind it."""
+    each paired with the name of the brand behind it. A match on a common-word
+    token counts at its reduced weight (COMMON_TOKEN_WEIGHTS); a common-word
+    BRAND_IN_DOMAIN alone is too weak to name the impersonated brand, so it is
+    paired with None."""
     found = []
     for m in brands.match_domain(host):
         if m.method in brands.LOOKALIKE_METHODS:
-            finding = Finding("LOOKALIKE_DOMAIN", evidence,
-                              {"domain": host, "official": m.official, "method": m.method})
+            code, params = "LOOKALIKE_DOMAIN", {"domain": host, "official": m.official, "method": m.method}
         elif m.method == "geo":
-            finding = Finding("BRAND_GEO_DOMAIN", evidence,
-                              {"domain": host, "brand": m.brand.name_en, "place": m.place})
+            code, params = "BRAND_GEO_DOMAIN", {"domain": host, "brand": m.brand.name_en, "place": m.place}
         else:
-            finding = Finding("BRAND_IN_DOMAIN", evidence, {"domain": host, "brand": m.brand.name_en})
-        found.append((finding, m.brand.name_en))
+            code, params = "BRAND_IN_DOMAIN", {"domain": host, "brand": m.brand.name_en}
+        weight = COMMON_TOKEN_WEIGHTS[code] if m.common else None
+        name = None if m.common and code == "BRAND_IN_DOMAIN" else m.brand.name_en
+        found.append((Finding(code, evidence, params, weight), name))
     return found
 
 
@@ -133,12 +128,18 @@ def _datetime(value: str | None) -> datetime | None:
         return None
 
 
+def _created(whois: dict[str, Any], today: date) -> date | None:
+    """The registration date; a date in the future is a bad record, so unknown."""
+    created = _date(whois.get("created"))
+    return created if created and created <= today else None
+
+
 def age_findings(whois: dict[str, Any], today: date) -> list[Finding]:
     """NEW_DOMAIN_7D, NEW_DOMAIN_30D or DOMAIN_OLD from the registration date."""
-    created = _date(whois.get("created"))
+    created = _created(whois, today)
     if created is None:
         return []
-    days = max((today - created).days, 0)
+    days = (today - created).days
     evidence = "whois.json#created"
     if days < NEW_DOMAIN_7D_DAYS:
         return [Finding("NEW_DOMAIN_7D", evidence, {"days": days, "created": created.isoformat()})]
@@ -162,7 +163,7 @@ def cert_findings(cert: dict[str, Any], now: datetime) -> list[Finding]:
 
 def intel_features(facts: dict[str, Any], now: datetime) -> dict[str, Any]:
     whois, dns, cert = facts.get("whois") or {}, facts.get("dns") or {}, facts.get("cert") or {}
-    created, issued = _date(whois.get("created")), _datetime(cert.get("not_before"))
+    created, issued = _created(whois, now.date()), _datetime(cert.get("not_before"))
     return {
         "domain_age_days": (now.date() - created).days if created else None,
         "registrar": whois.get("registrar"),
@@ -186,7 +187,8 @@ def url_signals(ctx: ScanContext, intel_by_domain: dict[str, dict[str, Any]]) ->
     URL shorteners); registration, certificate and popularity signals look at
     the landing domain. The landing domain only vouches for the link (TOP_SITE,
     DOMAIN_OLD) when it is not a URL shortener, no hop is on a hosting
-    platform, and the link reached it without passing through another domain.
+    platform or carries another site's address (`?url=`), and the link reached
+    it without passing through another domain.
     """
     chain = ctx.redirect_chain or [ctx.final_url]
     found: list[tuple[Finding, str | None]] = []
@@ -200,7 +202,9 @@ def url_signals(ctx: ScanContext, intel_by_domain: dict[str, dict[str, Any]]) ->
 
     final = registrable_domain(ctx.final_url)
     platform = next((p for p in map(brands.hosting_platform, chain) if p), None)
-    vouched = platform is None and final not in SHORTENERS and _lands_without_detour(chain, final)
+    embedded = list(dict.fromkeys(target for url in chain for target in brands.embedded_targets(url)))
+    vouched = (platform is None and not embedded and final not in SHORTENERS
+               and _lands_without_detour(chain, final))
     facts = intel_by_domain.get(final) or {}
     if facts:
         found += [(f, None) for f in age_findings(facts["whois"], ctx.scanned_at.date())
@@ -220,4 +224,4 @@ def url_signals(ctx: ScanContext, intel_by_domain: dict[str, dict[str, Any]]) ->
     if branded:
         ctx.impersonated_brand = max(branded, key=lambda pair: pair[0])[1]
     ctx.features.update(intel_features(facts, ctx.scanned_at))
-    ctx.features.update(top_site_rank=rank, hosting_platform=platform)
+    ctx.features.update(top_site_rank=rank, hosting_platform=platform, embedded_targets=embedded)

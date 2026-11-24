@@ -7,6 +7,7 @@ brands:
     official_domains: [paypal.com]
     keywords: [paypal]
     tokens: []
+    common_tokens: []
     phones: []
     sources: [https://www.paypal.com/ae/home]
 
@@ -16,7 +17,8 @@ brands:
     category: tech
     official_domains: [apple.com, icloud.com]
     keywords: [icloud, appleid]
-    tokens: [apple]
+    tokens: []
+    common_tokens: [apple]
     phones: []
     sources: [https://www.apple.com/ae/, https://www.icloud.com/]
 
@@ -26,7 +28,8 @@ brands:
     category: tech
     official_domains: [microsoft.com, live.com, office.com, microsoftonline.com, outlook.com, microsoft365.com]
     keywords: [microsoft, office365, microsoft365]
-    tokens: [outlook, office]
+    tokens: []
+    common_tokens: [outlook, office]
     phones: []
     sources: [https://www.microsoft.com/, https://outlook.live.com/mail/, https://m365.cloud.microsoft/]
 
@@ -37,6 +40,7 @@ brands:
     official_domains: [google.com, gmail.com]
     keywords: [google, gmail]
     tokens: []
+    common_tokens: []
     phones: []
     sources: [https://www.google.com/, https://accounts.google.com/]
 
@@ -47,6 +51,7 @@ brands:
     official_domains: [amazon.com, amazon.ae]
     keywords: [amazon]
     tokens: []
+    common_tokens: []
     phones: []
     sources: [https://www.amazon.com/, https://www.amazon.ae/]
 
@@ -57,6 +62,7 @@ brands:
     official_domains: [netflix.com]
     keywords: [netflix]
     tokens: []
+    common_tokens: []
     phones: []
     sources: [https://www.netflix.com/]
 
@@ -66,7 +72,8 @@ brands:
     category: tech
     official_domains: [facebook.com, fb.com, meta.com, messenger.com]
     keywords: [facebook, messenger]
-    tokens: [meta, fb]
+    tokens: []
+    common_tokens: [meta, fb]
     phones: []
     sources: [https://www.facebook.com/, https://www.meta.com/]
 
@@ -77,6 +84,7 @@ brands:
     official_domains: [instagram.com]
     keywords: [instagram]
     tokens: []
+    common_tokens: []
     phones: []
     sources: [https://www.instagram.com/]
 
@@ -87,6 +95,7 @@ brands:
     official_domains: [whatsapp.com]
     keywords: [whatsapp]
     tokens: []
+    common_tokens: []
     phones: []
     sources: [https://www.whatsapp.com/]
 
@@ -97,6 +106,7 @@ brands:
     official_domains: [dhl.com]
     keywords: []
     tokens: [dhl]
+    common_tokens: []
     phones: []
     sources: [https://www.dhl.com/]
 
@@ -107,6 +117,7 @@ brands:
     official_domains: [fedex.com]
     keywords: [fedex]
     tokens: []
+    common_tokens: []
     phones: []
     sources: [https://www.fedex.com/]
 
@@ -116,7 +127,8 @@ brands:
     category: logistics
     official_domains: [ups.com]
     keywords: []
-    tokens: [ups]
+    tokens: []
+    common_tokens: [ups]
     phones: []
     sources: [https://www.ups.com/]
 
@@ -127,6 +139,7 @@ brands:
     official_domains: [binance.com]
     keywords: [binance]
     tokens: []
+    common_tokens: []
     phones: []
     sources: [https://www.binance.com/]
 
@@ -137,6 +150,7 @@ brands:
     official_domains: [coinbase.com]
     keywords: [coinbase]
     tokens: []
+    common_tokens: []
     phones: []
     sources: [https://www.coinbase.com/]
 
@@ -147,6 +161,7 @@ brands:
     official_domains: [linkedin.com]
     keywords: [linkedin]
     tokens: []
+    common_tokens: []
     phones: []
     sources: [https://www.linkedin.com/]
 
@@ -157,6 +172,7 @@ brands:
     official_domains: [adobe.com]
     keywords: [adobe]
     tokens: []
+    common_tokens: []
     phones: []
     sources: [https://www.adobe.com/]
 
@@ -167,6 +183,7 @@ brands:
     official_domains: [dropbox.com]
     keywords: [dropbox]
     tokens: []
+    common_tokens: []
     phones: []
     sources: [https://www.dropbox.com/]
 
@@ -177,6 +194,7 @@ brands:
     official_domains: [docusign.com]
     keywords: [docusign]
     tokens: []
+    common_tokens: []
     phones: []
     sources: [https://www.docusign.com/]
 
@@ -186,7 +204,8 @@ brands:
     category: payments
     official_domains: [visa.com]
     keywords: []
-    tokens: [visa]
+    tokens: []
+    common_tokens: [visa]
     phones: []
     sources: [https://www.visa.com/]
 
@@ -197,5 +216,6 @@ brands:
     official_domains: [mastercard.com]
     keywords: [mastercard]
     tokens: []
+    common_tokens: []
     phones: []
     sources: [https://www.mastercard.com/]

@@ -44,6 +44,11 @@ WEIGHTS: dict[str, int] = {
     "DOMAIN_OLD": -15,
 }
 
+# Reduced weights for brand findings that rest on a common-word token
+# (`common_tokens` in the brand files: noon, visa, office, du), which also
+# turn up in ordinary domains such as office-furniture-dubai.com.
+COMMON_TOKEN_WEIGHTS: dict[str, int] = {"BRAND_IN_DOMAIN": 5, "BRAND_GEO_DOMAIN": 10}
+
 # Signals strong enough that an old domain is no comfort (DOMAIN_OLD is dropped).
 STRONG = frozenset({
     "SKIMMER_GATEWAY",

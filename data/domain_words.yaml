@@ -1,0 +1,17 @@
+# Words that appear next to brand names in scam domains.
+
+# Words that make a host look official or urgent (DECEPTIVE_DOMAIN_WORDS, +10).
+# Words of 5 or more letters also count inside a longer token (adcblogin);
+# shorter ones only as a whole token.
+deceptive: [login, signin, verify, secure, account, update, confirm, wallet, refund, fine, fines,
+            gov, portal, reward, claim, unlock, support, payment, pay, otp, kyc]
+
+# Ordinary shop and service words. A brand keyword found inside a longer word
+# counts only when the rest of the label splits fully into known words: these,
+# the deceptive words above, place names and Gulf codes from countries.yaml,
+# and other brand keywords. So adcbsecure, tammpay and dewabillpay match, but
+# codewars, dewalt and roadpolice do not.
+commerce: [shop, store, online, official, mall, deal, deals, sale, sales, outlet, bill, bills, app,
+           service, services, care, help, center, centre, offer, offers, gift, gifts, rewards,
+           bank, banking, card, cards, track, tracking, delivery, parcel, express, points, toll,
+           recharge, topup, renew, my, get]

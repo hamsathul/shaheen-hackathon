@@ -3,15 +3,18 @@ network (ASN) and the TLS certificate of a domain.
 
 `gather()` runs the lookups concurrently, caches what it learns in the store
 for 24 hours and never raises: anything it cannot learn stays null, an empty
-list or "unknown". Every network call times out after at most TIMEOUT seconds.
+list or "unknown". It returns within DEADLINE seconds; a lookup still running
+then is left to finish in the background and reported as not answered.
 """
 
 from __future__ import annotations
 
+import contextlib
 import re
 import socket
 import ssl
 import tempfile
+import time
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime, timezone
@@ -25,8 +28,10 @@ import httpx
 from baaz.domains import is_ip
 from baaz.store import Store
 
-TIMEOUT = 6.0
-DNS_TIMEOUT = 4.0
+DEADLINE = 8.0  # the whole of gather()
+TIMEOUT = 5.0  # one HTTP request, or one WHOIS answer
+SOCKET_TIMEOUT = 4.0  # each connect, read or TLS handshake step
+DNS_TIMEOUT = 3.0  # one DNS query, retries included
 BOOTSTRAP_URL = "https://data.iana.org/rdap/dns.json"
 RDAP_FALLBACK = "https://rdap.org/domain/{}"
 IANA_WHOIS = "whois.iana.org"
@@ -40,34 +45,64 @@ def gather(domain: str, store: Store, host: str | None = None) -> dict[str, Any]
     """Registration facts for `domain`; DNS, hosting network and certificate for
     `host`, the host the link landed on (default: `domain`)."""
     host = host or domain
-    with ThreadPoolExecutor(max_workers=3) as pool:
-        whois = pool.submit(_cached, store, domain, "whois", lambda: registration(domain, store))
-        hosting_ = pool.submit(_cached, store, host, "dns", lambda: hosting(domain, host))
-        cert = pool.submit(_cached, store, host, "cert", lambda: certificate(host))
-        return {"domain": domain, "host": host,
-                "whois": whois.result(), "dns": hosting_.result(), "cert": cert.result()}
+    jobs: dict[str, tuple[str, Callable[[], dict[str, Any]], dict[str, Any]]] = {
+        "whois": (domain, lambda: registration(domain, store), _registration_facts(domain)),
+        "dns": (host, lambda: hosting(domain, host), _hosting_facts(domain, host)),
+        "cert": (host, lambda: certificate(host), _certificate_facts(host)),
+    }
+    stop = time.monotonic() + DEADLINE
+    pool = ThreadPoolExecutor(max_workers=len(jobs))
+    try:
+        futures = {kind: pool.submit(_cached, store, key, kind, lookup) for kind, (key, lookup, _) in jobs.items()}
+        facts: dict[str, Any] = {"domain": domain, "host": host}
+        for kind, future in futures.items():
+            try:
+                facts[kind] = future.result(timeout=max(stop - time.monotonic(), 0))
+            except TimeoutError:
+                facts[kind] = {**jobs[kind][2], "error": f"no answer within {DEADLINE:g} seconds"}
+        return facts
+    finally:
+        pool.shutdown(wait=False, cancel_futures=True)
 
 
 def _cached(store: Store, key: str, kind: str, lookup: Callable[[], dict[str, Any]]) -> dict[str, Any]:
-    """A cached answer, or a fresh one; failed lookups are not cached."""
-    hit = store.cache_get(key, kind)
+    """A cached answer, or a fresh one. Failed lookups are not cached, and a
+    store that cannot be read or written counts as a cache miss."""
+    hit = None
+    with contextlib.suppress(Exception):
+        hit = store.cache_get(key, kind)
     if hit is not None:
         return hit
     data = lookup()
     if data["error"] is None:
-        store.cache_put(key, kind, data)
+        with contextlib.suppress(Exception):
+            store.cache_put(key, kind, data)
     return data
+
+
+def _connect(host: str, port: int) -> socket.socket:
+    """A TCP connection whose every step is bounded: the name is resolved
+    through dnspython (DNS_TIMEOUT) rather than the system resolver, which has
+    no timeout, and the connect and each read wait at most SOCKET_TIMEOUT."""
+    address = host if is_ip(host) else next(iter(_resolve(host, "A")[0] or _resolve(host, "AAAA")[0]), None)
+    if address is None:
+        raise OSError(f"cannot resolve {host}")
+    return socket.create_connection((address, port), timeout=SOCKET_TIMEOUT)
 
 
 # registration: RDAP, then WHOIS
 
 
-def registration(domain: str, store: Store) -> dict[str, Any]:
-    facts: dict[str, Any] = {
+def _registration_facts(domain: str) -> dict[str, Any]:
+    return {
         "domain": domain, "source": "unknown", "server": None, "created": None, "registrar": None,
         "registrar_abuse_email": None, "registrar_abuse_phone": None, "status": [],
         "nameservers": [], "error": None,
     }
+
+
+def registration(domain: str, store: Store) -> dict[str, Any]:
+    facts = _registration_facts(domain)
     if is_ip(domain):
         facts["error"] = "an IP address has no registration record"
         return facts
@@ -97,13 +132,16 @@ def _rdap_url(domain: str, store: Store) -> str:
 
 
 def _bootstrap(store: Store) -> dict[str, list[str]]:
-    services = store.cache_get("data.iana.org", "rdap_bootstrap")
+    services = None
+    with contextlib.suppress(Exception):
+        services = store.cache_get("data.iana.org", "rdap_bootstrap")
     if services is None:
         data = _get_json(BOOTSTRAP_URL)
         services = data.get("services") if data else None
         if not services:
             return {}
-        store.cache_put("data.iana.org", "rdap_bootstrap", services)
+        with contextlib.suppress(Exception):
+            store.cache_put("data.iana.org", "rdap_bootstrap", services)
     return {tld.lower(): urls for tlds, urls in services for tld in tlds}
 
 
@@ -150,10 +188,14 @@ def whois_text(domain: str) -> tuple[str, str] | None:
 
 
 def _whois(server: str, query: str) -> str:
+    """The answer of a WHOIS server, cut at MAX_WHOIS_BYTES or after TIMEOUT
+    seconds, whichever comes first (a slow server cannot hold the line)."""
     chunks: list[bytes] = []
-    with socket.create_connection((server, 43), timeout=TIMEOUT) as sock:
+    stop = time.monotonic() + TIMEOUT
+    with _connect(server, 43) as sock:
         sock.sendall(query.encode("ascii") + b"\r\n")
-        while sum(map(len, chunks)) < MAX_WHOIS_BYTES and (chunk := sock.recv(65536)):
+        while (time.monotonic() < stop and sum(map(len, chunks)) < MAX_WHOIS_BYTES
+               and (chunk := sock.recv(65536))):
             chunks.append(chunk)
     return b"".join(chunks).decode("utf-8", errors="replace")
 
@@ -161,8 +203,11 @@ def _whois(server: str, query: str) -> str:
 _W_CREATED = re.compile(
     r"^\s*(?:creation date|created(?: on| date)?|registered(?: on| date)?|registration (?:date|time)"
     r"|domain registration date|record created)\s*:[ \t]*(\S.*)$", re.I | re.M)
+# The registrar's name follows its label on the same line or, in some
+# registries (.uk), alone on the next, indented line; never a "Key: value" line.
 _W_REGISTRAR = re.compile(
-    r"^\s*(?:registrar(?: name)?|sponsoring registrar|registrar organization)\s*:[ \t]*\n?[ \t]*(\S.*)$",
+    r"^[ \t]*(?:registrar(?: name)?|sponsoring registrar|registrar organization)[ \t]*:"
+    r"(?:[ \t]*(\S.*)|[ \t]*\n[ \t]+(?![\w ]+:)(\S.*))$",
     re.I | re.M)
 _W_ABUSE_EMAIL = re.compile(r"^\s*registrar abuse contact email\s*:[ \t]*(\S+)", re.I | re.M)
 _W_ABUSE_PHONE = re.compile(r"^\s*registrar abuse contact phone\s*:[ \t]*(\S+)", re.I | re.M)
@@ -176,15 +221,19 @@ def parse_whois(text: str) -> dict[str, Any] | None:
     registrar = _W_REGISTRAR.search(text)
     if not (created or registrar):
         return None
-    first = lambda m: m.group(1).strip() if m else None  # noqa: E731
     return {
         "created": loose_date(created.group(1)) if created else None,
-        "registrar": first(registrar),
-        "registrar_abuse_email": first(_W_ABUSE_EMAIL.search(text)),
-        "registrar_abuse_phone": first(_W_ABUSE_PHONE.search(text)),
+        "registrar": _value(registrar),
+        "registrar_abuse_email": _value(_W_ABUSE_EMAIL.search(text)),
+        "registrar_abuse_phone": _value(_W_ABUSE_PHONE.search(text)),
         "status": list(dict.fromkeys(m.group(1) for m in _W_STATUS.finditer(text))),
         "nameservers": sorted({m.group(1).lower().rstrip(".") for m in _W_NAMESERVER.finditer(text)}),
     }
+
+
+def _value(match: re.Match[str] | None) -> str | None:
+    """The value a WHOIS pattern captured, from whichever group matched."""
+    return next((group.strip() for group in match.groups() if group), None) if match else None
 
 
 def loose_date(text: str) -> str | None:
@@ -207,11 +256,15 @@ def loose_date(text: str) -> str | None:
 # DNS and hosting network
 
 
-def hosting(domain: str, host: str) -> dict[str, Any]:
-    facts: dict[str, Any] = {
+def _hosting_facts(domain: str, host: str) -> dict[str, Any]:
+    return {
         "domain": domain, "host": host, "a": [], "aaaa": [], "ns": [], "mx": [], "nxdomain": None,
         "ip": None, "asn": None, "asn_name": None, "country": None, "error": None,
     }
+
+
+def hosting(domain: str, host: str) -> dict[str, Any]:
+    facts = _hosting_facts(domain, host)
     try:
         if is_ip(host):
             facts.update(a=[host] if ":" not in host else [], aaaa=[host] if ":" in host else [], nxdomain=False)
@@ -275,11 +328,15 @@ def asn_lookup(ip: str) -> dict[str, Any]:
 # TLS certificate
 
 
-def certificate(host: str) -> dict[str, Any]:
-    facts: dict[str, Any] = {
+def _certificate_facts(host: str) -> dict[str, Any]:
+    return {
         "host": host, "verified": None, "subject": None, "issuer": None,
         "not_before": None, "not_after": None, "san": [], "error": None,
     }
+
+
+def certificate(host: str) -> dict[str, Any]:
+    facts = _certificate_facts(host)
     try:
         try:
             cert, verified = _peer_cert(host, verify=True), True
@@ -296,8 +353,7 @@ def _peer_cert(host: str, verify: bool) -> dict[str, Any]:
     if not verify:
         context.check_hostname = False
         context.verify_mode = ssl.CERT_NONE
-    with socket.create_connection((host, 443), timeout=TIMEOUT) as sock, \
-            context.wrap_socket(sock, server_hostname=host) as tls:
+    with _connect(host, 443) as sock, context.wrap_socket(sock, server_hostname=host) as tls:
         if verify:
             return tls.getpeercert()
         der = tls.getpeercert(binary_form=True)
