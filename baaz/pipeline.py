@@ -226,6 +226,8 @@ class Scanner:
         if ctx.options.write_evidence:
             write_pack(ctx, result, self.settings.evidence_dir, self.settings)
         self.store.save_scan(result, ctx.features["final_domain"])
+        if result.verdict in ("fraud", "suspicious"):
+            self.store.queue_investigation(result.id)
         return result
 
     def _verdict(self, ctx: ScanContext) -> ScanResult:

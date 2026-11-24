@@ -1,0 +1,28 @@
+{
+  "autoEnableCodemode": false,
+  "mcpServers": {
+    "baaz": {
+      "command": "uv",
+      "args": ["run", "baaz", "mcp"],
+      "env": {
+        "BAAZ_CASE_ID": "${BAAZ_CASE_ID}",
+        "BAAZ_DB": "var/baaz.db",
+        "BAAZ_EVIDENCE_DIR": "evidence"
+      },
+      "exposure": "direct",
+      "timeout": 180
+    },
+    "browser": {
+      "command": "npx",
+      "args": [
+        "-y", "@playwright/mcp@0.0.86",
+        "--headless", "--isolated", "--ignore-https-errors", "--block-service-workers",
+        "--image-responses", "omit", "--timeout-navigation", "20000",
+        "--output-dir", "evidence/manual-browser", "--save-session",
+        "--blocked-origins", "http://localhost;http://127.0.0.1;http://169.254.169.254"
+      ],
+      "exposure": "direct",
+      "timeout": 180
+    }
+  }
+}

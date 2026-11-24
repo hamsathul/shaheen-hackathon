@@ -9,7 +9,7 @@ import logging
 import sys
 from pathlib import Path
 
-from baaz import __version__, batch, evidence, watch
+from baaz import __version__, batch, evidence, investigator, mcp_server, watch
 from baaz.config import load_settings
 from baaz.domains import normalize_url, registrable_domain
 from baaz.models import ScanOptions, ScanResult
@@ -154,6 +154,71 @@ def add_batch_commands(sub: argparse._SubParsersAction) -> None:
         p.set_defaults(func=func)
 
 
+def _print_investigation(record: dict) -> None:
+    run = record["run"]
+    print(f"{run['status'].upper()}  case {run['case_id']}  mode {run.get('mode', '?')}  "
+          f"{run.get('wall_s', '?')} s")
+    if run.get("fallback_from"):
+        print(f"  fell back from {run['fallback_from']}: {run['fallback_reason']}")
+    if run.get("error"):
+        print(f"  error: {run['error']}")
+    if record["declared_tools"]:
+        print(f"  tools declared to the model: {', '.join(record['declared_tools'])}")
+    calls = (run.get("pi") or {}).get("tool_calls") or []
+    if calls:
+        print(f"  tool calls: {', '.join(c['tool'] for c in calls)}")
+    for action in record.get("browser_actions") or []:
+        print(f"  browser: {action['tool']} {action['target']} -> {action['page_url'] or '-'}")
+    if record.get("policy_violation"):
+        print("  POLICY VIOLATION: the model put input into a page (see policy_violations)")
+    applied = run.get("applied")
+    if applied:
+        before, after = applied["before"], applied["after"]
+        print(f"  verdict {before['verdict']} {before['risk_score']} -> {after['verdict']} "
+              f"{after['risk_score']} (model asked {applied['requested_adjustment']:+d}; {applied['note']})")
+    if record.get("summary_en"):
+        print(f"  {record['summary_en']}")
+
+
+def cmd_investigate(args: argparse.Namespace) -> int:
+    try:
+        if args.bench:
+            print(json.dumps(investigator.bench(), ensure_ascii=False))
+            return 0
+        if args.queue:
+            for record in investigator.investigate_queue(args.loop, args.timeout, args.mode):
+                _print_investigation(record)
+            return 0
+        if not args.id:
+            print("baaz investigate: give a case id, --queue or --bench", file=sys.stderr)
+            return 2
+        record = investigator.investigate(args.id, args.mode, args.timeout)
+    except (LookupError, RuntimeError) as exc:
+        print(f"baaz investigate: {exc}", file=sys.stderr)
+        return 2
+    _print_investigation(record)
+    return 0 if record["run"]["status"] == "done" else 1
+
+
+def cmd_mcp(args: argparse.Namespace) -> int:
+    mcp_server.main()
+    return 0
+
+
+def _add_agent_commands(sub: argparse._SubParsersAction) -> None:
+    p = sub.add_parser("investigate", help="have the local model investigate a flagged case")
+    p.add_argument("id", nargs="?", help="case (scan) id")
+    p.add_argument("--mode", choices=("auto", "pi", "oneshot"), default="auto")
+    p.add_argument("--timeout", type=float, default=600, help="seconds per case (default 600)")
+    p.add_argument("--queue", action="store_true", help="work the investigation queue")
+    p.add_argument("--loop", action="store_true", help="with --queue: keep waiting for new cases")
+    p.add_argument("--bench", action="store_true", help="measure the model's tokens per second")
+    p.set_defaults(func=cmd_investigate)
+
+    p = sub.add_parser("mcp", help="serve the investigator's tools over stdio (used by pi)")
+    p.set_defaults(func=cmd_mcp)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="baaz", description=__doc__)
     parser.add_argument("--version", action="version", version=f"baaz {__version__}")
@@ -197,6 +262,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("target", help="a URL, or a text file (one per line) or CSV with a url column")
     p.add_argument("--source", default="manual", help="source label (default: manual)")
     p.set_defaults(func=cmd_enqueue)
+
+    _add_agent_commands(sub)
 
     return parser
 
