@@ -9,5 +9,17 @@ services:
       - ./evidence:/app/evidence
       - baaz-var:/app/var
 
+  watch:
+    build: .
+    user: "${BAAZ_UID:-1000}:${BAAZ_GID:-1000}"
+    command: watch
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - ./evidence:/app/evidence
+      - baaz-var:/app/var
+
 volumes:
   baaz-var:
