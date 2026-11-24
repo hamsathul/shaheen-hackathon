@@ -1,0 +1,41 @@
+# Free-hosting, site-builder, form and file-sharing platforms (FREE_HOSTING, +10).
+#
+# A URL on one of these is never allowlisted, even when its registrable domain
+# is an official brand domain (sites.google.com, forms.office.com), and never
+# gets TOP_SITE: the platform's popularity says nothing about the page.
+
+# Matched on any host under the suffix (user.github.io, x.sharepoint.com). Most
+# are in the private section of the Public Suffix List.
+suffixes: [
+  # code and app hosting
+  github.io, gitlab.io, bitbucket.io, pages.dev, workers.dev, r2.dev, trycloudflare.com,
+  web.app, firebaseapp.com, appspot.com, netlify.app, vercel.app, now.sh, herokuapp.com,
+  onrender.com, fly.dev, glitch.me, repl.co, replit.app, replit.dev, surge.sh,
+  codesandbox.io, csb.app, stackblitz.io, amplifyapp.com, azurewebsites.net,
+  blob.core.windows.net, web.core.windows.net, amazonaws.com, ngrok.io, ngrok-free.app,
+  ngrok.app, loca.lt, deno.dev,
+  # site builders and blogs
+  blogspot.com, wordpress.com, wpcomstaging.com, wixsite.com, wixstudio.io, weebly.com,
+  weeblysite.com, square.site, myshopify.com, webflow.io, framer.app, framer.website,
+  carrd.co, godaddysites.com, mystrikingly.com, strikingly.com, jimdosite.com,
+  jimdofree.com, site123.me, yolasite.com, tilda.ws, webnode.page, mobirisesite.com,
+  tiiny.site, canva.site, notion.site, gitbook.io, zohosites.com, hs-sites.com,
+  hubspotpagebuilder.com, mailchimpsites.com, business.site, ukit.me, webstarts.com,
+  # free web hosts
+  000webhostapp.com, infinityfreeapp.com, rf.gd, epizy.com, free.nf, great-site.net,
+  atwebpages.com, byethost.com, freehostia.com,
+  # forms and file sharing
+  sharepoint.com, typeform.com, jotform.com, dweb.link, w3s.link,
+  cloudflare-ipfs.com,
+]
+
+# Matched on the host (a leading www. is ignored) and, when given, a path prefix.
+# These are user-content areas of big, often official, domains.
+urls: [
+  sites.google.com, docs.google.com, drive.google.com, script.google.com, forms.gle,
+  storage.googleapis.com, firebasestorage.googleapis.com,
+  forms.office.com, sway.office.com, onedrive.live.com, 1drv.ms,
+  dropbox.com/s, dropbox.com/scl, dropbox.com/sh, dropbox.com/t, dl.dropboxusercontent.com,
+  express.adobe.com, spark.adobe.com, indd.adobe.com, acrobat.adobe.com/id,
+  ipfs.io/ipfs,
+]

@@ -1,20 +1,24 @@
 """`scan(url)`: the one pipeline the CLI, batch runner, watcher, dashboard
 and investigator all share.
 
-resolve -> intel -> render -> signals -> score -> reasons -> evidence -> store
+resolve -> allowlist -> intel -> render -> signals -> score -> reasons -> evidence -> store
+
+An allowlisted link (official or government domain all the way) skips the
+signal stages but still gets its evidence pack and stored result.
 """
 
 from __future__ import annotations
 
 import secrets
 from datetime import datetime, timezone
+from typing import Any
 
-from baaz import reasons, score
+from baaz import brands, intel, reasons, score, signals
 from baaz.config import Settings, load_settings
-from baaz.domains import normalize_url, registrable_domain
+from baaz.domains import host_of, normalize_url, registrable_domain
 from baaz.evidence import write_pack
 from baaz.models import ScanContext, ScanOptions, ScanResult
-from baaz.resolve import make_clients, resolve
+from baaz.resolve import SHORTENERS, make_clients, resolve
 from baaz.store import Store
 
 
@@ -51,6 +55,8 @@ class Scanner:
             options=options or ScanOptions(),
         )
         self._resolve(ctx)
+        if not self._allowlist(ctx):
+            signals.url_signals(ctx, self._intel(ctx))
         return self._finish(ctx)
 
     def _resolve(self, ctx: ScanContext) -> None:
@@ -67,6 +73,25 @@ class Scanner:
             ctx.add("URL_SHORTENER", "redirects.json#shortener", shortener=res.shortener)
         if res.html:
             ctx.artifacts["page.html"] = res.html
+
+    def _allowlist(self, ctx: ScanContext) -> bool:
+        allowed = brands.allowlist(ctx.redirect_chain)
+        if allowed is None:
+            return False
+        ctx.official_brand = allowed.owner
+        ctx.add(allowed.code, "redirects.json#final_url", **allowed.params)
+        return True
+
+    def _intel(self, ctx: ScanContext) -> dict[str, dict[str, Any]]:
+        """Intel on the landing domain, also written to the evidence pack."""
+        domain = ctx.features["final_domain"]
+        if domain in SHORTENERS:
+            return {}
+        facts = intel.gather(domain, self.store, host_of(ctx.final_url))
+        ctx.artifacts["whois.json"] = facts["whois"]
+        ctx.artifacts["dns_hosting.json"] = facts["dns"]
+        ctx.artifacts["cert.json"] = facts["cert"]
+        return {domain: facts}
 
     def _finish(self, ctx: ScanContext) -> ScanResult:
         result = self._verdict(ctx)

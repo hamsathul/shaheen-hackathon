@@ -1,0 +1,11 @@
+# Restricted government namespaces. Only a government (or military) body can
+# register a name under these suffixes, so a domain in them is treated like an
+# official domain: verdict legitimate, GOV_NAMESPACE.
+#
+# gov.ae and mil.ae: .ae Domain Name Policy (aeDA, AEDA-POL-007), clauses 15 and
+# 16, https://tdra.gov.ae/aeda. ac.ae, .abudhabi and .dubai are NOT here: ac.ae
+# admits academic institutions, .abudhabi admits any Abu Dhabi resident or
+# entity, and .dubai's eligibility could not be confirmed.
+# The foreign entries are the government zones of the US (gov, mil), the UK, the
+# GCC states, India, Australia and Canada.
+namespaces: [gov.ae, mil.ae, gov, mil, gov.uk, gov.sa, gov.qa, gov.om, gov.bh, gov.kw, gov.in, gov.au, gc.ca]

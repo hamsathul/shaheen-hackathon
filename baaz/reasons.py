@@ -138,6 +138,7 @@ LABELS: dict[str, tuple[str, str]] = {
     "punycode": ("disguised international characters", "أحرف دولية مموّهة"),
     "tld_swap": ("same name, different ending", "الاسم نفسه بامتداد مختلف"),
     "combo": ("brand name with extra words", "اسم العلامة مع كلمات إضافية"),
+    "subdomain_spoof": ("official name placed in front of another domain", "الاسم الرسمي موضوع أمام نطاق آخر"),
     "password": ("a password", "كلمة مرور"),
     "card": ("card details", "بيانات بطاقة"),
     "otp": ("a one-time code (OTP)", "رمز تحقق لمرة واحدة (OTP)"),

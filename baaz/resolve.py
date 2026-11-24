@@ -3,6 +3,7 @@ script redirects on near-empty pages and URL shorteners, up to 10 hops."""
 
 from __future__ import annotations
 
+import html as html_lib
 import re
 from dataclasses import dataclass, field
 from urllib.parse import urljoin
@@ -78,7 +79,7 @@ def page_redirect(html: str) -> tuple[str, str] | None:
     """A meta-refresh target, or a script redirect target when the page is near-empty."""
     m = _META_REFRESH.search(html)
     if m:
-        return m.group(1), "meta"
+        return html_lib.unescape(m.group(1)), "meta"  # attribute values are HTML-escaped
     if len(visible_text(html)) < 300:
         m = _JS_REDIRECT.search(html)
         if m:

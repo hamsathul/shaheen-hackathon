@@ -1,0 +1,277 @@
+# Places for BRAND_GEO_DOMAIN: a brand joined to a country or city, as in
+# bose-uae, boseuae, bose-kuwait or jbldubai.
+#
+# Countries: every ISO 3166-1 alpha-2 code, from the IANA time zone database
+# file iso3166.tab (https://data.iana.org/time-zones/, public domain), with
+# names written the way they appear in host names: lower case, no spaces or
+# punctuation (saudiarabia), plus common short forms (uae, ksa, usa, uk).
+# `codes` are two-letter forms and match only as a whole token (bose-ae).
+# `names` also match when glued to the brand (boseuae, jbldubai) or split by
+# hyphens (south-africa).
+# jersey is left out on purpose (a clothing word); emirates is left out because
+# it is a brand token (Emirates airline).
+
+# Two-letter codes that are common words or abbreviations in host names
+# (al-, it-, my-, co-, hr-); they never count as a place.
+ambiguous_codes: [ad, ai, al, am, as, at, be, by, cd, co, cv, do, fm, gg, gm, hr, id, in, io, is, it, la, me, md, mo, my, no, pm, pr, re, so, st, tm, to, tv, vc, ws]
+
+# Codes that also count glued straight after a brand (boseae, jblqa). Only the
+# Gulf states: other codes glued to a word make ordinary words (meta+ls =
+# metals, visa+ge = visage, dewa+lt = dewalt).
+glued_codes: [ae, sa, qa, kw, bh, om]
+
+countries:
+  - {codes: [ad], names: [andorra]}
+  - {codes: [ae], names: [unitedarabemirates, uae]}
+  - {codes: [af], names: [afghanistan]}
+  - {codes: [ag], names: [antiguaandbarbuda, antigua]}
+  - {codes: [ai], names: [anguilla]}
+  - {codes: [al], names: [albania]}
+  - {codes: [am], names: [armenia]}
+  - {codes: [ao], names: [angola]}
+  - {codes: [aq], names: [antarctica]}
+  - {codes: [ar], names: [argentina]}
+  - {codes: [as], names: [americansamoa]}
+  - {codes: [at], names: [austria]}
+  - {codes: [au], names: [australia]}
+  - {codes: [aw], names: [aruba]}
+  - {codes: [ax], names: [alandislands]}
+  - {codes: [az], names: [azerbaijan]}
+  - {codes: [ba], names: [bosniaandherzegovina, bosnia]}
+  - {codes: [bb], names: [barbados]}
+  - {codes: [bd], names: [bangladesh]}
+  - {codes: [be], names: [belgium]}
+  - {codes: [bf], names: [burkinafaso]}
+  - {codes: [bg], names: [bulgaria]}
+  - {codes: [bh], names: [bahrain]}
+  - {codes: [bi], names: [burundi]}
+  - {codes: [bj], names: [benin]}
+  - {codes: [bl], names: [saintbarthelemy]}
+  - {codes: [bm], names: [bermuda]}
+  - {codes: [bn], names: [brunei]}
+  - {codes: [bo], names: [bolivia]}
+  - {codes: [bq], names: [caribbeannetherlands, bonaire]}
+  - {codes: [br], names: [brazil]}
+  - {codes: [bs], names: [bahamas]}
+  - {codes: [bt], names: [bhutan]}
+  - {codes: [bv], names: [bouvetisland]}
+  - {codes: [bw], names: [botswana]}
+  - {codes: [by], names: [belarus]}
+  - {codes: [bz], names: [belize]}
+  - {codes: [ca], names: [canada]}
+  - {codes: [cc], names: [cocosislands]}
+  - {codes: [cd], names: [drcongo, congokinshasa]}
+  - {codes: [cf], names: [centralafricanrepublic]}
+  - {codes: [cg], names: [congo, congobrazzaville]}
+  - {codes: [ch], names: [switzerland]}
+  - {codes: [ci], names: [ivorycoast, cotedivoire]}
+  - {codes: [ck], names: [cookislands]}
+  - {codes: [cl], names: [chile]}
+  - {codes: [cm], names: [cameroon]}
+  - {codes: [cn], names: [china]}
+  - {codes: [co], names: [colombia]}
+  - {codes: [cr], names: [costarica]}
+  - {codes: [cu], names: [cuba]}
+  - {codes: [cv], names: [capeverde, caboverde]}
+  - {codes: [cw], names: [curacao]}
+  - {codes: [cx], names: [christmasisland]}
+  - {codes: [cy], names: [cyprus]}
+  - {codes: [cz], names: [czechrepublic, czechia, czech]}
+  - {codes: [de], names: [germany]}
+  - {codes: [dj], names: [djibouti]}
+  - {codes: [dk], names: [denmark]}
+  - {codes: [dm], names: [dominica]}
+  - {codes: [do], names: [dominicanrepublic]}
+  - {codes: [dz], names: [algeria]}
+  - {codes: [ec], names: [ecuador]}
+  - {codes: [ee], names: [estonia]}
+  - {codes: [eg], names: [egypt, misr]}
+  - {codes: [eh], names: [westernsahara]}
+  - {codes: [er], names: [eritrea]}
+  - {codes: [es], names: [spain]}
+  - {codes: [et], names: [ethiopia]}
+  - {codes: [fi], names: [finland]}
+  - {codes: [fj], names: [fiji]}
+  - {codes: [fk], names: [falklandislands]}
+  - {codes: [fm], names: [micronesia]}
+  - {codes: [fo], names: [faroeislands]}
+  - {codes: [fr], names: [france]}
+  - {codes: [ga], names: [gabon]}
+  - {codes: [gb, uk], names: [unitedkingdom, britain, greatbritain, england, scotland, wales]}
+  - {codes: [gd], names: [grenada]}
+  - {codes: [ge], names: [georgia]}
+  - {codes: [gf], names: [frenchguiana]}
+  - {codes: [gg], names: [guernsey]}
+  - {codes: [gh], names: [ghana]}
+  - {codes: [gi], names: [gibraltar]}
+  - {codes: [gl], names: [greenland]}
+  - {codes: [gm], names: [gambia]}
+  - {codes: [gn], names: [guinea]}
+  - {codes: [gp], names: [guadeloupe]}
+  - {codes: [gq], names: [equatorialguinea]}
+  - {codes: [gr], names: [greece]}
+  - {codes: [gs], names: [southgeorgia]}
+  - {codes: [gt], names: [guatemala]}
+  - {codes: [gu], names: [guam]}
+  - {codes: [gw], names: [guineabissau]}
+  - {codes: [gy], names: [guyana]}
+  - {codes: [hk], names: [hongkong]}
+  - {codes: [hm], names: [heardisland]}
+  - {codes: [hn], names: [honduras]}
+  - {codes: [hr], names: [croatia]}
+  - {codes: [ht], names: [haiti]}
+  - {codes: [hu], names: [hungary]}
+  - {codes: [id], names: [indonesia]}
+  - {codes: [ie], names: [ireland]}
+  - {codes: [il], names: [israel]}
+  - {codes: [im], names: [isleofman]}
+  - {codes: [in], names: [india]}
+  - {codes: [io], names: [britishindianoceanterritory]}
+  - {codes: [iq], names: [iraq]}
+  - {codes: [ir], names: [iran]}
+  - {codes: [is], names: [iceland]}
+  - {codes: [it], names: [italy]}
+  - {codes: [je], names: []}
+  - {codes: [jm], names: [jamaica]}
+  - {codes: [jo], names: [jordan]}
+  - {codes: [jp], names: [japan]}
+  - {codes: [ke], names: [kenya]}
+  - {codes: [kg], names: [kyrgyzstan]}
+  - {codes: [kh], names: [cambodia]}
+  - {codes: [ki], names: [kiribati]}
+  - {codes: [km], names: [comoros]}
+  - {codes: [kn], names: [saintkittsandnevis, stkitts]}
+  - {codes: [kp], names: [northkorea]}
+  - {codes: [kr], names: [southkorea, korea]}
+  - {codes: [kw], names: [kuwait]}
+  - {codes: [ky], names: [caymanislands]}
+  - {codes: [kz], names: [kazakhstan]}
+  - {codes: [la], names: [laos]}
+  - {codes: [lb], names: [lebanon]}
+  - {codes: [lc], names: [saintlucia, stlucia]}
+  - {codes: [li], names: [liechtenstein]}
+  - {codes: [lk], names: [srilanka]}
+  - {codes: [lr], names: [liberia]}
+  - {codes: [ls], names: [lesotho]}
+  - {codes: [lt], names: [lithuania]}
+  - {codes: [lu], names: [luxembourg]}
+  - {codes: [lv], names: [latvia]}
+  - {codes: [ly], names: [libya]}
+  - {codes: [ma], names: [morocco]}
+  - {codes: [mc], names: [monaco]}
+  - {codes: [md], names: [moldova]}
+  - {codes: [me], names: [montenegro]}
+  - {codes: [mf], names: [saintmartin]}
+  - {codes: [mg], names: [madagascar]}
+  - {codes: [mh], names: [marshallislands]}
+  - {codes: [mk], names: [northmacedonia, macedonia]}
+  - {codes: [ml], names: [mali]}
+  - {codes: [mm], names: [myanmar, burma]}
+  - {codes: [mn], names: [mongolia]}
+  - {codes: [mo], names: [macau]}
+  - {codes: [mp], names: [northernmarianaislands]}
+  - {codes: [mq], names: [martinique]}
+  - {codes: [mr], names: [mauritania]}
+  - {codes: [ms], names: [montserrat]}
+  - {codes: [mt], names: [malta]}
+  - {codes: [mu], names: [mauritius]}
+  - {codes: [mv], names: [maldives]}
+  - {codes: [mw], names: [malawi]}
+  - {codes: [mx], names: [mexico]}
+  - {codes: [my], names: [malaysia]}
+  - {codes: [mz], names: [mozambique]}
+  - {codes: [na], names: [namibia]}
+  - {codes: [nc], names: [newcaledonia]}
+  - {codes: [ne], names: [niger]}
+  - {codes: [nf], names: [norfolkisland]}
+  - {codes: [ng], names: [nigeria]}
+  - {codes: [ni], names: [nicaragua]}
+  - {codes: [nl], names: [netherlands, holland]}
+  - {codes: [no], names: [norway]}
+  - {codes: [np], names: [nepal]}
+  - {codes: [nr], names: [nauru]}
+  - {codes: [nu], names: [niue]}
+  - {codes: [nz], names: [newzealand]}
+  - {codes: [om], names: [oman]}
+  - {codes: [pa], names: [panama]}
+  - {codes: [pe], names: [peru]}
+  - {codes: [pf], names: [frenchpolynesia]}
+  - {codes: [pg], names: [papuanewguinea]}
+  - {codes: [ph], names: [philippines]}
+  - {codes: [pk], names: [pakistan]}
+  - {codes: [pl], names: [poland]}
+  - {codes: [pm], names: [saintpierreandmiquelon]}
+  - {codes: [pn], names: [pitcairn]}
+  - {codes: [pr], names: [puertorico]}
+  - {codes: [ps], names: [palestine]}
+  - {codes: [pt], names: [portugal]}
+  - {codes: [pw], names: [palau]}
+  - {codes: [py], names: [paraguay]}
+  - {codes: [qa], names: [qatar]}
+  - {codes: [re], names: [reunion]}
+  - {codes: [ro], names: [romania]}
+  - {codes: [rs], names: [serbia]}
+  - {codes: [ru], names: [russia, russianfederation]}
+  - {codes: [rw], names: [rwanda]}
+  - {codes: [sa], names: [saudiarabia, saudi, ksa]}
+  - {codes: [sb], names: [solomonislands]}
+  - {codes: [sc], names: [seychelles]}
+  - {codes: [sd], names: [sudan]}
+  - {codes: [se], names: [sweden]}
+  - {codes: [sg], names: [singapore]}
+  - {codes: [sh], names: [sainthelena]}
+  - {codes: [si], names: [slovenia]}
+  - {codes: [sj], names: [svalbard]}
+  - {codes: [sk], names: [slovakia]}
+  - {codes: [sl], names: [sierraleone]}
+  - {codes: [sm], names: [sanmarino]}
+  - {codes: [sn], names: [senegal]}
+  - {codes: [so], names: [somalia]}
+  - {codes: [sr], names: [suriname]}
+  - {codes: [ss], names: [southsudan]}
+  - {codes: [st], names: [saotomeandprincipe]}
+  - {codes: [sv], names: [elsalvador]}
+  - {codes: [sx], names: [sintmaarten]}
+  - {codes: [sy], names: [syria]}
+  - {codes: [sz], names: [eswatini, swaziland]}
+  - {codes: [tc], names: [turksandcaicos]}
+  - {codes: [td], names: [chad]}
+  - {codes: [tf], names: [frenchsouthernterritories]}
+  - {codes: [tg], names: [togo]}
+  - {codes: [th], names: [thailand]}
+  - {codes: [tj], names: [tajikistan]}
+  - {codes: [tk], names: [tokelau]}
+  - {codes: [tl], names: [easttimor, timorleste]}
+  - {codes: [tm], names: [turkmenistan]}
+  - {codes: [tn], names: [tunisia]}
+  - {codes: [to], names: [tonga]}
+  - {codes: [tr], names: [turkey, turkiye]}
+  - {codes: [tt], names: [trinidadandtobago, trinidad]}
+  - {codes: [tv], names: [tuvalu]}
+  - {codes: [tw], names: [taiwan]}
+  - {codes: [tz], names: [tanzania]}
+  - {codes: [ua], names: [ukraine]}
+  - {codes: [ug], names: [uganda]}
+  - {codes: [um], names: [usminoroutlyingislands]}
+  - {codes: [us], names: [unitedstates, usa, america]}
+  - {codes: [uy], names: [uruguay]}
+  - {codes: [uz], names: [uzbekistan]}
+  - {codes: [va], names: [vatican, vaticancity]}
+  - {codes: [vc], names: [saintvincent, stvincent]}
+  - {codes: [ve], names: [venezuela]}
+  - {codes: [vg], names: [britishvirginislands]}
+  - {codes: [vi], names: [usvirginislands]}
+  - {codes: [vn], names: [vietnam]}
+  - {codes: [vu], names: [vanuatu]}
+  - {codes: [wf], names: [wallisandfutuna]}
+  - {codes: [ws], names: [samoa]}
+  - {codes: [ye], names: [yemen]}
+  - {codes: [yt], names: [mayotte]}
+  - {codes: [za], names: [southafrica]}
+  - {codes: [zm], names: [zambia]}
+  - {codes: [zw], names: [zimbabwe]}
+
+# Main cities of the Gulf states, in host-name form.
+cities: [dubai, abudhabi, sharjah, ajman, fujairah, rasalkhaimah, ummalquwain, alain,
+         khorfakkan, riyadh, jeddah, dammam, khobar, alkhobar, makkah, mecca, madinah,
+         medina, taif, tabuk, doha, kuwaitcity, muscat, salalah, sohar, manama, muharraq]

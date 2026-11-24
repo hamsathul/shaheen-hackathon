@@ -1,0 +1,157 @@
+import json
+
+import pytest
+import yaml
+
+from baaz import intel, pipeline
+from baaz.config import DATA_DIR, Settings
+from baaz.domains import registrable_domain
+from baaz.pipeline import Scanner
+from baaz.reasons import LABELS
+from baaz.resolve import SHORTENERS, Hop, Resolution
+from baaz.store import Store
+
+UAE_OFFICIAL = [d for b in yaml.safe_load((DATA_DIR / "brands_uae.yaml").read_text(encoding="utf-8"))["brands"]
+                for d in b["official_domains"]]
+
+
+@pytest.fixture
+def scanner(tmp_path, monkeypatch):
+    """A Scanner whose fetch and intel are fakes. `scanner.routes` maps a start
+    URL to its redirect chain; anything else is a dead link that goes nowhere."""
+    settings = Settings(db_path=tmp_path / "baaz.db", evidence_dir=tmp_path / "evidence", llm_base_url="",
+                        llm_model="", llm_api_key="", http_timeout=5, user_agent="test")
+    routes: dict[str, list[str]] = {}
+    gathered: list[str] = []
+
+    def fake_resolve(url, client, insecure_client=None, headers=None):
+        chain = routes.get(url, [url])
+        hops = [Hop(u, None, "start" if i == 0 else "http") for i, u in enumerate(chain)]
+        start = registrable_domain(url)
+        return Resolution(final_url=chain[-1], fetch_status="dead", hops=hops,
+                          shortener=start if start in SHORTENERS else None)
+
+    def fake_gather(domain, store, host=None):
+        gathered.append(domain)
+        return {"domain": domain, "host": host or domain,
+                "whois": {"source": "unknown", "created": None, "registrar": None},
+                "dns": {"a": [], "nxdomain": None, "asn": None, "country": None},
+                "cert": {"not_before": None}}
+
+    monkeypatch.setattr(pipeline, "resolve", fake_resolve)
+    monkeypatch.setattr(intel, "gather", fake_gather)
+    with Scanner(settings, Store(settings.db_path)) as s:
+        s.routes, s.gathered = routes, gathered
+        yield s
+
+
+def codes(result) -> set[str]:
+    return {r.code for r in result.reasons}
+
+
+@pytest.mark.parametrize("domain", UAE_OFFICIAL)
+def test_every_official_uae_domain_is_legitimate(scanner, domain):
+    for url in (domain, f"https://www.{domain}/"):
+        result = scanner.scan(url)
+        assert (result.verdict, result.risk_score) == ("legitimate", 0), url
+        assert codes(result) == {"OFFICIAL_DOMAIN"}
+    assert scanner.gathered == []  # allowlisted scans skip intel
+
+
+def test_official_domain_redirecting_elsewhere_is_not_allowlisted(scanner):
+    scanner.routes["https://www.adcb.com/go"] = ["https://www.adcb.com/go", "https://adcb-verify.top/"]
+    result = scanner.scan("https://www.adcb.com/go")
+    assert "OFFICIAL_DOMAIN" not in codes(result)
+    assert result.verdict == "suspicious" and result.risk_score >= 40
+    assert scanner.gathered == ["adcb-verify.top"]
+
+
+def test_shortener_landing_on_an_official_domain_is_legitimate(scanner):
+    scanner.routes["https://bit.ly/abc"] = ["https://bit.ly/abc", "https://www.adcb.com/en/"]
+    result = scanner.scan("https://bit.ly/abc")
+    assert result.verdict == "legitimate" and result.risk_score == 0
+    assert codes(result) == {"URL_SHORTENER", "OFFICIAL_DOMAIN"}
+    assert result.redirect_chain == ["https://bit.ly/abc", "https://www.adcb.com/en/"]
+
+
+def test_defensive_registration_redirecting_to_the_brand_is_legitimate(scanner):
+    scanner.routes["https://tamm.ae/"] = ["https://tamm.ae/", "https://www.tamm.abudhabi/"]
+    assert scanner.scan("https://tamm.ae/").verdict == "legitimate"
+
+
+def test_government_namespace_is_legitimate(scanner):
+    result = scanner.scan("https://services.example.gov.ae/")
+    assert result.verdict == "legitimate"
+    assert codes(result) == {"GOV_NAMESPACE"}
+
+
+@pytest.mark.parametrize("url, platform", [
+    ("https://sites.google.com/view/x", "sites.google.com"),
+    ("https://docs.google.com/forms/d/e/x/viewform", "docs.google.com"),
+])
+def test_user_content_on_an_official_domain_is_not_allowlisted(scanner, url, platform):
+    result = scanner.scan(url)
+    assert "OFFICIAL_DOMAIN" not in codes(result)
+    free = [r for r in result.reasons if r.code == "FREE_HOSTING"]
+    assert free and platform in free[0].en
+    assert "TOP_SITE" not in codes(result)
+
+
+@pytest.mark.parametrize("url, method, brand", [
+    ("uaepas.ae", "typo", "UAE PASS"),
+    ("rakbnak.ae", "typo", "RAKBANK"),
+    ("rnashreq.com", "homoglyph", "Mashreq"),
+    ("et1had.com", "homoglyph", "Etihad Airways"),
+    ("xn--dcb-5cd.com", "punycode", "Abu Dhabi Commercial Bank (ADCB)"),
+    ("xn--slik-53d.ae", "punycode", "Salik"),  # Cyrillic а in salik
+    ("rakbank.co", "tld_swap", "RAKBANK"),
+    ("tamm.co", "tld_swap", "TAMM"),
+    ("adcb-secure-login.com", "combo", "Abu Dhabi Commercial Bank (ADCB)"),
+    ("dewa-gov.com", "combo", "Dubai Electricity and Water Authority (DEWA)"),
+    ("salik-pay.com", "combo", "Salik"),
+    ("emiratesnbdlogin.com", "combo", "Emirates NBD"),
+    ("etisalat-rewards.net", "combo", "e& (Etisalat)"),
+    ("adcb.com.verify-now.xyz", "subdomain_spoof", "Abu Dhabi Commercial Bank (ADCB)"),
+    ("www.tamm.abudhabi-gov.com", "subdomain_spoof", "TAMM"),
+    ("harmankardonkuwait.com", "combo", "Harman Kardon"),
+])
+def test_lookalikes_are_flagged_without_a_page_fetch(scanner, url, method, brand):
+    result = scanner.scan(url)
+    assert result.fetch_status == "dead"
+    assert result.risk_score >= 40 and result.verdict in ("suspicious", "fraud"), result.reasons
+    lookalike = next(r for r in result.reasons if r.code == "LOOKALIKE_DOMAIN")
+    assert lookalike.evidence.startswith("redirects.json#chain[")
+    assert LABELS[method][0] in lookalike.en
+    assert result.impersonated_brand == brand
+
+
+@pytest.mark.parametrize("url, brand", [
+    ("bose-uae.com", "Bose"),
+    ("boseuae.com", "Bose"),
+    ("bose-kuwait.com", "Bose"),
+    ("jbldubai.com", "JBL"),
+])
+def test_brand_with_a_country_or_city_is_suspicious(scanner, url, brand):
+    result = scanner.scan(url)
+    assert result.risk_score >= 40 and result.verdict == "suspicious"
+    assert {"BRAND_GEO_DOMAIN", "BRAND_IN_DOMAIN"} <= codes(result)
+    assert result.impersonated_brand == brand
+
+
+@pytest.mark.parametrize("url", ["afternoon.com", "fabric.com", "dubai.com", "emiratesauction.com", "verbose.com"])
+def test_ordinary_domains_stay_legitimate(scanner, url):
+    result = scanner.scan(url)
+    assert result.verdict == "legitimate"
+    assert not codes(result) & {"LOOKALIKE_DOMAIN", "BRAND_IN_DOMAIN", "BRAND_GEO_DOMAIN"}
+
+
+def test_intel_is_written_to_the_evidence_pack(scanner):
+    result = scanner.scan("https://www.adcb-verify.top/login")
+    folder = scanner.settings.evidence_dir / result.id
+    for name in ("redirects.json", "whois.json", "dns_hosting.json", "cert.json", "report.json"):
+        assert (folder / name).is_file(), name
+    assert json.loads((folder / "whois.json").read_text(encoding="utf-8"))["source"] == "unknown"
+    assert scanner.gathered == ["adcb-verify.top"]
+    intel_features = {"domain_age_days", "registrar", "asn", "hosting_country", "cert_age_days", "nxdomain"}
+    assert intel_features <= set(result.signals)
+    assert scanner.store.get_scan(result.id).verdict == result.verdict

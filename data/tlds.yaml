@@ -1,0 +1,18 @@
+# High-abuse top-level domains (RISKY_TLD, +10).
+#
+# Kept conservative: TLDs that recur at the top of these reports by share of
+# abusive registrations, not just by volume:
+# - Spamhaus Project, "The World's Most Abused TLDs" and quarterly Domain
+#   Reputation Updates, https://www.spamhaus.org/reputation-statistics/
+# - Interisle Consulting Group, "Phishing Landscape 2024",
+#   https://interisle.net/insights
+# Popular general-purpose TLDs (com, net, org, ae, shop, store, online, site,
+# live) are deliberately absent even where abuse volumes are high.
+tlds: [
+  top, xyz, icu, cfd, sbs, bond, click, cyou, buzz, rest, lol, monster, quest, mom,
+  autos, boats, homes, yachts, beauty, hair, makeup, skin,
+  tk, ml, ga, cf, gq, su, pw,
+  zip, mov,
+  win, loan, bid, racing, date, stream, download, review, accountant, cricket,
+  science, party, men, trade, webcam, faith, gdn,
+]
