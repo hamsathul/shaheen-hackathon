@@ -287,28 +287,12 @@ def inspect(ctx: ScanContext, client: httpx.Client, store: Store) -> None:
     catalogue = catalogue_hash(products)
     admins = admin_hashes(users)
 
-    found: list[Finding] = []
-    if gateways["strong"]:
-        found.append(Finding("SKIMMER_GATEWAY", "storefront.json#payment_methods",
-                             {"gateway": gateways["strong"][0]}))
-    elif gateways["weak"]:
-        found.append(Finding("WEAK_GATEWAY", "storefront.json#payment_methods", {"gateway": gateways["weak"][0]}))
-    if check["form"] == "visible" and not check["processors"] and brand:
-        found.append(Finding("CARD_FORM_NO_PROCESSOR", "storefront.json#checkout"))
-    found += deep_discount_findings(stats)
-
     domain = ctx.features["final_domain"]
     prints = [("catalogue", catalogue)] if catalogue else []
     prints += [("admin", h) for h in admins]
     shared = _shared(store, domain, prints)
-    for item in shared[:1]:
-        evidence = "storefront.json#catalogue" if item["kind"] == "catalogue" else "storefront.json#admin_clusters"
-        found.append(Finding("SHARED_FINGERPRINT", evidence, {"kind": item["kind"], "cluster": item["cluster"]}))
     store.add_fingerprints(ctx.id, domain, [("gateway", s) for s in slugs] + prints)
-
-    ctx.findings += found
-    if found and brand:
-        ctx.impersonated_brand = brand
+    _record(ctx, store_findings(gateways, check, brand, stats, shared), brand)
     ctx.artifacts["storefront.json"] = {
         "origin": fetcher.origin,
         "woocommerce": True,
@@ -327,6 +311,53 @@ def inspect(ctx: ScanContext, client: httpx.Client, store: Store) -> None:
     }
     ctx.features["storefront"] = {"woocommerce": True, "payment_methods": slugs, "storefront_brand": brand,
                                   "checkout_form": check["form"]}
+
+
+def store_findings(gateways: dict[str, list[str]], check: dict[str, Any], brand: str | None,
+                   stats: dict[str, Any], shared: list[dict[str, Any]]) -> list[Finding]:
+    """The storefront signals of a store's gateways, checkout, prices and shared fingerprints."""
+    found: list[Finding] = []
+    if gateways["strong"]:
+        found.append(Finding("SKIMMER_GATEWAY", "storefront.json#payment_methods",
+                             {"gateway": gateways["strong"][0]}))
+    elif gateways["weak"]:
+        found.append(Finding("WEAK_GATEWAY", "storefront.json#payment_methods", {"gateway": gateways["weak"][0]}))
+    if check.get("form") == "visible" and not check.get("processors") and brand:
+        found.append(Finding("CARD_FORM_NO_PROCESSOR", "storefront.json#checkout"))
+    found += deep_discount_findings(stats)
+    for item in shared[:1]:
+        evidence = "storefront.json#catalogue" if item["kind"] == "catalogue" else "storefront.json#admin_clusters"
+        found.append(Finding("SHARED_FINGERPRINT", evidence, {"kind": item["kind"], "cluster": item["cluster"]}))
+    return found
+
+
+def _record(ctx: ScanContext, found: list[Finding], brand: str | None) -> None:
+    ctx.findings += found
+    if found and brand:
+        ctx.impersonated_brand = brand
+
+
+def replay(ctx: ScanContext, saved: dict[str, Any], store: Store) -> None:
+    """The storefront checks of a re-analysis, from the capture's
+    `storefront.json` instead of the store's endpoints. Gateways are classified
+    again against the current lists; the checkout, prices and fingerprints
+    shared with fraud are taken as captured."""
+    if not saved.get("woocommerce"):
+        ctx.artifacts["storefront.json"] = saved
+        ctx.features["storefront"] = {"woocommerce": False}
+        return
+    slugs = [s for s in saved.get("payment_methods") or [] if isinstance(s, str)]
+    gateways = classify_gateways(slugs)
+    check = saved.get("checkout") or {"form": "unavailable"}
+    brand = storefront_brand(host_of(ctx.final_url), str(saved.get("site_name") or ""))
+    catalogue = (saved.get("catalogue") or {}).get("hash")
+    prints = [("gateway", s) for s in slugs] + ([("catalogue", catalogue)] if catalogue else [])
+    store.add_fingerprints(ctx.id, ctx.features["final_domain"], prints)
+    _record(ctx, store_findings(gateways, check, brand, saved.get("prices") or price_stats([]),
+                                saved.get("shared_with_fraud") or []), brand)
+    ctx.artifacts["storefront.json"] = {**saved, "storefront_brand": brand, "gateways": gateways}
+    ctx.features["storefront"] = {"woocommerce": True, "payment_methods": slugs, "storefront_brand": brand,
+                                  "checkout_form": check.get("form")}
 
 
 def _shared(store: Store, domain: str, prints: list[tuple[str, str]]) -> list[dict[str, Any]]:

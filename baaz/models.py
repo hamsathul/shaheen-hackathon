@@ -5,7 +5,10 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from baaz.capture import Capture
 
 VERDICTS = ("fraud", "suspicious", "legitimate")
 FETCH_STATUSES = ("ok", "dead", "blocked", "timeout")
@@ -51,7 +54,8 @@ class ScanContext:
     `artifacts` maps an evidence-pack file name (`redirects.json`) to its
     content: a JSON-serialisable object, `str` or `bytes`. Stages add raw
     facts to `features` (reported as the result's `signals`) and fired
-    signals to `findings`.
+    signals to `findings`. `capture` is the saved evidence folder a re-analysis
+    reads instead of the network.
     """
 
     id: str
@@ -67,6 +71,15 @@ class ScanContext:
     artifacts: dict[str, Any] = field(default_factory=dict)
     official_brand: str | None = None
     impersonated_brand: str | None = None
+    capture: Capture | None = None
+
+    @property
+    def as_of(self) -> datetime:
+        """When the facts were collected: the original scan's time for a
+        re-analysis. Domain and certificate ages are measured from it."""
+        if self.capture is None:
+            return self.scanned_at
+        return datetime.fromisoformat(self.capture.collected_at.replace("Z", "+00:00"))
 
     def add(self, code: str, evidence: str, weight: int | None = None, **params: Any) -> None:
         self.findings.append(Finding(code, evidence, params, weight))

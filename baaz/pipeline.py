@@ -8,6 +8,10 @@ An allowlisted link (official or government domain all the way, JavaScript
 redirects included) skips the signal stages but still gets its evidence pack
 and stored result. A stage that fails is recorded in `stage_errors` and the
 scan goes on to a verdict.
+
+With `ScanOptions.capture_dir` set, the same stages read a saved evidence
+folder (`baaz.capture`) instead of the network: a re-analysis under a new
+scan ID, aged from the original scan's time.
 """
 
 from __future__ import annotations
@@ -16,10 +20,13 @@ import secrets
 import time
 from collections.abc import Callable
 from concurrent.futures import Future, ThreadPoolExecutor
+from dataclasses import replace
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
 from baaz import brands, intel, page, reasons, score, signals, storefront
+from baaz.capture import Capture
 from baaz.config import Settings, load_settings
 from baaz.domains import host_of, normalize_url, registrable_domain
 from baaz.evidence import write_pack
@@ -57,15 +64,20 @@ class Scanner:
         """Scan one link. With `fetch=False` nothing is requested from the site:
         the link is scored from its URL and domain alone, as `timeout`."""
         now = datetime.now(timezone.utc)
+        options = options or ScanOptions()
+        capture = Capture(options.capture_dir) if options.capture_dir else None
         ctx = ScanContext(
             id=new_scan_id(now),
             url=normalize_url(url),
             scanned_at=now,
-            options=options or ScanOptions(),
+            options=options,
+            capture=capture,
         )
         ctx.final_url, ctx.redirect_chain = ctx.url, [ctx.url]
         ctx.features.update(final_domain=registrable_domain(ctx.url), fetched=fetch, rendered=False,
                             stage_seconds={})
+        if capture:
+            ctx.features.update(captured_from=capture.id, captured_at=capture.collected_at)
         with ThreadPoolExecutor(max_workers=len(PROFILES) + 1) as side:
             profiles: list[Future[dict[str, Any]]] = []
             early: dict[str, Future[dict[str, Any]]] = {}
@@ -77,9 +89,9 @@ class Scanner:
                 # intel and the visitor profiles are fetched while the browser renders
                 domain = ctx.features["final_domain"]
                 if domain not in SHORTENERS:
-                    early[domain] = side.submit(intel.gather, domain, self.store, host_of(ctx.final_url))
-                if ctx.fetch_status == "ok":
-                    profiles = [side.submit(self._profile, ctx.url, key) for key in PROFILES]
+                    early[domain] = side.submit(self._gather, ctx, domain, host_of(ctx.final_url))
+                if ctx.fetch_status == "ok" and (capture is None or capture.has("profiles.json")):
+                    profiles = [side.submit(self._profile, ctx, key) for key in PROFILES]
             if fetch:
                 self._stage(ctx, "render", self._render)
             if not self._stage(ctx, "allowlist", self._allowlist):
@@ -87,6 +99,11 @@ class Scanner:
             self._stage(ctx, "page", lambda c: self._page(c, profiles))
         self._stage(ctx, "storefront", self._storefront)
         return self._finish(ctx)
+
+    def rescan(self, capture_dir: Path, options: ScanOptions | None = None) -> ScanResult:
+        """Re-analyse a saved evidence folder with no network, under a new scan ID."""
+        capture_dir = Path(capture_dir)
+        return self.scan(Capture(capture_dir).url, replace(options or ScanOptions(), capture_dir=capture_dir))
 
     @staticmethod
     def _stage(ctx: ScanContext, name: str, step: Callable[[ScanContext], Any]) -> Any:
@@ -102,7 +119,7 @@ class Scanner:
             ctx.features["stage_seconds"][name] = round(time.monotonic() - start, 1)
 
     def _resolve(self, ctx: ScanContext) -> None:
-        res = resolve(ctx.url, self.client, self.insecure_client)
+        res = ctx.capture.resolution() if ctx.capture else resolve(ctx.url, self.client, self.insecure_client)
         ctx.final_url = res.final_url
         ctx.redirect_chain = res.chain
         ctx.fetch_status = res.fetch_status
@@ -130,19 +147,21 @@ class Scanner:
         domain = ctx.features["final_domain"]
         if domain in SHORTENERS:
             return {}
-        facts = early[domain].result() if domain in early else intel.gather(domain, self.store,
-                                                                              host_of(ctx.final_url))
+        facts = early[domain].result() if domain in early else self._gather(ctx, domain, host_of(ctx.final_url))
         ctx.artifacts["whois.json"] = facts["whois"]
         ctx.artifacts["dns_hosting.json"] = facts["dns"]
         ctx.artifacts["cert.json"] = facts["cert"]
         return {domain: facts}
+
+    def _gather(self, ctx: ScanContext, domain: str, host: str) -> dict[str, Any]:
+        return ctx.capture.intel(domain, host) if ctx.capture else intel.gather(domain, self.store, host)
 
     def _render(self, ctx: ScanContext) -> None:
         """Render the landing page in the browser: its DOM replaces the fetched
         HTML, and a JavaScript redirect to another site extends the chain."""
         if not ctx.options.render or ctx.fetch_status == "dead":
             return
-        rendered, error = render(ctx.final_url)
+        rendered, error = ctx.capture.rendered(ctx.final_url) if ctx.capture else render(ctx.final_url)
         if rendered is None:
             ctx.features["render_error"] = error
             return
@@ -212,13 +231,20 @@ class Scanner:
         """Storefront checks on a reachable site. A site that blocks its pages
         to Baaz (403, a bot or phishing interstitial) often still answers on
         its public Store API, so blocked sites are checked too."""
-        if ctx.options.storefront and ctx.fetch_status in ("ok", "blocked") and ctx.official_brand is None:
-            client = self.client if ctx.features.get("tls_verified", True) else self.insecure_client
-            storefront.inspect(ctx, client, self.store)
+        if not (ctx.options.storefront and ctx.fetch_status in ("ok", "blocked") and ctx.official_brand is None):
+            return
+        if ctx.capture:
+            if saved := ctx.capture.storefront():
+                storefront.replay(ctx, saved, self.store)
+            return
+        client = self.client if ctx.features.get("tls_verified", True) else self.insecure_client
+        storefront.inspect(ctx, client, self.store)
 
-    def _profile(self, url: str, key: str) -> dict[str, Any]:
+    def _profile(self, ctx: ScanContext, key: str) -> dict[str, Any]:
         """The link as one visitor profile sees it (phone in Arabic, desktop, crawler)."""
-        res = resolve(url, self.client, self.insecure_client, headers=PROFILES[key])
+        if ctx.capture:
+            return ctx.capture.profile(key)
+        res = resolve(ctx.url, self.client, self.insecure_client, headers=PROFILES[key])
         return signals.profile_view(res, page.analyse(res.html, res.final_url))
 
     def _finish(self, ctx: ScanContext) -> ScanResult:

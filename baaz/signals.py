@@ -190,7 +190,8 @@ def url_signals(ctx: ScanContext, intel_by_domain: dict[str, dict[str, Any]]) ->
 
     Lexical and brand signals look at every hop (brand and domain signals skip
     URL shorteners); registration, certificate and popularity signals look at
-    the landing domain. The landing domain only vouches for the link (TOP_SITE,
+    the landing domain, aged from when the facts were collected
+    (`ctx.as_of`). The landing domain only vouches for the link (TOP_SITE,
     DOMAIN_OLD) when it is not a URL shortener, no hop is on a hosting
     platform or carries another site's address (`?url=`), and the link reached
     it without passing through another domain.
@@ -212,9 +213,9 @@ def url_signals(ctx: ScanContext, intel_by_domain: dict[str, dict[str, Any]]) ->
                and _lands_without_detour(chain, final))
     facts = intel_by_domain.get(final) or {}
     if facts:
-        found += [(f, None) for f in age_findings(facts["whois"], ctx.scanned_at.date())
+        found += [(f, None) for f in age_findings(facts["whois"], ctx.as_of.date())
                   if vouched or f.code != "DOMAIN_OLD"]
-        found += [(f, None) for f in cert_findings(facts["cert"], ctx.scanned_at)]
+        found += [(f, None) for f in cert_findings(facts["cert"], ctx.as_of)]
     rank = top_site_rank(final)
     if rank and vouched:
         found.append((Finding("TOP_SITE", "redirects.json#final_url", {"domain": final, "rank": rank}), None))
@@ -228,7 +229,7 @@ def url_signals(ctx: ScanContext, intel_by_domain: dict[str, dict[str, Any]]) ->
     branded = [(weight_of(f), name) for f, name in found if name]
     if branded:
         ctx.impersonated_brand = max(branded, key=lambda pair: pair[0])[1]
-    ctx.features.update(intel_features(facts, ctx.scanned_at))
+    ctx.features.update(intel_features(facts, ctx.as_of))
     ctx.features.update(top_site_rank=rank, hosting_platform=platform, embedded_targets=embedded)
 
 
