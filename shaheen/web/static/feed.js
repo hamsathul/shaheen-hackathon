@@ -138,15 +138,18 @@
     block.appendChild(meta);
     if (run.shot) block.appendChild(shot(run.shot, T.live_shot));
 
+    // Newest call on top, under what the model is doing now.
     var list = el("ol", "log-tail");
     list.dir = "ltr";
     var first = run.tool_count - run.tools.length;
     var known = calls[run.id];
-    if (first > 0) list.appendChild(aside("more", "+" + first + " " + T.live_earlier));
-    run.tools.forEach(function (t, i) {
-      var n = first + i + 1;
+    var last = run.tools[run.tools.length - 1];
+    if (!last) list.appendChild(aside("note", T.live_starting));
+    else if (last.done) list.appendChild(aside("note", T.live_thinking));
+    run.tools.slice().reverse().forEach(function (t, i) {
+      var n = run.tool_count - i;
       var cls = "call " + (t.error ? "err" : t.done ? "done" : "running");
-      if (i === run.tools.length - 1) cls += " latest";
+      if (i === 0) cls += " latest";
       if (known !== undefined && n > known) cls += " fresh";
       var item = el("li", cls);
       item.appendChild(el("span", "n", String(n).padStart(2, "0")));
@@ -158,10 +161,8 @@
       if (t.error) item.appendChild(el("span", "stamp dashed", T.error));
       list.appendChild(item);
     });
+    if (first > 0) list.appendChild(aside("more", "+" + first + " " + T.live_earlier));
     calls[run.id] = run.tool_count;
-    var last = run.tools[run.tools.length - 1];
-    if (!last) list.appendChild(aside("note", T.live_starting));
-    else if (last.done) list.appendChild(aside("note", T.live_thinking));
     block.appendChild(list);
     return block;
   }

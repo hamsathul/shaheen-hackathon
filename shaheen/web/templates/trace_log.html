@@ -1,7 +1,8 @@
-{# The tool-call timeline of an agent run (case and hunt pages). #}
+{# The tool-call timeline of an agent run (case and hunt pages): in order once the
+   run is over, newest step on top while it is live. #}
 {% if trace %}
 <ol class="log" dir="ltr">
-  {% for s in trace %}
+  {% for s in (trace | reverse | list if live else trace) %}
   {% if s.kind == "tool" %}
   <li class="step tool{{ ' err' if s.error }}">
     <div class="call">

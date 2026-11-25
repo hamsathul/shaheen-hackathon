@@ -1,7 +1,7 @@
 // Live trace: while this case's investigation is queued or running, fetch
-// /api/case/<id>/live every 5 seconds and redraw the tool-call trace. Once the
-// run's record is filed, load the page again to show the report. Everything
-// is built with textContent only; the server sends it defanged.
+// /api/case/<id>/live every 5 seconds and redraw the tool-call trace, newest
+// step on top. Once the run's record is filed, load the page again to show the
+// report. Everything is built with textContent only; the server sends it defanged.
 (function () {
   "use strict";
   var section = document.getElementById("trace");
@@ -45,7 +45,7 @@
     steps.forEach(function (s, i) {
       var item = step(s);
       if (i >= shown) item.className += " fresh";
-      list.appendChild(item);
+      list.prepend(item);
     });
     shown = steps.length;
     section.querySelector(".log, .no-trace").replaceWith(list);
