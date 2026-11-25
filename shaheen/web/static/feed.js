@@ -1,6 +1,7 @@
-// Live feed: refresh the counters, the latest scans, the AI investigator
-// panel and the Google Maps watch from /api/feed, every 5 seconds (every 2
-// while a Maps round runs). Everything is built with textContent only, never
+// Live feed: the counters, the latest scans, the AI investigator panel and the
+// Google Maps watch, pushed by /api/feed/stream every 2 seconds. When the stream
+// is quiet for 10 seconds the page asks /api/feed itself, every 5 seconds (every
+// 2 while a Maps round runs). Everything is built with textContent only, never
 // innerHTML; addresses arrive defanged from the server. With a browser key the
 // Maps watch loads Google's Maps JavaScript API, the one outside script.
 (function () {
@@ -94,6 +95,40 @@
     return item;
   }
 
+  // Each block and list item carries a key and a signature of what it shows. A
+  // redraw keeps every node whose key and signature are unchanged, and the loaded
+  // screenshots of the ones that changed, so nothing on screen flickers.
+  function keyed(node, key, shown) {
+    node.setAttribute("data-key", key);
+    node.setAttribute("data-sig", JSON.stringify(shown));
+    return node;
+  }
+
+  function patch(holder, nodes, flash) {
+    var old = {};
+    Array.prototype.forEach.call(holder.children, function (n) {
+      if (n.hasAttribute("data-key")) old[n.getAttribute("data-key")] = n;
+    });
+    var filled = holder.hasAttribute("data-filled");
+    var next = nodes.map(function (n) {
+      var before = old[n.getAttribute("data-key")];
+      if (!before) {
+        if (flash && filled) n.classList.add("fresh");
+        return n;
+      }
+      if (before.getAttribute("data-sig") === n.getAttribute("data-sig")) return before;
+      Array.prototype.forEach.call(n.querySelectorAll("img"), function (img) {
+        var same = Array.prototype.find.call(before.querySelectorAll("img"), function (b) {
+          return b.getAttribute("src") === img.getAttribute("src");
+        });
+        if (same) img.replaceWith(same);
+      });
+      return n;
+    });
+    holder.replaceChildren.apply(holder, next);
+    holder.setAttribute("data-filled", "");
+  }
+
   function blockHead(r, cls) {
     var block = el("article", cls);
     block.setAttribute("data-id", r.id);
@@ -116,38 +151,57 @@
     return figure;
   }
 
-  function contactsBlock(c) {
-    var block = blockHead(c, "run reading");
-    var meta = el("p", "run-meta");
-    meta.appendChild(el("span", "mode", T.live_contacts_mode));
-    block.appendChild(meta);
-    if (c.shot) block.appendChild(shot(c.shot, T.live_contacts_shot));
-    block.appendChild(el("p", "live-contacts", T.live_contacts_reading));
-    return block;
+  function shots(list) {  // the newest screenshot, then a strip of the ones before it
+    var holder = document.createDocumentFragment();
+    if (!list.length) return holder;
+    holder.appendChild(shot(list[0], T.live_shot));
+    if (list.length > 1) {
+      var strip = el("p", "shot-strip");
+      strip.title = T.live_shots_earlier;
+      list.slice(1).forEach(function (src) {
+        var link = el("a");
+        link.href = src;
+        var img = el("img");
+        img.src = src;
+        img.alt = T.live_shots_earlier;
+        img.loading = "lazy";
+        link.appendChild(img);
+        strip.appendChild(link);
+      });
+      holder.appendChild(strip);
+    }
+    return holder;
   }
 
-  function runBlock(run) {
-    var block = blockHead(run, "run");
-
+  function elapsedMeta(work) {
     var meta = el("p", "run-meta");
     var elapsed = el("span", "elapsed");
-    elapsed.setAttribute("data-started", String(Date.now() - run.elapsed_s * 1000));
+    elapsed.setAttribute("data-started", String(Date.now() - work.elapsed_s * 1000));
     meta.appendChild(elapsed);
-    meta.appendChild(el("span", null, T.live_calls + " " + run.tool_count));
-    if (run.mode) meta.appendChild(el("span", "mode", run.mode));
-    block.appendChild(meta);
-    if (run.shot) block.appendChild(shot(run.shot, T.live_shot));
+    meta.appendChild(el("span", null, T.live_calls + " " + work.tool_count));
+    return meta;
+  }
 
-    // Newest call on top, under what the model is doing now.
+  function note(text) {  // the latest note the model wrote to itself
+    var line = el("p", "live-note");
+    line.appendChild(el("span", "label", T.live_now));
+    var said = el("span", null, text);
+    said.dir = "auto";
+    line.appendChild(said);
+    return line;
+  }
+
+  // The tool calls of a run or hunt, newest on top, under what the model is doing now.
+  function toolList(work, key) {
     var list = el("ol", "log-tail");
     list.dir = "ltr";
-    var first = run.tool_count - run.tools.length;
-    var known = calls[run.id];
-    var last = run.tools[run.tools.length - 1];
+    var first = work.tool_count - work.tools.length;
+    var known = calls[key];
+    var last = work.tools[work.tools.length - 1];
     if (!last) list.appendChild(aside("note", T.live_starting));
     else if (last.done) list.appendChild(aside("note", T.live_thinking));
-    run.tools.slice().reverse().forEach(function (t, i) {
-      var n = run.tool_count - i;
+    work.tools.slice().reverse().forEach(function (t, i) {
+      var n = work.tool_count - i;
       var cls = "call " + (t.error ? "err" : t.done ? "done" : "running");
       if (i === 0) cls += " latest";
       if (known !== undefined && n > known) cls += " fresh";
@@ -159,32 +213,115 @@
       target.title = t.target;
       item.appendChild(target);
       if (t.error) item.appendChild(el("span", "stamp dashed", T.error));
+      if (t.said) {
+        var said = el("span", "said", "→ " + t.said);
+        said.title = t.said;
+        item.appendChild(said);
+      }
       list.appendChild(item);
     });
     if (first > 0) list.appendChild(aside("more", "+" + first + " " + T.live_earlier));
-    calls[run.id] = run.tool_count;
-    block.appendChild(list);
-    return block;
+    calls[key] = work.tool_count;
+    return list;
   }
 
-  function recentItem(r) {
-    var item = el("li", "done-case");
-    var time = el("span", "done-time", r.time.slice(-5));
-    time.title = r.time;
+  function runBlock(run) {
+    var block = blockHead(run, "run");
+    var meta = elapsedMeta(run);
+    if (run.mode) meta.appendChild(el("span", "mode", run.mode));
+    block.appendChild(meta);
+    if (run.note) block.appendChild(note(run.note));
+    block.appendChild(shots(run.shots));
+    block.appendChild(toolList(run, "run:" + run.id));
+    return keyed(block, "run:" + run.id, [run.score, run.mode, run.note, run.shots, run.tool_count, run.tools]);
+  }
+
+  function huntBlock(h) {
+    var block = el("article", "run hunting");
+    var head = el("header", "run-head");
+    head.appendChild(el("span", "label", T.live_hunt + " " + h.id));
+    var link = el("a", "hunt-mission", h.mission);
+    link.href = "/hunts/" + encodeURIComponent(h.id);
+    link.dir = "auto";
+    head.appendChild(link);
+    block.appendChild(head);
+    var meta = elapsedMeta(h);
+    if (h.theme) meta.appendChild(el("span", null, h.theme));
+    meta.appendChild(el("span", null, h.finds + " " + T.live_finds));
+    block.appendChild(meta);
+    if (h.note) block.appendChild(note(h.note));
+    block.appendChild(toolList(h, "hunt:" + h.id));
+    return keyed(block, "hunt:" + h.id, [h.note, h.finds, h.tool_count, h.tools]);
+  }
+
+  function contactsBlock(c) {
+    var block = blockHead(c, "run reading");
+    var meta = el("p", "run-meta");
+    meta.appendChild(el("span", "mode", T.live_contacts_mode));
+    block.appendChild(meta);
+    if (c.shot) block.appendChild(shot(c.shot, T.live_contacts_shot));
+    block.appendChild(el("p", "live-contacts", T.live_contacts_reading));
+    return keyed(block, "read:" + c.id, [c.score, c.shot]);
+  }
+
+  function timeCell(gst) {
+    var time = el("span", "done-time", gst.slice(-5));
+    time.title = gst + " GST";
     time.dir = "ltr";
-    item.appendChild(time);
+    return time;
+  }
+
+  function nextItem(c) {  // a queued case, in the order the workers take them
+    var item = el("li", "done-case");
+    item.appendChild(timeCell(c.time));
     var head = el("div", "done-head");
-    head.appendChild(mark(r.verdict, r.verdict_label));
-    head.appendChild(el("span", "done-score", String(r.score)));
-    head.appendChild(caseLink(r));
-    if (r.type) head.appendChild(el("span", "done-type", r.type));
+    head.appendChild(mark(c.verdict, c.verdict_label));
+    head.appendChild(el("span", "done-score", String(c.score)));
+    head.appendChild(caseLink(c));
+    if (c.brand) head.appendChild(el("span", "done-type", c.brand));
     item.appendChild(head);
-    if (r.summary) {
-      var summary = el("p", "done-summary", r.summary);
+    item.appendChild(el("p", "done-summary", c.source));
+    return keyed(item, "case:" + c.id, [c.score, c.brand]);
+  }
+
+  function huntLink(h) {
+    var link = el("a", "domain", h.mission);
+    link.href = "/hunts/" + encodeURIComponent(h.id);
+    link.dir = "auto";
+    return link;
+  }
+
+  function huntItem(h) {  // a queued hunt: the workers take it before any case
+    var item = el("li", "done-case");
+    item.appendChild(el("span", "done-time"));
+    var head = el("div", "done-head");
+    head.appendChild(el("span", "label", T.live_hunt + " " + h.id));
+    head.appendChild(huntLink(h));
+    item.appendChild(head);
+    if (h.theme) item.appendChild(el("p", "done-summary", h.theme));
+    return keyed(item, "hunt:" + h.id, [h.mission, h.theme]);
+  }
+
+  function eventItem(e) {  // one entry of the "just happened" timeline
+    var item = el("li", "done-case");
+    item.appendChild(timeCell(e.time));
+    var head = el("div", "done-head");
+    head.appendChild(el("span", "label", e.label));
+    if (e.kind === "hunt") {
+      head.appendChild(huntLink(e));
+    } else {
+      head.appendChild(mark(e.verdict, e.verdict_label));
+      head.appendChild(el("span", "done-score", String(e.score)));
+      head.appendChild(caseLink(e));
+    }
+    if (e.text) head.appendChild(el("span", "done-type", e.text));
+    item.appendChild(head);
+    if (e.summary) {
+      var summary = el("p", "done-summary", e.summary);
       summary.dir = "auto";
       item.appendChild(summary);
     }
-    return item;
+    return keyed(item, e.key, [e.time, e.score, e.text, e.summary]);
   }
 
   function renderLive(a) {
@@ -195,41 +332,35 @@
     model.hidden = !a.model || a.state === "off";
     model.replaceChildren(el("span", "label", T.live_model), el("code", null, a.model));
 
-    var runs = document.createDocumentFragment();
-    if (a.model_down) runs.appendChild(el("p", "live-warning", T.live_waiting_note));
-    a.running.forEach(function (run) { runs.appendChild(runBlock(run)); });
-    a.contacts.reading.forEach(function (c) { runs.appendChild(contactsBlock(c)); });
-    if (!a.running.length && !a.contacts.reading.length && !a.model_down) {
-      runs.appendChild(el("p", "live-quiet", a.state === "idle" ? T.live_idle_note : T.live_off_note));
+    var blocks = a.hunts.map(huntBlock).concat(a.running.map(runBlock), a.contacts.reading.map(contactsBlock));
+    if (a.model_down) blocks.unshift(keyed(el("p", "live-warning", T.live_waiting_note), "warning", []));
+    if (!blocks.length) {
+      blocks.push(keyed(el("p", "live-quiet", a.state === "idle" ? T.live_idle_note : T.live_off_note),
+                        "quiet", [a.state]));
     }
     var holder = live.querySelector('[data-live="runs"]');
-    holder.replaceChildren(runs);
-    holder.className = "runs" + (a.running.length + a.contacts.reading.length > 1 ? " parallel" : "");
+    patch(holder, blocks, false);
+    holder.className = "runs" + (a.hunts.length + a.running.length + a.contacts.reading.length > 1 ? " parallel" : "");
 
     var queue = document.createDocumentFragment();
-    a.queue.forEach(function (q) {
+    var counts = a.queue.concat([{ label: T.live_contacts_waiting, n: a.contacts.waiting },
+                                 { label: T.live_hunts_waiting, n: a.next.hunts.length }]);
+    counts.forEach(function (q, i) {
+      if (i >= a.queue.length && !q.n) return;
       var item = el("span", "queue-item");
       item.appendChild(el("b", null, String(q.n)));
       item.appendChild(document.createTextNode(" " + q.label));
       queue.appendChild(item);
     });
-    if (a.contacts.waiting) {
-      var reads = el("span", "queue-item");
-      reads.appendChild(el("b", null, String(a.contacts.waiting)));
-      reads.appendChild(document.createTextNode(" " + T.live_contacts_waiting));
-      queue.appendChild(reads);
-    }
     live.querySelector('[data-live="queue"]').replaceChildren(queue);
 
-    var recent = document.createDocumentFragment();
-    a.recent.forEach(function (r) { recent.appendChild(recentItem(r)); });
-    if (!a.recent.length) recent.appendChild(el("li", "live-quiet", T.live_no_recent));
-    live.querySelector('[data-live="recent"]').replaceChildren(recent);
+    var next = a.next.hunts.map(huntItem).concat(a.next.cases.map(nextItem));
+    if (!next.length) next.push(keyed(el("li", "live-quiet", T.live_next_none), "none", []));
+    patch(live.querySelector('[data-live="next"]'), next, true);
 
-    var reads = document.createDocumentFragment();
-    a.contacts.recent.forEach(function (r) { reads.appendChild(recentItem(r)); });
-    if (!a.contacts.recent.length) reads.appendChild(el("li", "live-quiet", T.live_contacts_none));
-    live.querySelector('[data-live="contacts"]').replaceChildren(reads);
+    var events = a.events.map(eventItem);
+    if (!events.length) events.push(keyed(el("li", "live-quiet", T.live_events_none), "none", []));
+    patch(live.querySelector('[data-live="events"]'), events, true);
     tickElapsed();
   }
 
@@ -517,6 +648,7 @@
   });
 
   var timer = null;
+  var pushed = 0;  // when the stream last delivered
 
   function schedule(data) {
     clearTimeout(timer);
@@ -524,6 +656,10 @@
   }
 
   function refresh() {
+    if (Date.now() - pushed < 10000) {
+      schedule(null);
+      return;
+    }
     fetch("/api/feed" + window.location.search, { credentials: "same-origin" })
       .then(function (resp) { return resp.ok ? resp.json() : null; })
       .then(function (data) {
@@ -533,6 +669,12 @@
       .catch(function () { schedule(null); });
   }
 
+  if (window.EventSource) {
+    new EventSource("/api/feed/stream" + window.location.search).onmessage = function (event) {
+      pushed = Date.now();
+      render(JSON.parse(event.data));
+    };
+  }
   refresh();
   setInterval(tickElapsed, 1000);
 

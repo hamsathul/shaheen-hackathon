@@ -341,7 +341,7 @@ def _add_agent_commands(sub: argparse._SubParsersAction) -> None:
 
 
 def cmd_dashboard(args: argparse.Namespace) -> int:
-    uvicorn.run(create_app(), host=args.host, port=args.port)
+    uvicorn.run(create_app(), host=args.host, port=args.port, timeout_graceful_shutdown=5)
     return 0
 
 

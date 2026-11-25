@@ -312,9 +312,9 @@ def browser_dir(folder: Path) -> Path:
     return path
 
 
-def latest_shot(folder: Path) -> Path | None:
-    """The newest screenshot the investigator's browser saved for this case."""
-    return max((folder / "browser").glob(SHOT_GLOB), default=None)
+def recent_shots(folder: Path, n: int) -> list[Path]:
+    """The newest `n` screenshots the investigator's browser saved for this case, newest first."""
+    return sorted((folder / "browser").glob(SHOT_GLOB), reverse=True)[:n]
 
 
 def browser_args(settings: Settings, folder: Path) -> list[str]:

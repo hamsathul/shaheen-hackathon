@@ -41,10 +41,16 @@
         <p class="inv-queue"><span class="label">{{ t.live_queue }}</span><span data-live="queue"></span></p>
       </header>
       <div class="runs" data-live="runs"></div>
-      <h3 class="label recent-title">{{ t.live_recent }}</h3>
-      <ol class="recent" data-live="recent"></ol>
-      <h3 class="label recent-title">{{ t.live_contacts_recent }}</h3>
-      <ol class="recent" data-live="contacts"></ol>
+      <div class="live-lower">
+        <section>
+          <h3 class="label recent-title">{{ t.live_next }}</h3>
+          <ol class="recent" data-live="next"></ol>
+        </section>
+        <section>
+          <h3 class="label recent-title">{{ t.live_events }}</h3>
+          <ol class="recent" data-live="events"></ol>
+        </section>
+      </div>
     </section>
 
     <section class="maps-watch" id="maps-watch" data-lang="{{ lang }}"{% if map_key %} data-key="{{ map_key }}"{% endif %}>

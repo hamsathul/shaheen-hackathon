@@ -87,7 +87,8 @@ def run(host: str, port: int, workers: int, render: bool, investigate: bool, inv
         thread.start()
     log.info("dashboard: http://%s:%d/", host, port)
     try:
-        uvicorn.run(create_app(settings), host=host, port=port, log_config=None, access_log=False)
+        uvicorn.run(create_app(settings), host=host, port=port, log_config=None, access_log=False,
+                    timeout_graceful_shutdown=5)
     except KeyboardInterrupt:
         pass
     finally:

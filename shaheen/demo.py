@@ -87,7 +87,7 @@ def run(cases_dir: Path, host: str, port: int, with_watcher: bool) -> None:
                                    name="shaheen-watch", daemon=True)
         watcher.start()
     try:
-        uvicorn.run(create_app(settings), host=host, port=port)
+        uvicorn.run(create_app(settings), host=host, port=port, timeout_graceful_shutdown=5)
     finally:
         stop.set()
         if watcher is not None:

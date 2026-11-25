@@ -133,6 +133,9 @@ CREATE TABLE IF NOT EXISTS meta (
 """
 
 
+# The order the AI workers take queued cases in: fraud before suspicious, oldest first.
+NEXT_CASE = "ORDER BY CASE s.verdict WHEN 'fraud' THEN 0 ELSE 1 END, i.queued_at"
+
 # How long after its last check a URL may be queued again, by the verdict of
 # that check (None: the check failed). Fraud and analyst-confirmed cases are
 # never re-queued.
@@ -412,12 +415,10 @@ class Store:
         parallel investigators never take the same case."""
         with self._conn() as db:
             rows = db.execute(
-                """UPDATE investigations SET status = 'running', started_at = ?, finished_at = NULL, error = NULL
-                   WHERE scan_id = (SELECT i.scan_id FROM investigations i JOIN scans s ON s.id = i.scan_id
-                                    WHERE i.status = 'queued'
-                                    ORDER BY CASE s.verdict WHEN 'fraud' THEN 0 ELSE 1 END, i.queued_at
-                                    LIMIT 1)
-                   RETURNING scan_id""",
+                f"""UPDATE investigations SET status = 'running', started_at = ?, finished_at = NULL, error = NULL
+                    WHERE scan_id = (SELECT i.scan_id FROM investigations i JOIN scans s ON s.id = i.scan_id
+                                     WHERE i.status = 'queued' {NEXT_CASE} LIMIT 1)
+                    RETURNING scan_id""",
                 (utcnow(),),
             ).fetchall()
         return rows[0]["scan_id"] if rows else None
@@ -457,6 +458,17 @@ class Store:
                    WHERE i.status = 'queued' GROUP BY s.verdict"""
             ).fetchall()
         return {r["verdict"]: r["n"] for r in rows}
+
+    def next_investigations(self, limit: int) -> list[dict[str, Any]]:
+        """The queued cases the AI workers take next, in the order they take them."""
+        with self._conn() as db:
+            rows = db.execute(
+                f"""SELECT i.scan_id, i.queued_at, s.url, s.final_url, s.verdict, s.risk_score, s.impersonated_brand
+                    FROM investigations i JOIN scans s ON s.id = i.scan_id
+                    WHERE i.status = 'queued' {NEXT_CASE} LIMIT ?""",
+                (limit,),
+            ).fetchall()
+        return [dict(r) for r in rows]
 
     def finished_investigations(self, limit: int) -> list[dict[str, Any]]:
         """The latest finished investigations, newest first, with their report."""
@@ -632,6 +644,18 @@ class Store:
                           (SELECT COUNT(*) FROM hunt_finds f WHERE f.hunt_id = h.id) AS finds
                    FROM hunts h ORDER BY h.id DESC LIMIT ?""",
                 (limit,),
+            ).fetchall()
+        return [dict(r) for r in rows]
+
+    def hunts_with_status(self, status: str) -> list[dict[str, Any]]:
+        """The hunts in one state, oldest first (the order the workers take queued
+        ones), with how many domains each one has found so far."""
+        with self._conn() as db:
+            rows = db.execute(
+                """SELECT h.id, h.mission, h.theme, h.queued_at, h.started_at, h.finished_at,
+                          (SELECT COUNT(*) FROM hunt_finds f WHERE f.hunt_id = h.id) AS finds
+                   FROM hunts h WHERE h.status = ? ORDER BY h.id""",
+                (status,),
             ).fetchall()
         return [dict(r) for r in rows]
 

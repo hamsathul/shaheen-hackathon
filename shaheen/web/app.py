@@ -22,10 +22,12 @@ hashes or tool calls. /stats charts the store in either view's words, and
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 import re
 import secrets
+import time
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
@@ -34,30 +36,35 @@ from typing import Any
 from urllib.parse import urlsplit
 
 from fastapi import FastAPI, Form, HTTPException, Request
-from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from jinja2 import Environment, FileSystemLoader
 from starlette.concurrency import run_in_threadpool
 
-from shaheen import agents, contacts, evidence, investigator, watch
+from shaheen import agents, contacts, evidence, investigator, themes, watch
 from shaheen.collectors import maps
 from shaheen.config import PACKAGE_DIR, Settings, load_settings
 from shaheen.domains import host_of, registrable_domain
 from shaheen.evidence import GST, defang_text
+from shaheen.hunter import hunt_folder
 from shaheen.models import ScanResult
 from shaheen.pipeline import Scanner
 from shaheen.store import Store, utcnow
 from shaheen.web import charts, hunts, i18n, reports, stats
-from shaheen.web.trace import read_trace
+from shaheen.web.trace import read_live, read_trace
 
 WEB_DIR = PACKAGE_DIR / "web"
 CASE_ID = re.compile(r"[0-9A-Za-z][0-9A-Za-z_-]{0,63}")
 SHOT_NAME = re.compile(r"shot-\d{1,16}\.jpg")
 FEED_LIMIT = 60
 TRACE = "agent_trace.jsonl"
-LIVE_TOOLS = 12  # tool calls shown per running investigation, newest last
-RECENT = 5  # finished investigations shown in the live panel
+LIVE_TOOLS = 12  # tool calls shown per running investigation or hunt
+SHOTS = 4  # browser screenshots shown per running investigation: the newest and the three before
+NEXT = 8  # queued cases listed as next up in the live panel
+EVENTS = 12  # entries in the live panel's "just happened" timeline
+STREAM_EVERY = 2.0  # seconds between two looks at the live feed for /api/feed/stream
+STREAM_FOR = 60.0  # seconds one stream lasts before the browser opens a new one
 ALIVE_S = 4 * agents.HEARTBEAT_S  # an older queue heartbeat means the investigator is off
 FILTERS = ("fraud", "suspicious", "legitimate")
 SIGNAL_KEYS = (
@@ -377,7 +384,19 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                      else t["simple_all"].format(total=total) if total else "")
             lists[verdict] = {"count": count, "rows": [site_row(r, said.get(r.id), t) for r in found]}
         return {"suspicious_total": totals["suspicious"], "ai": ai_line(t, data["activity"]),
+                "live": simple_live(t, data["activity"]),
                 "maps": maps_line(t, data["maps"], counters["maps_leads"], lang), **lists}
+
+    def simple_live(t: dict[str, str], live: dict[str, Any]) -> list[dict[str, Any]]:
+        """What the AI is doing now, in plain words: each site it checks or reads, with
+        what its browser shows, and each hunt with its theme or mission."""
+        found = [{"label": t["simple_live_checking"], "subject": r["domain"], "href": f"/case/{r['id']}",
+                  "shot": r["shots"][0] if r["shots"] else None} for r in live["running"]]
+        found += [{"label": t["simple_live_reading"], "subject": c["domain"], "href": f"/case/{c['id']}",
+                   "shot": c["shot"]} for c in live["contacts"]["reading"]]
+        found += [{"label": t["simple_live_hunting"], "subject": h["theme"] or h["mission"],
+                   "href": f"/hunts/{h['id']}", "shot": None} for h in live["hunts"]]
+        return found
 
     def site_row(r: ScanResult, said: tuple[str, str] | None, t: dict[str, str]) -> dict[str, Any]:
         """A flagged site in plain words: the first sentence of its AI summary, or else its top reason."""
@@ -445,53 +464,103 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return beat is not None and beat <= ALIVE_S
 
     def activity(lang: str) -> dict[str, Any]:
-        """The investigator for the live panel: each run under way with its tool calls so
-        far, the queue by verdict and the latest finished investigations. Runs count only
+        """The AI workers for the live panel: each investigation, contacts read and hunt
+        under way, what comes next and what just happened. Work counts as under way only
         while the queue's heartbeat is fresh, so a killed investigator shows as off."""
         alive = investigator_alive()
         model_down = alive and bool(store.get_meta(agents.MODEL_DOWN_KEY))
         running = []
         for run in store.running_investigations() if alive else []:
             folder = settings.evidence_dir / run["scan_id"]
-            tools = [s for s in read_trace(folder / TRACE) if s["kind"] == "tool"]
-            shot = investigator.latest_shot(folder)
             running.append({
                 **case_row(run, lang), "mode": run["mode"] or "", "elapsed_s": _age_s(run["started_at"]) or 0,
-                "shot": f"/case/{run['scan_id']}/shot/{shot.name}" if shot else None,
-                "tool_count": len(tools),
-                "tools": [{"server": s["server"], "tool": s["tool"], "target": _defang(s["target"]),
-                           "done": s["done"], "error": s["error"]} for s in tools[-LIVE_TOOLS:]],
+                "shots": [f"/case/{run['scan_id']}/shot/{p.name}" for p in investigator.recent_shots(folder, SHOTS)],
+                **agent_view(folder / TRACE),
             })
+        hunting = [{**hunt_row(h, lang), "finds": h["finds"], "elapsed_s": _age_s(h["started_at"]) or 0,
+                    **agent_view(hunt_folder(settings, h["id"]) / TRACE)}
+                   for h in store.hunts_with_status("running")] if alive else []
         queued = store.investigation_queue()
         waiting, reading = store.contacts_activity() if alive else (0, [])
-        t = i18n.STRINGS[lang]
-        reads = [{**case_row(row, lang), "time": _gst(row["finished_at"]), "type": contacts_outcome(row, t),
-                  "summary": _defang(f"{t['contacts_claims_to_be']}: {row['result']['claims_to_be']}")
-                  if row["result"].get("claims_to_be") else ""}
-                 for row in store.recent_contacts(RECENT)]
-        recent = []
-        for row in store.finished_investigations(RECENT):
-            report = row["report"] if isinstance(row["report"], dict) else {}
-            summary = (lang == "ar" and report.get("summary_ar")) or report.get("summary_en")
-            kind = report.get("fraud_type") if isinstance(report.get("fraud_type"), str) else row["fraud_type"]
-            recent.append({
-                **case_row(row, lang), "time": _gst(row["finished_at"]),
-                "type": i18n.label(i18n.FRAUD_TYPES, lang, kind) if kind else "",
-                "summary": _defang(investigator.first_sentence(str(summary or ""))),
-            })
         return {
-            "state": "running" if running or reading else "waiting" if model_down else "idle" if alive else "off",
+            "state": "running" if running or reading or hunting else "waiting" if model_down else
+                     "idle" if alive else "off",
             "model_down": model_down,
             "model": settings.llm_model,
             "running": running,
+            "hunts": hunting,
             "queue": [{"verdict": v, "label": i18n.label(i18n.VERDICTS, lang, v), "n": queued.get(v, 0)}
                       for v in ("fraud", "suspicious")],
-            "contacts": {"waiting": waiting, "recent": reads,
+            "next": next_up(lang),
+            "contacts": {"waiting": waiting,
                          "reading": [{**case_row(r, lang), "shot": f"/case/{r['scan_id']}/screenshot.png"
                                       if (settings.evidence_dir / r["scan_id"] / evidence.SCREENSHOT).is_file()
                                       else None} for r in reading]},
-            "recent": recent,
+            "events": events(lang),
         }
+
+    def agent_view(trace: Path) -> dict[str, Any]:
+        """A running agent's work so far: its latest tool calls, each with what it
+        returned in a few words, and the latest note the model wrote to itself."""
+        steps, thought = read_live(trace)
+        tools = [s for s in steps if s["kind"] == "tool"]
+        return {
+            "tool_count": len(tools),
+            "note": _defang(investigator.first_sentence(" ".join(thought.split()))),
+            "tools": [{"server": s["server"], "tool": s["tool"], "target": _defang(s["target"]),
+                       "said": _defang(s["said"]), "done": s["done"], "error": s["error"]}
+                      for s in tools[-LIVE_TOOLS:]],
+        }
+
+    def hunt_row(hunt: dict[str, Any], lang: str) -> dict[str, Any]:
+        names = themes.labels()
+        theme = names[hunt["theme"]][lang == "ar"] if hunt["theme"] in names else ""
+        return {"id": hunt["id"], "mission": _defang(hunt["mission"]), "theme": theme}
+
+    def next_up(lang: str) -> dict[str, Any]:
+        """What the AI workers take next: the queued hunts, then the first NEXT cases."""
+        cases = store.next_investigations(NEXT)
+        sources = store.scan_sources([c["scan_id"] for c in cases])
+        return {
+            "hunts": [hunt_row(h, lang) for h in store.hunts_with_status("queued")],
+            "cases": [{**case_row(c, lang), "brand": c["impersonated_brand"] or "", "time": _gst(c["queued_at"]),
+                       "source": i18n.label(i18n.SOURCES, lang, sources.get(c["scan_id"], "manual"))}
+                      for c in cases],
+        }
+
+    def events(lang: str) -> list[dict[str, Any]]:
+        """The live panel's timeline, newest first: finished investigations, contacts reads
+        and hunts, and the scanner's latest fraud verdicts."""
+        t = i18n.STRINGS[lang]
+        found: list[tuple[str, dict[str, Any]]] = []
+        for row in store.finished_investigations(EVENTS):
+            report = row["report"] if isinstance(row["report"], dict) else {}
+            summary = (lang == "ar" and report.get("summary_ar")) or report.get("summary_en")
+            kind = report.get("fraud_type") if isinstance(report.get("fraud_type"), str) else row["fraud_type"]
+            found.append((row["finished_at"], {
+                **case_row(row, lang), "kind": "ai",
+                "text": i18n.label(i18n.FRAUD_TYPES, lang, kind) if kind else "",
+                "summary": _defang(investigator.first_sentence(str(summary or ""))),
+            }))
+        for row in store.recent_contacts(EVENTS):
+            claims = row["result"].get("claims_to_be")
+            found.append((row["finished_at"], {
+                **case_row(row, lang), "kind": "contacts", "text": contacts_outcome(row, t),
+                "summary": _defang(f"{t['contacts_claims_to_be']}: {claims}") if claims else "",
+            }))
+        for hunt in store.hunts_with_status("done")[-EVENTS:]:
+            found.append((hunt["finished_at"], {**hunt_row(hunt, lang), "kind": "hunt",
+                                                "text": t["live_ev_found"].format(n=hunt["finds"])}))
+        for r in store.list_scans(("fraud",), EVENTS):
+            found.append((r.scanned_at, {
+                "id": r.id, "domain": defang_text(host_of(r.final_url or r.url)), "verdict": r.verdict,
+                "verdict_label": i18n.label(i18n.VERDICTS, lang, r.verdict), "score": r.risk_score,
+                "kind": "scan", "text": r.impersonated_brand or "",
+            }))
+        dated = sorted(((datetime.fromisoformat(at), at, e) for at, e in found if at),
+                       key=lambda d: d[0], reverse=True)
+        return [{**e, "key": f"{e['kind']}:{e['id']}", "label": t[f"live_ev_{e['kind']}"], "time": _gst(at)}
+                for _, at, e in dated[:EVENTS]]
 
     def contacts_outcome(row: dict[str, Any], t: dict[str, str]) -> str:
         """What one contacts read found, in a few words: the count of each kind, or why it found nothing."""
@@ -554,6 +623,23 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/api/feed")
     def api_feed(request: Request, verdict: str | None = None) -> JSONResponse:
         return JSONResponse(feed(lang_of(request), verdict, simple=simple_of(request)))
+
+    @app.get("/api/feed/stream")
+    async def feed_stream(request: Request, verdict: str | None = None) -> StreamingResponse:
+        """The /api/feed data as server-sent events, every STREAM_EVERY seconds. A stream
+        ends after STREAM_FOR seconds and the browser opens the next one by itself, so a
+        server that is stopping never waits long for an open page."""
+        lang, simple = lang_of(request), simple_of(request)
+
+        async def stream() -> AsyncIterator[str]:
+            end = time.monotonic() + STREAM_FOR
+            yield "retry: 1000\n\n"
+            while time.monotonic() < end and not await request.is_disconnected():
+                data = await run_in_threadpool(feed, lang, verdict, simple)
+                yield f"data: {json.dumps(data, ensure_ascii=False)}\n\n"
+                await asyncio.sleep(STREAM_EVERY)
+
+        return StreamingResponse(stream(), media_type="text/event-stream", headers={"Cache-Control": "no-store"})
 
     @app.get("/stats")
     def stats_page(request: Request) -> Response:

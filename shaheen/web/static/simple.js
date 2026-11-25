@@ -1,5 +1,5 @@
-// Simple feed: refresh the headline numbers, the AI and Maps lines and the two
-// lists of sites from /api/feed every 5 seconds. Everything is built with
+// Simple feed: refresh the headline numbers, the AI and Maps lines, what the AI
+// is doing now and the two lists of sites from /api/feed every 5 seconds. Everything is built with
 // textContent only, never innerHTML; addresses arrive defanged from the server.
 (function () {
   "use strict";
@@ -53,6 +53,31 @@
     return item;
   }
 
+  function liveItem(w) {  // a site the AI is checking or reading, or a hunt, with its screenshot
+    var item = el("figure", "simple-live-item");
+    if (w.shot) {
+      var img = el("img");
+      img.src = w.shot;
+      img.alt = "";
+      item.appendChild(img);
+    }
+    var caption = el("figcaption", null, w.label + " ");
+    var link = el("a", null, w.subject);
+    link.href = w.href;
+    link.dir = "auto";
+    caption.appendChild(link);
+    item.appendChild(caption);
+    return item;
+  }
+
+  function renderLive(work) {
+    var holder = part("live");
+    var shown = JSON.stringify(work);
+    if (holder.getAttribute("data-sig") === shown) return;  // unchanged: keep the images as they are
+    holder.setAttribute("data-sig", shown);
+    holder.replaceChildren.apply(holder, work.map(liveItem));
+  }
+
   function renderList(verdict, found) {
     var list = part(verdict);
     var items = document.createDocumentFragment();
@@ -74,6 +99,7 @@
     var s = data.simple;
     part("suspicious-total").textContent = s.suspicious_total;
     part("ai").textContent = s.ai;
+    renderLive(s.live);
     part("maps").textContent = s.maps;
     ["fraud", "suspicious"].forEach(function (verdict) {
       renderList(verdict, s[verdict]);
