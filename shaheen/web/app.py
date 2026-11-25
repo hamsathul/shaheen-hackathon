@@ -22,6 +22,7 @@ hashes or tool calls. /stats charts the store in either view's words, and
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import secrets
@@ -52,6 +53,7 @@ from shaheen.web.trace import read_trace
 
 WEB_DIR = PACKAGE_DIR / "web"
 CASE_ID = re.compile(r"[0-9A-Za-z][0-9A-Za-z_-]{0,63}")
+SHOT_NAME = re.compile(r"shot-\d{1,16}\.jpg")
 FEED_LIMIT = 60
 TRACE = "agent_trace.jsonl"
 LIVE_TOOLS = 12  # tool calls shown per running investigation, newest last
@@ -98,6 +100,16 @@ def _map_headers(nonce: str) -> dict[str, str]:
         "object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'"
     )
     return {"Content-Security-Policy": policy, "Referrer-Policy": MAP_REFERRER}
+
+
+def asset_version() -> str:
+    """A short hash of the page scripts and styles, added to their URLs so a browser
+    fetches them again after an update instead of running a cached copy."""
+    digest = hashlib.sha256()
+    for path in sorted((WEB_DIR / "static").rglob("*")):
+        if path.is_file():
+            digest.update(path.name.encode("utf-8") + path.read_bytes())
+    return digest.hexdigest()[:10]
 
 
 def _gst(iso: str | None, fmt: str = "%Y-%m-%d %H:%M") -> str:
@@ -277,6 +289,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     env = Environment(loader=FileSystemLoader(WEB_DIR / "templates"), autoescape=True,
                       trim_blocks=True, lstrip_blocks=True)
     env.filters.update(defang=_defang, gst=_gst)
+    env.globals["asset_version"] = asset_version()
     templates = Jinja2Templates(env=env)
 
     @app.middleware("http")
@@ -439,9 +452,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         model_down = alive and bool(store.get_meta(agents.MODEL_DOWN_KEY))
         running = []
         for run in store.running_investigations() if alive else []:
-            tools = [s for s in read_trace(settings.evidence_dir / run["scan_id"] / TRACE) if s["kind"] == "tool"]
+            folder = settings.evidence_dir / run["scan_id"]
+            tools = [s for s in read_trace(folder / TRACE) if s["kind"] == "tool"]
+            shot = investigator.latest_shot(folder)
             running.append({
                 **case_row(run, lang), "mode": run["mode"] or "", "elapsed_s": _age_s(run["started_at"]) or 0,
+                "shot": f"/case/{run['scan_id']}/shot/{shot.name}" if shot else None,
                 "tool_count": len(tools),
                 "tools": [{"server": s["server"], "tool": s["tool"], "target": _defang(s["target"]),
                            "done": s["done"], "error": s["error"]} for s in tools[-LIVE_TOOLS:]],
@@ -470,7 +486,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "running": running,
             "queue": [{"verdict": v, "label": i18n.label(i18n.VERDICTS, lang, v), "n": queued.get(v, 0)}
                       for v in ("fraud", "suspicious")],
-            "contacts": {"waiting": waiting, "reading": [case_row(r, lang) for r in reading], "recent": reads},
+            "contacts": {"waiting": waiting, "recent": reads,
+                         "reading": [{**case_row(r, lang), "shot": f"/case/{r['scan_id']}/screenshot.png"
+                                      if (settings.evidence_dir / r["scan_id"] / evidence.SCREENSHOT).is_file()
+                                      else None} for r in reading]},
             "recent": recent,
         }
 
@@ -627,6 +646,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if not path.is_file():
             raise HTTPException(404, "no screenshot")
         return FileResponse(path, media_type="image/png")
+
+    @app.get("/case/{case_id}/shot/{name}")
+    def browser_shot(case_id: str, name: str) -> FileResponse:
+        """A screenshot the AI investigator's browser saved; each name is written once."""
+        path = case_folder(case_id) / "browser" / name
+        if not SHOT_NAME.fullmatch(name) or not path.is_file():
+            raise HTTPException(404, "no such screenshot")
+        return FileResponse(path, media_type="image/jpeg", headers={"Cache-Control": "max-age=86400, immutable"})
 
     @app.get("/case/{case_id}/evidence.zip")
     def evidence_zip(case_id: str) -> FileResponse:

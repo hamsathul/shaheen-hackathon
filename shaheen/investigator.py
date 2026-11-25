@@ -52,6 +52,9 @@ TOOL_PREFIX = "mcp__shaheen__"
 BROWSER_PREFIX = "mcp__browser__"
 BROWSER_PACKAGE = "@playwright/mcp@0.0.86"
 BLOCKED_ORIGINS = "http://localhost;http://127.0.0.1;http://169.254.169.254"
+# Saves a screenshot after each page load in the browser folder, for the live panel.
+SHOTS_SCRIPT = REPO_DIR / "agent" / "browser_shots.js"
+SHOT_GLOB = "shot-*.jpg"
 # Runs Playwright code in the browser server's Node process: as good as a shell, so
 # never declared (pi --exclude-tools) and a run that declares it fails.
 FORBIDDEN_TOOLS = frozenset({f"{BROWSER_PREFIX}browser_run_code_unsafe"})
@@ -309,11 +312,16 @@ def browser_dir(folder: Path) -> Path:
     return path
 
 
+def latest_shot(folder: Path) -> Path | None:
+    """The newest screenshot the investigator's browser saved for this case."""
+    return max((folder / "browser").glob(SHOT_GLOB), default=None)
+
+
 def browser_args(settings: Settings, folder: Path) -> list[str]:
     args = ["--headless", "--isolated", "--ignore-https-errors", "--block-service-workers",
             "--image-responses", "omit", "--timeout-navigation", "20000",
             "--user-agent", settings.user_agent,
-            "--output-dir", str(browser_dir(folder)), "--save-session"]
+            "--output-dir", str(browser_dir(folder)), "--save-session", "--init-page", str(SHOTS_SCRIPT)]
     return args if allow_private_fetch() else [*args, "--blocked-origins", BLOCKED_ORIGINS]
 
 

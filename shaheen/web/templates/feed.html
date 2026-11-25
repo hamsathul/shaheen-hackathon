@@ -117,4 +117,4 @@
   </div>
 </div>
 {% endblock %}
-{% block scripts %}<script src="/static/feed.js"{% if nonce %} nonce="{{ nonce }}"{% endif %}></script>{% endblock %}
+{% block scripts %}<script src="/static/feed.js?v={{ asset_version }}"{% if nonce %} nonce="{{ nonce }}"{% endif %}></script>{% endblock %}

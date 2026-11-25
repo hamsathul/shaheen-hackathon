@@ -94,14 +94,40 @@
     return item;
   }
 
-  function runBlock(run) {
-    var block = el("article", "run");
-    block.setAttribute("data-id", run.id);
+  function blockHead(r, cls) {
+    var block = el("article", cls);
+    block.setAttribute("data-id", r.id);
     var head = el("header", "run-head");
-    head.appendChild(mark(run.verdict, run.verdict_label));
-    head.appendChild(el("span", "run-score", String(run.score)));
-    head.appendChild(caseLink(run));
+    head.appendChild(mark(r.verdict, r.verdict_label));
+    head.appendChild(el("span", "run-score", String(r.score)));
+    head.appendChild(caseLink(r));
     block.appendChild(head);
+    return block;
+  }
+
+  function shot(src, caption) {
+    var figure = el("figure", "live-shot");
+    var img = el("img");
+    img.src = src;
+    img.alt = caption;
+    img.loading = "lazy";
+    figure.appendChild(img);
+    figure.appendChild(el("figcaption", "label", caption));
+    return figure;
+  }
+
+  function contactsBlock(c) {
+    var block = blockHead(c, "run reading");
+    var meta = el("p", "run-meta");
+    meta.appendChild(el("span", "mode", T.live_contacts_mode));
+    block.appendChild(meta);
+    if (c.shot) block.appendChild(shot(c.shot, T.live_contacts_shot));
+    block.appendChild(el("p", "live-contacts", T.live_contacts_reading));
+    return block;
+  }
+
+  function runBlock(run) {
+    var block = blockHead(run, "run");
 
     var meta = el("p", "run-meta");
     var elapsed = el("span", "elapsed");
@@ -110,6 +136,7 @@
     meta.appendChild(el("span", null, T.live_calls + " " + run.tool_count));
     if (run.mode) meta.appendChild(el("span", "mode", run.mode));
     block.appendChild(meta);
+    if (run.shot) block.appendChild(shot(run.shot, T.live_shot));
 
     var list = el("ol", "log-tail");
     list.dir = "ltr";
@@ -170,17 +197,13 @@
     var runs = document.createDocumentFragment();
     if (a.model_down) runs.appendChild(el("p", "live-warning", T.live_waiting_note));
     a.running.forEach(function (run) { runs.appendChild(runBlock(run)); });
-    a.contacts.reading.forEach(function (c) {
-      var line = el("p", "live-contacts", T.live_contacts_reading + " ");
-      line.appendChild(caseLink(c));
-      runs.appendChild(line);
-    });
+    a.contacts.reading.forEach(function (c) { runs.appendChild(contactsBlock(c)); });
     if (!a.running.length && !a.contacts.reading.length && !a.model_down) {
       runs.appendChild(el("p", "live-quiet", a.state === "idle" ? T.live_idle_note : T.live_off_note));
     }
     var holder = live.querySelector('[data-live="runs"]');
     holder.replaceChildren(runs);
-    holder.className = "runs" + (a.running.length > 1 ? " parallel" : "");
+    holder.className = "runs" + (a.running.length + a.contacts.reading.length > 1 ? " parallel" : "");
 
     var queue = document.createDocumentFragment();
     a.queue.forEach(function (q) {

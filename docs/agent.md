@@ -50,12 +50,14 @@ The `browser` server runs with:
 ```text
 --headless --isolated --ignore-https-errors --block-service-workers --image-responses omit
 --timeout-navigation 20000 --user-agent <SHAHEEN_USER_AGENT> --output-dir evidence/<id>/browser --save-session
+--init-page agent/browser_shots.js
 --blocked-origins "http://localhost;http://127.0.0.1;http://169.254.169.254"   (unless SHAHEEN_ALLOW_PRIVATE_FETCH=1)
 ```
 
 - `--isolated`: the browser profile lives in memory and is thrown away; no cookies or logins carry over between runs.
 - `--image-responses omit`: the model is text-only, so it reads accessibility snapshots, not screenshots.
 - `--output-dir … --save-session`: every page snapshot and every browser action is kept as evidence.
+- `--init-page agent/browser_shots.js`: after each page load settles (1.5 s), the browser saves what it shows as `browser/shot-<epoch ms>.jpg`. The model never sees these. The dashboard's live panel shows the newest one under the run, and they join the evidence pack with the rest of `browser/`.
 - `--blocked-origins` keeps the browser off the host's own services. Playwright states that this list **is not a security boundary** (it does not cover redirects, for example). `SHAHEEN_ALLOW_PRIVATE_FETCH=1` drops it, for local fixture demos only.
 - File access: Playwright MCP confines files the model names (a snapshot or screenshot `filename`) to its output directory, which is also its working directory (`evidence/<id>/browser`), and blocks `file://` navigation. Checked with 0.0.86: `../../x.yml` and `/tmp/x.yml` are refused as "outside allowed roots". Shaheen does not pass `--allow-unrestricted-file-access`.
 - `browser_run_code_unsafe` runs Playwright code in the browser server's Node process, which amounts to a shell on the host. pi excludes it (`--exclude-tools`), and a run that declares it fails.
