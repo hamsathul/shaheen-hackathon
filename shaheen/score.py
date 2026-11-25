@@ -40,6 +40,7 @@ WEIGHTS: dict[str, int] = {
     "URGENCY_WORDING": 10,
     "DECEPTIVE_DOMAIN_WORDS": 10,
     "THEME_UAE_DOMAIN": 10,
+    "CLOUDFLARE_PHISHING_WARNING": 40,
     "TOP_SITE": -25,
     "NO_PAGE_EVIDENCE": 0,
     "DOMAIN_OLD": -15,
@@ -60,7 +61,8 @@ TELEGRAM_EXFIL_WEIGHT = 40
 
 # Signals that come from seeing the scam itself: its page, its checkout or a
 # fingerprint shared with known fraud. Without one, the name, registration and
-# certificate alone make a link suspicious at most (NO_PAGE_EVIDENCE).
+# certificate alone make a link suspicious at most (NO_PAGE_EVIDENCE). Cloudflare's
+# phishing warning is not one: it hides the page, so it is a report, not the scam seen.
 CONTENT = frozenset({
     "SKIMMER_GATEWAY", "CARD_FORM_NO_PROCESSOR", "SENSITIVE_FORM_BRAND", "SHARED_FINGERPRINT",
     "DEEP_DISCOUNTS", "WEAK_GATEWAY", "DOORWAY", "CLOAKING", "FORM_OFFSITE_POST", "URGENCY_WORDING",
@@ -76,6 +78,7 @@ STRONG = frozenset({
     "LOOKALIKE_DOMAIN",
     "SENSITIVE_FORM_BRAND",
     "SHARED_FINGERPRINT",
+    "CLOUDFLARE_PHISHING_WARNING",
 })
 
 # Signals that decide the verdict on their own.

@@ -27,7 +27,7 @@ from shaheen.config import REPO_DIR, Settings
 from shaheen.domains import registrable_domain
 from shaheen.investigator import chat, parse_reply
 from shaheen.resolve import visible_text
-from shaheen.signals import is_challenge
+from shaheen.signals import is_challenge, phishing_warning
 from shaheen.store import Store
 
 PROMPT_PATH = REPO_DIR / "agent" / "contacts.md"
@@ -71,11 +71,11 @@ class Contacts(BaseModel):
 
 def page_material(folder: Path) -> tuple[str, list[str]]:
     """The saved page's visible text (capped) and its contact links; empty when the
-    page is missing, nearly empty or a bot check."""
+    page is missing, nearly empty, a bot check or a phishing warning."""
     path = folder / "page.html"
     html = path.read_text(encoding="utf-8", errors="replace") if path.is_file() else ""
     text = html_lib.unescape(visible_text(html))
-    if len(text) < MIN_TEXT or is_challenge("", text, html):
+    if len(text) < MIN_TEXT or is_challenge("", text, html) or phishing_warning(html):
         return "", []
     links = list(dict.fromkeys(html_lib.unescape(m.group(1)).strip() for m in _LINK.finditer(html)))
     return text[:TEXT_LIMIT], links[:50]
@@ -137,7 +137,8 @@ def read(scan_id: str, settings: Settings, store: Store, timeout_s: float = TIME
     folder = settings.evidence_dir / scan_id
     text, links = page_material(folder)
     if result is None or not text:
-        store.set_contacts(scan_id, "skipped", error="no page text to read (a bot check, or an empty page)")
+        store.set_contacts(scan_id, "skipped",
+                           error="no page text to read (a bot check, a phishing warning or an empty page)")
         return {"scan_id": scan_id, "status": "skipped"}
     started = time.monotonic()
     prompt = messages(text, links)

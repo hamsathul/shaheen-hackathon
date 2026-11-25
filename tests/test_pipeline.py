@@ -12,6 +12,7 @@ from shaheen.domains import registrable_domain
 from shaheen.models import ScanOptions
 from shaheen.pipeline import Scanner
 from shaheen.reasons import LABELS
+from shaheen.render import Rendered
 from shaheen.resolve import SHORTENERS, Hop, Resolution
 from shaheen.score import TLD_SWAP_WEIGHT, WEIGHTS
 from shaheen.store import Store
@@ -266,3 +267,27 @@ def test_a_fetch_blocked_by_a_bot_check_gets_a_second_look_as_chrome(scanner, mo
     monkeypatch.setattr(pipeline, "resolve", fake_resolve)
     result = scanner.scan("https://dubai-fines-pay.test/", ScanOptions(render=False, storefront=False))
     assert result.fetch_status == "ok" and result.signals["second_look"] == {"via": "own address", "fetch": "ok"}
+
+
+# A hand-written stand-in for Cloudflare's phishing interstitial.
+WARNING = ("<html><head><title>Suspected Phishing | Cloudflare</title></head><body><h1>Warning</h1>"
+           "<p>This website has been reported for potential phishing.</p><p>Cloudflare Ray ID: 0000</p></body></html>")
+
+
+def test_cloudflare_phishing_warning_flags_the_link_without_making_it_fraud(scanner, monkeypatch):
+    def fake_resolve(url, client, insecure_client=None, headers=None):
+        return Resolution(final_url=url, fetch_status="blocked", hops=[Hop(url, 403, "start")], status_code=403,
+                          html=WARNING)
+
+    def fake_render(url, timeout_s=0, as_chrome=False, proxy=""):
+        assert not as_chrome, "no browser gets past the warning without a click"
+        return Rendered(final_url=url, chain=[url], html=WARNING, status=403), None
+
+    monkeypatch.setattr(pipeline, "resolve", fake_resolve)
+    monkeypatch.setattr(pipeline, "render", fake_render)
+    plain = scanner.scan("https://parcel-desk.test/", ScanOptions(storefront=False))
+    assert codes(plain) >= {"CLOUDFLARE_PHISHING_WARNING"} and plain.verdict == "suspicious"
+    assert plain.signals["second_look"]["render"] == "phishing warning"
+    lookalike = scanner.scan("https://rakbnak.test/", ScanOptions(storefront=False))
+    assert {"CLOUDFLARE_PHISHING_WARNING", "LOOKALIKE_DOMAIN", "NO_PAGE_EVIDENCE"} <= codes(lookalike)
+    assert lookalike.verdict == "suspicious"

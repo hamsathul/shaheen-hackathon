@@ -267,6 +267,7 @@ _CHALLENGE_TEXT = re.compile(
     re.I,
 )
 _CHALLENGE_HTML = re.compile(r"_cf_chl_opt|cf-chl-|_incapsula_resource|sgcaptcha|px-captcha", re.I)
+_CLOUDFLARE_PHISHING = re.compile(r"<title[^>]*>\s*Suspected Phishing\s*\|\s*Cloudflare\s*</title>", re.I)
 _TELEGRAM_BOT = re.compile(r"api\.telegram\.org/bot", re.I)
 
 
@@ -391,11 +392,13 @@ def exfiltration_targets(html: str) -> list[str]:
 
 
 def page_findings(facts: PageFacts, final_url: str, html: str) -> tuple[list[Finding], str | None]:
-    """SENSITIVE_FORM_BRAND, FORM_OFFSITE_POST and URGENCY_WORDING for a page,
-    with the brand it impersonates."""
+    """SENSITIVE_FORM_BRAND, FORM_OFFSITE_POST, URGENCY_WORDING and
+    CLOUDFLARE_PHISHING_WARNING for a page, with the brand it impersonates."""
     domain = registrable_domain(final_url)
     sensitive = facts.sensitive_fields()
     found: list[Finding] = []
+    if phishing_warning(html):
+        found.append(Finding("CLOUDFLARE_PHISHING_WARNING", "page.json#title", {}))
     impersonated = None
     named = brands_on_page(facts, domain)
     if sensitive and len(named) <= MAX_PAGE_BRANDS:
@@ -436,6 +439,13 @@ def doorway_findings(chain: list[dict[str, Any]]) -> list[Finding]:
 def is_challenge(title: str, text: str, html: str) -> bool:
     """A bot check or block page instead of the site (Cloudflare, Incapsula and the like)."""
     return bool(_CHALLENGE_TEXT.search(f"{title} {text[:500]}") or _CHALLENGE_HTML.search(html[:200_000]))
+
+
+def phishing_warning(html: str) -> bool:
+    """Cloudflare's "Suspected Phishing" warning in place of the site: the network
+    serving the site has had it reported for phishing, and only a click past the
+    warning (which Shaheen never makes) leads on to the site."""
+    return bool(_CLOUDFLARE_PHISHING.search(html[:20_000])) and "Ray ID" in html
 
 
 def profile_view(res: Any, facts: PageFacts) -> dict[str, Any]:

@@ -119,6 +119,12 @@ TEMPLATES: dict[str, tuple[str, str]] = {
         "The domain uses words meant to look official or urgent: {words}.",
         "النطاق يستخدم كلمات توحي بأنه رسمي أو عاجل: {words}.",
     ),
+    "CLOUDFLARE_PHISHING_WARNING": (
+        "Cloudflare, the network serving this site, shows its \"Suspected Phishing\" warning instead of the page: "
+        "the site has been reported to it for phishing. Shaheen does not click past the warning.",
+        "تعرض Cloudflare، الشبكة التي تخدم هذا الموقع، تحذير \"Suspected Phishing\" بدل الصفحة: "
+        "فقد أُبلغت عن الموقع بأنه موقع تصيّد. لا يتجاوز شاهين هذا التحذير.",
+    ),
     "THEME_UAE_DOMAIN": (
         "The domain pairs a UAE name ({marker}) with words used in common local scams: {words}. Theme: {themes}.",
         "النطاق يقرن اسمًا إماراتيًا ({marker}) بكلمات تُستخدم في عمليات احتيال محلية شائعة: {words}. النوع: {themes}.",

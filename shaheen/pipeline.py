@@ -180,12 +180,15 @@ class Scanner:
     def _render(self, ctx: ScanContext) -> None:
         """Render the landing page in the browser: its DOM replaces the fetched
         HTML, and a JavaScript redirect to another site extends the chain. A render
-        turned away by a bot check is tried once more in Chrome."""
+        turned away by a bot check is tried once more in Chrome, unless the page is a
+        warning no browser gets past without a click, or a block on Shaheen's address."""
         if not ctx.options.render or ctx.fetch_status == "dead":
             return
         rendered, error = ctx.capture.rendered(ctx.final_url) if ctx.capture else render(ctx.final_url)
         if rendered is not None and not ctx.capture and stealth.blocked(rendered.status, rendered.html):
-            if stealth.address_blocked(rendered.html) and not self.settings.proxy_url:
+            if signals.phishing_warning(rendered.html):
+                self._second_look(ctx, "render", "phishing warning")
+            elif stealth.address_blocked(rendered.html) and not self.settings.proxy_url:
                 self._second_look(ctx, "render", "address blocked")
             else:
                 second, _ = render(ctx.final_url, as_chrome=True, proxy=self.settings.proxy_url)
