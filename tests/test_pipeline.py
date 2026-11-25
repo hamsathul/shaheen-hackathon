@@ -254,6 +254,7 @@ def test_a_case_taken_out_of_the_queue_stays_out_until_put_back_in_its_old_place
     assert [c["scan_id"] for c in store.held_investigations()] == [first]
     assert store.hold_investigation(first, held=False)
     assert [c["scan_id"] for c in store.next_investigations()] == [first, second]
+    assert store.move_up_investigation(second) and store.claim_investigation() == second
 
 
 PAGE = ("<html><head><title>Traffic fine</title></head><body><p>Pay your fine today. Call +971 50 123 4567 or "

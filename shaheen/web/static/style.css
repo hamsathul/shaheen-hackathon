@@ -802,7 +802,8 @@ details.numbers > :not(summary) { margin-block-start: 10px; }
 .queue-asof { margin: -10px 0 0; font-size: 13.5px; }
 .queue-table td.label { white-space: nowrap; }
 .queue-table td.act { width: 1%; white-space: nowrap; text-align: end; }
-.queue-table td.act form { margin: 0; }
+.queue-table td.act form { display: inline-block; margin: 0; }
+.queue-table td.act form + form { margin-inline-start: 6px; }
 .queue-table td.act button { padding: 3px 10px; font-size: 13px; }
 .queue-table tr:target td { background: var(--tint); }
 .case-head h1.hunt-mission { font: 600 28px/1.25 var(--sans); word-break: normal; }

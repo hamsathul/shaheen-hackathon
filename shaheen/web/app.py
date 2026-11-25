@@ -521,7 +521,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         """Queued or held cases with the brand each imitates, when it was queued and what found it."""
         sources = store.scan_sources([c["scan_id"] for c in rows])
         return [{**case_row(c, lang), "brand": c["impersonated_brand"] or "", "time": _gst(c["queued_at"]),
-                 "source": i18n.label(i18n.SOURCES, lang, sources.get(c["scan_id"], "manual"))} for c in rows]
+                 "source": i18n.label(i18n.SOURCES, lang, sources.get(c["scan_id"], "manual")),
+                 "moved_up": bool(c["moved_up_at"])} for c in rows]
 
     def next_up(lang: str) -> dict[str, Any]:
         """What the AI workers take next: the queued hunts, then the first NEXT cases."""
@@ -770,6 +771,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             store.queue_investigation(case_id)
         elif current["status"] != "running":  # a running case is never queued twice
             store.set_investigation(case_id, "queued", queued_at=utcnow(), error=None)
+        store.move_up_investigation(case_id)
         store.queue_contacts(case_id)
         return RedirectResponse(f"/case/{case_id}?notice=queued", status_code=303)
 
@@ -782,6 +784,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                     cases=waiting_cases(store.next_investigations(), lang),
                     held=waiting_cases(store.held_investigations(), lang),
                     contacts_waiting=store.contacts_activity()[0], as_of=_gst(utcnow()))
+
+    @app.post("/queue/{case_id}/top")
+    def move_up(case_id: str) -> Response:
+        case_folder(case_id)
+        store.move_up_investigation(case_id)
+        return RedirectResponse(f"/queue#c-{case_id}", status_code=303)
 
     @app.post("/queue/{case_id}/hold")
     def hold(case_id: str) -> Response:

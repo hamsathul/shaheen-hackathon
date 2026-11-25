@@ -6,7 +6,7 @@
 <td><span class="mark {{ c.verdict }}">{{ c.verdict_label }}</span></td>
 <td class="num score">{{ c.score }}</td>
 <td>{{ c.brand }}</td>
-<td class="muted">{{ c.source }}</td>
+<td class="muted">{{ c.source }}{% if c.moved_up %}<span class="listing">{{ t.queue_moved_up }}</span>{% endif %}</td>
 {% endmacro %}
 {% macro case_head() %}
 <th>{{ t.queue_queued_at }}</th><th>{{ t.domain }}</th><th>{{ t.verdict }}</th><th class="num">{{ t.score }}</th><th>{{ t.brand }}</th><th>{{ t.source }}</th>
@@ -100,7 +100,10 @@
           <tr id="c-{{ c.id }}">
             <td class="num">{{ loop.index }}</td>
             {{ case_cells(c) }}
-            <td class="act"><form method="post" action="/queue/{{ c.id }}/hold"><button type="submit" class="quiet">{{ t.queue_take_out }}</button></form></td>
+            <td class="act">
+              {% if not loop.first %}<form method="post" action="/queue/{{ c.id }}/top"><button type="submit" class="quiet">{{ t.queue_move_up }}</button></form>{% endif %}
+              <form method="post" action="/queue/{{ c.id }}/hold"><button type="submit" class="quiet">{{ t.queue_take_out }}</button></form>
+            </td>
           </tr>
           {% else %}
           <tr class="empty"><td colspan="8">{{ t.queue_cases_none }}</td></tr>

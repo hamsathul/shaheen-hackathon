@@ -70,7 +70,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "verify_fail": "Evidence check failed",
         "manifest": "manifest SHA-256",
         "reinvestigate": "Re-investigate with the local AI",
-        "queued_done": "Queued for the investigator.",
+        "queued_done": "Put at the top of the AI queue.",
         "takedown": "Takedown request",
         "ai": "AI investigation",
         "no_investigation": "No investigation yet.",
@@ -358,8 +358,9 @@ STRINGS: dict[str, dict[str, str]] = {
         "hunt_queued_at": "Asked (GST)",
         "queue_nav": "Queue",
         "queue_title": "AI queue",
-        "queue_intro": "The AI workers take hunts first, then fraud cases, then suspicious ones, oldest first. A case "
-                       "you take out stays out until you put it back here or send it to the AI from its case page.",
+        "queue_intro": "The AI workers take hunts first, then the cases moved to the top (the latest moved first), "
+                       "then fraud cases, then suspicious ones, oldest first. A case you take out stays out until you "
+                       "put it back here or send it to the AI from its case page.",
         "queue_agents_off": "The AI workers are not running, so nothing leaves the queue until shaheen up starts.",
         "queue_running": "Running now",
         "queue_running_none": "Nothing is running.",
@@ -371,6 +372,8 @@ STRINGS: dict[str, dict[str, str]] = {
         "queue_held_none": "No case has been taken out.",
         "queue_queued_at": "Queued (GST)",
         "queue_elapsed": "Elapsed",
+        "queue_move_up": "Move to top",
+        "queue_moved_up": "moved up",
         "queue_take_out": "Take out",
         "queue_put_back": "Put back",
         "hunt_finished_at": "Finished (GST)",
@@ -543,7 +546,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "verify_fail": "فشل التحقق من الأدلة",
         "manifest": "بصمة SHA-256 للبيان",
         "reinvestigate": "إعادة التحقيق بالذكاء الاصطناعي المحلي",
-        "queued_done": "أُضيفت الحالة إلى قائمة المحقق.",
+        "queued_done": "وُضعت الحالة في أول قائمة انتظار الذكاء الاصطناعي.",
         "takedown": "طلب الإزالة",
         "ai": "تحقيق الذكاء الاصطناعي",
         "no_investigation": "لا يوجد تحقيق بعد.",
@@ -828,7 +831,8 @@ STRINGS: dict[str, dict[str, str]] = {
         "hunt_queued_at": "وقت الطلب (توقيت الخليج)",
         "queue_nav": "قائمة الانتظار",
         "queue_title": "قائمة انتظار الذكاء الاصطناعي",
-        "queue_intro": "يأخذ العمّال الآليون مهام الصيد أولاً، ثم حالات الاحتيال، ثم الحالات المشبوهة، الأقدم أولاً. "
+        "queue_intro": "يأخذ العمّال الآليون مهام الصيد أولاً، ثم الحالات المنقولة إلى الأعلى (آخرها نقلاً أولاً)، "
+                       "ثم حالات الاحتيال، ثم الحالات المشبوهة، الأقدم أولاً. "
                        "الحالة التي تُخرجها تبقى خارج القائمة حتى تعيدها من هنا أو ترسلها إلى الذكاء الاصطناعي "
                        "من صفحة الحالة.",
         "queue_agents_off": "العمّال الآليون لا يعملون، لذلك لا يُؤخذ شيء من القائمة حتى يبدأ shaheen up.",
@@ -842,6 +846,8 @@ STRINGS: dict[str, dict[str, str]] = {
         "queue_held_none": "لم تُخرج أي حالة من القائمة.",
         "queue_queued_at": "وقت الإضافة (توقيت الخليج)",
         "queue_elapsed": "المدة",
+        "queue_move_up": "نقل إلى الأعلى",
+        "queue_moved_up": "منقولة إلى الأعلى",
         "queue_take_out": "إخراج",
         "queue_put_back": "إعادة",
         "hunt_finished_at": "وقت الانتهاء (توقيت الخليج)",

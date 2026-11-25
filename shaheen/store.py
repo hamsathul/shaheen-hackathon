@@ -55,7 +55,8 @@ CREATE TABLE IF NOT EXISTS investigations (
     started_at TEXT,
     finished_at TEXT,
     report_json TEXT,
-    error TEXT
+    error TEXT,
+    moved_up_at TEXT
 );
 
 CREATE TABLE IF NOT EXISTS contact_reads (
@@ -133,8 +134,10 @@ CREATE TABLE IF NOT EXISTS meta (
 """
 
 
-# The order the AI workers take queued cases in: fraud before suspicious, oldest first.
-NEXT_CASE = "ORDER BY CASE s.verdict WHEN 'fraud' THEN 0 ELSE 1 END, i.queued_at"
+# The order the AI workers take queued cases in: the ones an analyst moved to the top
+# (the latest moved first), then fraud before suspicious, oldest first.
+NEXT_CASE = ("ORDER BY i.moved_up_at IS NULL, i.moved_up_at DESC, CASE s.verdict WHEN 'fraud' THEN 0 ELSE 1 END,"
+             " i.queued_at")
 
 # How long after its last check a URL may be queued again, by the verdict of
 # that check (None: the check failed). Fraud and analyst-confirmed cases are
@@ -159,9 +162,12 @@ class Store:
     @staticmethod
     def _migrate(db: sqlite3.Connection) -> None:
         """Bring a store made by an earlier version up to this schema: candidates gained
-        a priority, and the watcher claims them by status, priority and age."""
+        a priority, and the watcher claims them by status, priority and age; investigations
+        gained the time an analyst moved one to the top of the queue."""
         if "priority" not in {row["name"] for row in db.execute("PRAGMA table_info(candidates)")}:
             db.execute("ALTER TABLE candidates ADD COLUMN priority INTEGER NOT NULL DEFAULT 0")
+        if "moved_up_at" not in {row["name"] for row in db.execute("PRAGMA table_info(investigations)")}:
+            db.execute("ALTER TABLE investigations ADD COLUMN moved_up_at TEXT")
         db.execute("DROP INDEX IF EXISTS candidates_status")
         db.execute("CREATE INDEX IF NOT EXISTS candidates_claim ON candidates(status, priority, id)")
 
@@ -410,9 +416,9 @@ class Store:
             r["status"] in ("done", "failed", "parked", "held") and r["verdict"] != "fraud" for r in rows))
 
     def claim_investigation(self) -> str | None:
-        """Take the next queued case, fraud before suspicious, oldest first, and mark
-        it running. One UPDATE takes the write lock for the pick and the change, so
-        parallel investigators never take the same case."""
+        """Take the next queued case in NEXT_CASE order and mark it running. One UPDATE
+        takes the write lock for the pick and the change, so parallel investigators never
+        take the same case."""
         with self._conn() as db:
             rows = db.execute(
                 f"""UPDATE investigations SET status = 'running', started_at = ?, finished_at = NULL, error = NULL
@@ -470,12 +476,22 @@ class Store:
     def _waiting_cases(self, status: str, limit: int | None) -> list[dict[str, Any]]:
         with self._conn() as db:
             rows = db.execute(
-                f"""SELECT i.scan_id, i.queued_at, s.url, s.final_url, s.verdict, s.risk_score, s.impersonated_brand
+                f"""SELECT i.scan_id, i.queued_at, i.moved_up_at, s.url, s.final_url, s.verdict, s.risk_score,
+                           s.impersonated_brand
                     FROM investigations i JOIN scans s ON s.id = i.scan_id
                     WHERE i.status = ? {NEXT_CASE} LIMIT ?""",
                 (status, -1 if limit is None else limit),
             ).fetchall()
         return [dict(r) for r in rows]
+
+    def move_up_investigation(self, scan_id: str) -> bool:
+        """Put a queued case at the top of the AI queue, above every case moved up before
+        it (to the microsecond, so two clicks in one second keep their order)."""
+        moved = datetime.now(timezone.utc).isoformat(timespec="microseconds")
+        with self._conn() as db:
+            cur = db.execute("UPDATE investigations SET moved_up_at = ? WHERE scan_id = ? AND status = 'queued'",
+                             (moved, scan_id))
+        return cur.rowcount == 1
 
     def hold_investigation(self, scan_id: str, held: bool) -> bool:
         """Take a queued case out of the AI queue, or put a held one back. It keeps its

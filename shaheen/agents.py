@@ -154,7 +154,7 @@ def _queue_worker(settings: Settings, store: Store, gate: ModelGate, loop: bool,
 def work_queue(loop: bool = False, timeout_s: float = 900, mode: str = "auto", workers: int = 1,
                stop: threading.Event | None = None,
                on_record: Callable[[dict[str, Any]], None] | None = None) -> None:
-    """Work queued hunts, then queued cases (fraud before suspicious), with `workers`
+    """Work queued hunts, then queued cases (in `store.NEXT_CASE` order), with `workers`
     parallel runs until the queues are empty or, with `loop`, until stopped. Each
     filed case record goes to `on_record`. Ctrl-C (in the main thread) or `stop`
     ends the pi runs in flight and puts their hunts and cases back in the queue."""
