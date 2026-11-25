@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Shaheen | {{ t.queue_title }}{% endblock %}
+{% macro case_cells(c) %}
+<td class="time" dir="ltr">{{ c.time }}</td>
+<td class="domain" dir="ltr"><a href="/case/{{ c.id }}">{{ c.domain }}</a></td>
+<td><span class="mark {{ c.verdict }}">{{ c.verdict_label }}</span></td>
+<td class="num score">{{ c.score }}</td>
+<td>{{ c.brand }}</td>
+<td class="muted">{{ c.source }}</td>
+{% endmacro %}
+{% macro case_head() %}
+<th>{{ t.queue_queued_at }}</th><th>{{ t.domain }}</th><th>{{ t.verdict }}</th><th class="num">{{ t.score }}</th><th>{{ t.brand }}</th><th>{{ t.source }}</th>
+{% endmacro %}
+{% block main %}
+<div class="frame feed queue">
+  <aside class="side">
+    <dl class="tally">
+      <div class="tally-row"><dt>{{ t.queue_running }}</dt><dd>{{ live.hunts | length + live.running | length + live.contacts.reading | length }}</dd></div>
+      <div class="tally-row"><dt>{{ t.queue_hunts }}</dt><dd>{{ hunts | length }}</dd></div>
+      <div class="tally-row">
+        <dt>{{ t.queue_cases }}</dt><dd>{{ cases | length }}</dd>
+        <dd class="tally-sub"><span class="chip fraud" aria-hidden="true"></span>{{ cases | selectattr("verdict", "equalto", "fraud") | list | length }} {{ verdicts.fraud }}</dd>
+      </div>
+      <div class="tally-row"><dt>{{ t.queue_contacts }}</dt><dd>{{ contacts_waiting }}</dd></div>
+      <div class="tally-row"><dt>{{ t.queue_held }}</dt><dd>{{ held | length }}</dd></div>
+    </dl>
+    <p class="note">{{ t.queue_intro }}</p>
+    {% if not alive %}<p class="note">{{ t.queue_agents_off }}</p>{% endif %}
+  </aside>
+
+  <div class="work">
+    <h1 class="leads-title">{{ t.queue_title }}</h1>
+    <p class="muted queue-asof">{{ t.stats_as_of }} <bdi dir="ltr">{{ as_of }} GST</bdi></p>
+
+    <section class="queue-part">
+      <h2 class="label recent-title">{{ t.queue_running }}</h2>
+      <table class="ledger scans-table queue-table">
+        <tbody>
+          {% for h in live.hunts %}
+          <tr>
+            <td class="label">{{ t.live_hunt }} {{ h.id }}</td>
+            <td class="mission" colspan="5"><a href="/hunts/{{ h.id }}" dir="auto">{{ h.mission }}</a></td>
+            <td class="num time" dir="ltr">{{ "%d:%02d" | format(h.elapsed_s // 60, h.elapsed_s % 60) }}</td>
+          </tr>
+          {% endfor %}
+          {% for r in live.running %}
+          <tr>
+            <td class="label">{{ t.live_ev_ai }}</td>
+            <td class="domain" dir="ltr" colspan="3"><a href="/case/{{ r.id }}">{{ r.domain }}</a></td>
+            <td><span class="mark {{ r.verdict }}">{{ r.verdict_label }}</span></td>
+            <td class="num score">{{ r.score }}</td>
+            <td class="num time" dir="ltr">{{ "%d:%02d" | format(r.elapsed_s // 60, r.elapsed_s % 60) }}</td>
+          </tr>
+          {% endfor %}
+          {% for r in live.contacts.reading %}
+          <tr>
+            <td class="label">{{ t.live_ev_contacts }}</td>
+            <td class="domain" dir="ltr" colspan="3"><a href="/case/{{ r.id }}">{{ r.domain }}</a></td>
+            <td><span class="mark {{ r.verdict }}">{{ r.verdict_label }}</span></td>
+            <td class="num score">{{ r.score }}</td>
+            <td></td>
+          </tr>
+          {% endfor %}
+          {% if not (live.hunts or live.running or live.contacts.reading) %}
+          <tr class="empty"><td colspan="7">{{ t.queue_running_none }}</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </section>
+
+    {% if hunts %}
+    <section class="queue-part">
+      <h2 class="label recent-title">{{ t.queue_hunts }}</h2>
+      <table class="ledger scans-table hunt-table">
+        <thead>
+          <tr><th class="num">#</th><th>{{ t.hunt_queued_at }}</th><th>{{ t.hunt_mission }}</th><th>{{ t.hunt_theme }}</th></tr>
+        </thead>
+        <tbody>
+          {% for h in hunts %}
+          <tr>
+            <td class="num"><a href="/hunts/{{ h.id }}">{{ h.id }}</a></td>
+            <td class="time" dir="ltr">{{ h.time }}</td>
+            <td class="mission"><a href="/hunts/{{ h.id }}" dir="auto">{{ h.mission }}</a></td>
+            <td>{{ h.theme }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+    {% endif %}
+
+    <section class="queue-part" id="waiting">
+      <h2 class="label recent-title">{{ t.queue_cases }}</h2>
+      <table class="ledger scans-table queue-table">
+        <thead>
+          <tr><th class="num">#</th>{{ case_head() }}<th></th></tr>
+        </thead>
+        <tbody>
+          {% for c in cases %}
+          <tr id="c-{{ c.id }}">
+            <td class="num">{{ loop.index }}</td>
+            {{ case_cells(c) }}
+            <td class="act"><form method="post" action="/queue/{{ c.id }}/hold"><button type="submit" class="quiet">{{ t.queue_take_out }}</button></form></td>
+          </tr>
+          {% else %}
+          <tr class="empty"><td colspan="8">{{ t.queue_cases_none }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <section class="queue-part" id="held">
+      <h2 class="label recent-title">{{ t.queue_held }}</h2>
+      <table class="ledger scans-table queue-table">
+        <thead>
+          <tr>{{ case_head() }}<th></th></tr>
+        </thead>
+        <tbody>
+          {% for c in held %}
+          <tr id="c-{{ c.id }}">
+            {{ case_cells(c) }}
+            <td class="act"><form method="post" action="/queue/{{ c.id }}/release"><button type="submit" class="quiet">{{ t.queue_put_back }}</button></form></td>
+          </tr>
+          {% else %}
+          <tr class="empty"><td colspan="7">{{ t.queue_held_none }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  </div>
+</div>
+{% endblock %}

@@ -400,14 +400,14 @@ class Store:
     def needs_investigation(self, domain: str, verdict: str) -> bool:
         """Whether a new case on this domain should be investigated: when no case on
         it was, or when this one is fraud and every earlier investigation of the
-        domain is finished or parked and was of a case that was not fraud."""
+        domain is finished, parked or held and was of a case that was not fraud."""
         with self._conn() as db:
             rows = db.execute(
                 "SELECT i.status, s.verdict FROM investigations i JOIN scans s ON s.id = i.scan_id WHERE s.domain = ?",
                 (domain,),
             ).fetchall()
         return not rows or (verdict == "fraud" and all(
-            r["status"] in ("done", "failed", "parked") and r["verdict"] != "fraud" for r in rows))
+            r["status"] in ("done", "failed", "parked", "held") and r["verdict"] != "fraud" for r in rows))
 
     def claim_investigation(self) -> str | None:
         """Take the next queued case, fraud before suspicious, oldest first, and mark
@@ -459,16 +459,33 @@ class Store:
             ).fetchall()
         return {r["verdict"]: r["n"] for r in rows}
 
-    def next_investigations(self, limit: int) -> list[dict[str, Any]]:
-        """The queued cases the AI workers take next, in the order they take them."""
+    def next_investigations(self, limit: int | None = None) -> list[dict[str, Any]]:
+        """The queued cases the AI workers take next, in the order they take them (all of them by default)."""
+        return self._waiting_cases("queued", limit)
+
+    def held_investigations(self) -> list[dict[str, Any]]:
+        """The cases an analyst took out of the AI queue, in their old queue order."""
+        return self._waiting_cases("held", None)
+
+    def _waiting_cases(self, status: str, limit: int | None) -> list[dict[str, Any]]:
         with self._conn() as db:
             rows = db.execute(
                 f"""SELECT i.scan_id, i.queued_at, s.url, s.final_url, s.verdict, s.risk_score, s.impersonated_brand
                     FROM investigations i JOIN scans s ON s.id = i.scan_id
-                    WHERE i.status = 'queued' {NEXT_CASE} LIMIT ?""",
-                (limit,),
+                    WHERE i.status = ? {NEXT_CASE} LIMIT ?""",
+                (status, -1 if limit is None else limit),
             ).fetchall()
         return [dict(r) for r in rows]
+
+    def hold_investigation(self, scan_id: str, held: bool) -> bool:
+        """Take a queued case out of the AI queue, or put a held one back. It keeps its
+        queued time, so it goes back to its old place. `shaheen refocus` leaves held
+        cases alone: an analyst took them out."""
+        before, after = ("queued", "held") if held else ("held", "queued")
+        with self._conn() as db:
+            cur = db.execute("UPDATE investigations SET status = ? WHERE scan_id = ? AND status = ?",
+                             (after, scan_id, before))
+        return cur.rowcount == 1
 
     def finished_investigations(self, limit: int) -> list[dict[str, Any]]:
         """The latest finished investigations, newest first, with their report."""

@@ -517,16 +517,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         theme = names[hunt["theme"]][lang == "ar"] if hunt["theme"] in names else ""
         return {"id": hunt["id"], "mission": _defang(hunt["mission"]), "theme": theme}
 
+    def waiting_cases(rows: list[dict[str, Any]], lang: str) -> list[dict[str, Any]]:
+        """Queued or held cases with the brand each imitates, when it was queued and what found it."""
+        sources = store.scan_sources([c["scan_id"] for c in rows])
+        return [{**case_row(c, lang), "brand": c["impersonated_brand"] or "", "time": _gst(c["queued_at"]),
+                 "source": i18n.label(i18n.SOURCES, lang, sources.get(c["scan_id"], "manual"))} for c in rows]
+
     def next_up(lang: str) -> dict[str, Any]:
         """What the AI workers take next: the queued hunts, then the first NEXT cases."""
-        cases = store.next_investigations(NEXT)
-        sources = store.scan_sources([c["scan_id"] for c in cases])
-        return {
-            "hunts": [hunt_row(h, lang) for h in store.hunts_with_status("queued")],
-            "cases": [{**case_row(c, lang), "brand": c["impersonated_brand"] or "", "time": _gst(c["queued_at"]),
-                       "source": i18n.label(i18n.SOURCES, lang, sources.get(c["scan_id"], "manual"))}
-                      for c in cases],
-        }
+        return {"hunts": [hunt_row(h, lang) for h in store.hunts_with_status("queued")],
+                "cases": waiting_cases(store.next_investigations(NEXT), lang)}
 
     def events(lang: str) -> list[dict[str, Any]]:
         """The live panel's timeline, newest first: finished investigations, contacts reads
@@ -772,6 +772,28 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             store.set_investigation(case_id, "queued", queued_at=utcnow(), error=None)
         store.queue_contacts(case_id)
         return RedirectResponse(f"/case/{case_id}?notice=queued", status_code=303)
+
+    @app.get("/queue")
+    def queue(request: Request) -> Response:
+        """Everything the AI workers have to do, in the order they take it."""
+        lang = lang_of(request)
+        hunts_waiting = [{**hunt_row(h, lang), "time": _gst(h["queued_at"])} for h in store.hunts_with_status("queued")]
+        return page(request, "queue.html", live=activity(lang), alive=investigator_alive(), hunts=hunts_waiting,
+                    cases=waiting_cases(store.next_investigations(), lang),
+                    held=waiting_cases(store.held_investigations(), lang),
+                    contacts_waiting=store.contacts_activity()[0], as_of=_gst(utcnow()))
+
+    @app.post("/queue/{case_id}/hold")
+    def hold(case_id: str) -> Response:
+        case_folder(case_id)
+        store.hold_investigation(case_id, held=True)
+        return RedirectResponse(f"/queue#c-{case_id}", status_code=303)
+
+    @app.post("/queue/{case_id}/release")
+    def release(case_id: str) -> Response:
+        case_folder(case_id)
+        store.hold_investigation(case_id, held=False)
+        return RedirectResponse(f"/queue#c-{case_id}", status_code=303)
 
     @app.get("/lang/{code}")
     def switch_language(code: str, next: str | None = None) -> Response:

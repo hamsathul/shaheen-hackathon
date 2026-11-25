@@ -156,7 +156,7 @@
       {% else %}
       {% if inv.illustrative %}<p class="note">{{ t.illustrative }}</p>{% endif %}
       {% if inv.error %}<p class="error">{{ inv.error }}</p>{% endif %}
-      {% if inv.status == "parked" %}<p class="note">{{ t.inv_parked.format(button=t.reinvestigate) }}</p>{% endif %}
+      {% if inv.status in ("parked", "held") %}<p class="note">{{ t["inv_" ~ inv.status].format(button=t.reinvestigate) }}</p>{% endif %}
       {% if inv.policy_violation %}<p class="alarm"><span class="stamp solid">{{ t.policy_violation }}</span></p>{% endif %}
       {% if inv.summary_en or inv.summary_ar %}
       <div class="summary">

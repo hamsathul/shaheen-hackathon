@@ -245,6 +245,17 @@ def test_refocus_applies_the_uae_focus_to_what_is_already_waiting(scanner):
     assert store.investigation_queue() == {"suspicious": 1}
 
 
+def test_a_case_taken_out_of_the_queue_stays_out_until_put_back_in_its_old_place(scanner):
+    store = scanner.store
+    first, second = (scanner.scan(url).id for url in ("boseuae.test", "jblsharjah.test"))
+    assert store.hold_investigation(first, held=True) and not store.hold_investigation(first, held=True)
+    focus.refocus(store)
+    assert [c["scan_id"] for c in store.next_investigations()] == [second]
+    assert [c["scan_id"] for c in store.held_investigations()] == [first]
+    assert store.hold_investigation(first, held=False)
+    assert [c["scan_id"] for c in store.next_investigations()] == [first, second]
+
+
 PAGE = ("<html><head><title>Traffic fine</title></head><body><p>Pay your fine today. Call +971 50 123 4567 or "
         '<a href="https://wa.me/971501234567">message us</a>. Transfer to AE07 0331 2345 6789 0123 456. '
         "Email help@fines-uae.test</p>" + "<p>Official notice.</p>" * 30 + "</body></html>")

@@ -32,6 +32,7 @@ Officers and analysts work the results in the dashboard (`shaheen dashboard`), i
 - **Reports:** every case's evidence report with filters, and a threat summary for the police (today, 24 hours or 7 days) that prints on A4; `shaheen summary` writes the same report as one file.
 - **Maps leads:** Google Maps listings that use a brand's name with an off-brand website or a fake helpline number.
 - **Hunts:** a box that sends the AI hunter on a mission, optionally narrowed to one UAE scam theme, and a page per hunt with its report, every domain it found with Shaheen's latest check, and its tool calls.
+- **Queue:** everything the AI workers have to do, in the order they take it: what is running, the hunts waiting and every case waiting. An analyst can take a case out of the queue and put it back in its old place; `shaheen refocus` leaves a case taken out alone.
 
 `shaheen up` runs all of it in one process: the watcher finds and scores candidates, two AI workers take queued hunts first and then the flagged cases (fraud first), and the dashboard shows each investigation's tool calls as they happen. If the model goes away, the investigators wait for it and claim nothing; a run cut off by a lost connection goes back in the queue.
 
