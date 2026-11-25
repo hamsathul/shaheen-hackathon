@@ -556,6 +556,30 @@ class Store:
         data["result"] = json.loads(data.pop("result_json")) if data.get("result_json") else None
         return data
 
+    def contacts_activity(self) -> tuple[int, list[dict[str, Any]]]:
+        """How many contacts reads are queued, and the ones being read with their case."""
+        with self._conn() as db:
+            waiting = db.execute("SELECT COUNT(*) FROM contact_reads WHERE status = 'queued'").fetchone()[0]
+            reading = db.execute(
+                """SELECT c.scan_id, s.url, s.final_url, s.verdict, s.risk_score
+                   FROM contact_reads c JOIN scans s ON s.id = c.scan_id WHERE c.status = 'running'""").fetchall()
+        return waiting, [dict(r) for r in reading]
+
+    def recent_contacts(self, limit: int) -> list[dict[str, Any]]:
+        """The latest finished contacts reads, newest first, with their case and result."""
+        with self._conn() as db:
+            rows = db.execute(
+                """SELECT c.scan_id, c.status, c.finished_at, c.result_json, s.url, s.final_url, s.verdict, s.risk_score
+                   FROM contact_reads c JOIN scans s ON s.id = c.scan_id
+                   WHERE c.status IN ('done', 'skipped', 'failed') ORDER BY c.finished_at DESC, c.rowid DESC LIMIT ?""",
+                (limit,)).fetchall()
+        found = []
+        for row in rows:
+            data = dict(row)
+            data["result"] = json.loads(data.pop("result_json")) if data.get("result_json") else {}
+            found.append(data)
+        return found
+
     def requeue_running_contacts(self) -> int:
         """Return contacts reads left 'running' by a stopped run to the queue."""
         with self._conn() as db:

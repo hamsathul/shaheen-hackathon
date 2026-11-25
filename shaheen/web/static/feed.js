@@ -170,7 +170,12 @@
     var runs = document.createDocumentFragment();
     if (a.model_down) runs.appendChild(el("p", "live-warning", T.live_waiting_note));
     a.running.forEach(function (run) { runs.appendChild(runBlock(run)); });
-    if (!a.running.length && !a.model_down) {
+    a.contacts.reading.forEach(function (c) {
+      var line = el("p", "live-contacts", T.live_contacts_reading + " ");
+      line.appendChild(caseLink(c));
+      runs.appendChild(line);
+    });
+    if (!a.running.length && !a.contacts.reading.length && !a.model_down) {
       runs.appendChild(el("p", "live-quiet", a.state === "idle" ? T.live_idle_note : T.live_off_note));
     }
     var holder = live.querySelector('[data-live="runs"]');
@@ -184,12 +189,23 @@
       item.appendChild(document.createTextNode(" " + q.label));
       queue.appendChild(item);
     });
+    if (a.contacts.waiting) {
+      var reads = el("span", "queue-item");
+      reads.appendChild(el("b", null, String(a.contacts.waiting)));
+      reads.appendChild(document.createTextNode(" " + T.live_contacts_waiting));
+      queue.appendChild(reads);
+    }
     live.querySelector('[data-live="queue"]').replaceChildren(queue);
 
     var recent = document.createDocumentFragment();
     a.recent.forEach(function (r) { recent.appendChild(recentItem(r)); });
     if (!a.recent.length) recent.appendChild(el("li", "live-quiet", T.live_no_recent));
     live.querySelector('[data-live="recent"]').replaceChildren(recent);
+
+    var reads = document.createDocumentFragment();
+    a.contacts.recent.forEach(function (r) { reads.appendChild(recentItem(r)); });
+    if (!a.contacts.recent.length) reads.appendChild(el("li", "live-quiet", T.live_contacts_none));
+    live.querySelector('[data-live="contacts"]').replaceChildren(reads);
     tickElapsed();
   }
 

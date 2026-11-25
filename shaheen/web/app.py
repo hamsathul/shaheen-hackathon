@@ -382,7 +382,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def ai_line(t: dict[str, str], live: dict[str, Any]) -> str:
         """The AI investigator in one plain line, with its queue."""
         if live["state"] == "running":
-            n = len(live["running"])
+            n = len(live["running"]) + len(live["contacts"]["reading"])
             line = t[{1: "simple_ai_one", 2: "simple_ai_two"}.get(n, "simple_ai_many")].format(n=n)
         else:
             line = t[{"waiting": "simple_ai_paused", "idle": "simple_ai_idle"}.get(live["state"], "simple_ai_off")]
@@ -447,6 +447,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                            "done": s["done"], "error": s["error"]} for s in tools[-LIVE_TOOLS:]],
             })
         queued = store.investigation_queue()
+        waiting, reading = store.contacts_activity() if alive else (0, [])
+        t = i18n.STRINGS[lang]
+        reads = [{**case_row(row, lang), "time": _gst(row["finished_at"]), "type": contacts_outcome(row, t),
+                  "summary": _defang(f"{t['contacts_claims_to_be']}: {row['result']['claims_to_be']}")
+                  if row["result"].get("claims_to_be") else ""}
+                 for row in store.recent_contacts(RECENT)]
         recent = []
         for row in store.finished_investigations(RECENT):
             report = row["report"] if isinstance(row["report"], dict) else {}
@@ -458,14 +464,23 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 "summary": _defang(investigator.first_sentence(str(summary or ""))),
             })
         return {
-            "state": "running" if running else "waiting" if model_down else "idle" if alive else "off",
+            "state": "running" if running or reading else "waiting" if model_down else "idle" if alive else "off",
             "model_down": model_down,
             "model": settings.llm_model,
             "running": running,
             "queue": [{"verdict": v, "label": i18n.label(i18n.VERDICTS, lang, v), "n": queued.get(v, 0)}
                       for v in ("fraud", "suspicious")],
+            "contacts": {"waiting": waiting, "reading": [case_row(r, lang) for r in reading], "recent": reads},
             "recent": recent,
         }
+
+    def contacts_outcome(row: dict[str, Any], t: dict[str, str]) -> str:
+        """What one contacts read found, in a few words: the count of each kind, or why it found nothing."""
+        if row["status"] != "done":
+            return t[f"live_contacts_{row['status']}"]
+        counts = [f"{t['contacts_' + field]} {len(row['result'][field])}"
+                  for field in contacts.IDENTIFIERS if row["result"].get(field)]
+        return t["list_sep"].join(counts) or t["live_contacts_nothing"]
 
     def contacts_view(result: ScanResult) -> dict[str, Any] | None:
         """The case's contacts read, each number, address or account with the other

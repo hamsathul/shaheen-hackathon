@@ -287,6 +287,7 @@ input::placeholder { color: var(--muted); }
 
 .live-warning { margin: 0 0 12px; padding: 6px 10px; border: 1px solid var(--ink); border-inline-start-width: 4px; }
 .live-quiet { color: var(--muted); }
+.live-contacts { margin: 6px 0; color: var(--ink-2); }
 
 .recent-title { margin: 30px 0 0; padding-block-end: 8px; border-block-end: 1px solid var(--ink); }
 .recent { margin: 0; padding: 0; list-style: none; }

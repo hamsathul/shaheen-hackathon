@@ -1,8 +1,10 @@
 """The AI agents' queue: parallel workers that take a queued hunt first
-(`shaheen.hunter`), else a queued contacts read (`shaheen.contacts`, one quick
-model call), else the next flagged case (`shaheen.investigator`), fraud before
-suspicious. All of them share one view of the model endpoint and claim nothing
-while it does not answer.
+(`shaheen.hunter`), else the next flagged case (`shaheen.investigator`), fraud
+before suspicious. The first worker takes a queued contacts read
+(`shaheen.contacts`, one quick model call) before a case, the others only when
+no case is waiting, so a backlog of reads never stops the investigations. All
+of them share one view of the model endpoint and claim nothing while it does
+not answer.
 """
 
 from __future__ import annotations
@@ -98,7 +100,7 @@ def _work_contacts(settings: Settings, store: Store, scan_id: str) -> None:
 
 
 def _queue_worker(settings: Settings, store: Store, gate: ModelGate, loop: bool, timeout_s: float, mode: str,
-                  stop: threading.Event, on_record: Callable[[dict[str, Any]], None]) -> None:
+                  stop: threading.Event, on_record: Callable[[dict[str, Any]], None], contacts_first: bool) -> None:
     while not stop.is_set():
         if not gate.ready(stop):
             continue
@@ -110,11 +112,13 @@ def _queue_worker(settings: Settings, store: Store, gate: ModelGate, loop: bool,
                 log.info("stopped hunt %d: its run was ended and the hunt is back in the queue", hunt_id)
                 return
             continue
-        read_id = store.claim_contacts()
+        read_id = store.claim_contacts() if contacts_first else None
+        scan_id = None if read_id else store.claim_investigation()
+        if scan_id is None and read_id is None:
+            read_id = store.claim_contacts()
         if read_id is not None:
             _work_contacts(settings, store, read_id)
             continue
-        scan_id = store.claim_investigation()
         if scan_id is None:
             if not loop:
                 return
@@ -177,7 +181,7 @@ def work_queue(loop: bool = False, timeout_s: float = 900, mode: str = "auto", w
                 on_record(record)
 
     threads = [threading.Thread(target=_queue_worker, name=f"agent-{n}", daemon=True,
-                                args=(settings, store, gate, loop, timeout_s, mode, stop, report))
+                                args=(settings, store, gate, loop, timeout_s, mode, stop, report, n == 1))
                for n in range(1, max(1, workers) + 1)]
     for thread in threads:
         thread.start()
