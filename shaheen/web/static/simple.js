@@ -115,7 +115,7 @@
       .then(function () { setTimeout(refresh, 5000); });
   }
 
-  setTimeout(refresh, 5000);
+  refresh();  // at once: the page arrives without the live line, which only this draws
 
   var form = document.getElementById("scan-form");
   form.addEventListener("submit", function () {
