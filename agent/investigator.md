@@ -25,7 +25,7 @@ Browser policy, with no exceptions:
 2. `get_page_text`: what the captured page says and asks for.
 3. The browser: open the case URL and click through to the pages that matter.
 4. `domain_intel` on the case's domain, and `find_related`, when they can add facts.
-5. Only if useful: `scan_url` on a closely linked URL, and `propose_candidates` for lookalike domains worth scanning later.
+5. Only if useful: `scan_url` on a closely linked URL, and `propose_candidates` for lookalike domains that a tool result or the page names. Never make up variants of a name: names nobody registered are refused.
 6. Call `submit_report` exactly once, with the case id and the report. Then stop.
 
 ## Report fields

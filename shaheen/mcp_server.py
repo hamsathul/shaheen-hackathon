@@ -7,7 +7,8 @@ and the bounded writes.
 
 Everything is read-only except these bounded writes: `scan_url` stores a
 deterministic scan (at most 10 per process, public hosts only),
-`propose_candidates` queues domains for the watcher (at most 50 per process),
+`propose_candidates` queues domains that exist in DNS for the watcher (at most
+50 looked up per process),
 and `submit_report` or `submit_hunt_report` files one report for the case or
 hunt being worked. A hunt also records each domain it scans or queues.
 """
@@ -19,13 +20,14 @@ import json
 import os
 import re
 import zipfile
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
 import httpx
 from mcp.server.mcpserver import MCPServer
 
-from shaheen import brands, focus, hunter, investigator, themes
+from shaheen import brands, focus, hunter, intel, investigator, themes
 from shaheen.collectors import Throttle, ctlogs, excluded, newdomains
 from shaheen.config import Settings, load_settings
 from shaheen.domains import host_of, is_ip, normalize_url, public_suffix, refang, registrable_domain
@@ -38,6 +40,7 @@ from shaheen.store import Store
 SCAN_CAP = 10
 INTEL_CAP = 20
 PROPOSE_CAP = 50
+DNS_WORKERS = 8
 CERT_CAP = 4  # crt.sh is slow and shared: a hunt gets a few certificate searches
 CERT_TERM_MIN = 6  # shorter terms match far too many certificates
 CERT_TIMEOUT = 45.0  # three tries and their back-off stay within pi's 180 s tool timeout
@@ -162,15 +165,19 @@ def build_server(settings: Settings | None = None, case_id: str | None = None,
     def propose_candidates(domains: list[str], reason: str) -> str:
         """Queue domains you suspect belong to the same operation for a later scan.
 
+        Only names seen in a tool result: each one is looked up in DNS and a name
+        nobody registered is refused (not_registered), so never make up variants.
         Up to 50 per session; invalid names and official domains are rejected."""
-        accepted = known = rejected = 0
-        for raw in domains:
-            domain = clean_domain(raw)
-            if domain is None or used["proposed"] >= PROPOSE_CAP \
-                    or brands.allowlist([normalize_url(domain)]) is not None:
-                rejected += 1
-                continue
-            used["proposed"] += 1
+        valid = list(dict.fromkeys(d for d in map(clean_domain, domains)
+                                   if d is not None and brands.allowlist([normalize_url(d)]) is None))
+        room = max(PROPOSE_CAP - used["proposed"], 0)
+        rejected = len(domains) - len(valid[:room])
+        valid = valid[:room]
+        used["proposed"] += len(valid)
+        with ThreadPoolExecutor(max_workers=DNS_WORKERS) as pool:
+            exists = list(pool.map(lambda d: intel.in_dns(registrable_domain(d)), valid))
+        accepted = known = 0
+        for domain in (d for d, found in zip(valid, exists, strict=True) if found):
             url = normalize_url(domain)
             if store.enqueue(url, registrable_domain(domain), source, str(reason)[:300],
                              focus.priority(domain, source)):
@@ -179,8 +186,8 @@ def build_server(settings: Settings | None = None, case_id: str | None = None,
                 known += 1
             if hunt_id is not None:
                 store.add_hunt_find(hunt_id, url, registrable_domain(domain), str(reason)[:300])
-        return _dumps({"accepted": accepted, "already_known": known, "rejected": rejected,
-                       "remaining_this_session": PROPOSE_CAP - used["proposed"]})
+        return _dumps({"accepted": accepted, "already_known": known, "not_registered": exists.count(False),
+                       "rejected": rejected, "remaining_this_session": PROPOSE_CAP - used["proposed"]})
 
     if hunt_id is None:
         _add_case_tools(server, store, settings, case_id, used)

@@ -40,7 +40,7 @@ The model gets no shell and no file tools. pi declares only the tools of two MCP
 | `domain_intel(domain)` | RDAP/WHOIS, DNS, hosting network and TLS certificate facts (`intel.gather`, cached 24 h) | valid public domain names only; 20 per session |
 | `find_related(id)` | Other stored domains sharing a catalogue or admin fingerprint: defanged domain, shared kind, derived cluster ID, verdict | never returns raw fingerprint values |
 | `scan_url(url)` | The deterministic `Scanner.scan`, browser off, stored like any scan | public http(s) hosts only (no private, loopback or single-label hosts); 10 per session |
-| `propose_candidates(domains, reason)` | Queues domains for the watcher (`source="investigator"`) | syntactically valid public domains, official domains refused; 50 per session |
+| `propose_candidates(domains, reason)` | Queues domains for the watcher (`source="investigator"`) | syntactically valid public domains, official domains refused; each registrable domain is looked up in DNS (NS) and a name that answers NXDOMAIN, or whose lookup fails, is refused as `not_registered`, so a model cannot queue names it made up; 50 lookups per session |
 | `submit_report(id, report)` | Validates the report and saves it | only for the case being investigated, once per session |
 
 ### The browser

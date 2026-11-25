@@ -43,7 +43,10 @@ def test_a_hunt_searches_new_domains_and_records_what_it_queues(tmp_path, monkey
     assert [d["host"] for d in found["domains"]] == ["uaevisa-renew.test", "dubai-visa-centre.test"]
     assert found["domains"][0]["themes"] == ["visa_residency"] and len(downloads) == 1
 
-    _call(server, "propose_candidates", domains=["uaevisa-renew.test"], reason="visa renewal with a UAE name")
+    monkeypatch.setattr(mcp_server.intel, "in_dns", lambda domain: domain == "uaevisa-renew.test")
+    queued = json.loads(_call(server, "propose_candidates", domains=["uaevisa-renew.test", "uaevisa-renewal.test"],
+                              reason="visa renewal with a UAE name"))
+    assert (queued["accepted"], queued["not_registered"]) == (1, 1)
     assert [(f["domain"], f["reason"]) for f in store.hunt_finds(hunt_id)] == [
         ("uaevisa-renew.test", "visa renewal with a UAE name")]
     assert store.claim_candidate()["source"] == "hunt"

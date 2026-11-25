@@ -285,6 +285,12 @@ def hosting(domain: str, host: str) -> dict[str, Any]:
     return facts
 
 
+def in_dns(domain: str) -> bool:
+    """Whether a registrable domain exists in DNS. A name nobody registered answers
+    NXDOMAIN; a lookup that fails counts as not found."""
+    return _resolve(domain, "NS")[1] in ("ok", "noanswer")
+
+
 def _resolve(name: str, rdtype: str) -> tuple[list[str], str]:
     """(records as text, status), status being ok, nxdomain, noanswer or error."""
     resolver = dns.resolver.Resolver()
