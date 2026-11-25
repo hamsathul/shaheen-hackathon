@@ -5,9 +5,11 @@ from datetime import datetime, timedelta, timezone
 import pytest
 import yaml
 
-from shaheen import intel, pipeline
+from shaheen import focus, intel, pipeline
+from shaheen.collectors import enqueue_host
 from shaheen.config import DATA_DIR, Settings
 from shaheen.domains import registrable_domain
+from shaheen.models import ScanOptions
 from shaheen.pipeline import Scanner
 from shaheen.reasons import LABELS
 from shaheen.resolve import SHORTENERS, Hop, Resolution
@@ -204,3 +206,27 @@ def test_a_domain_is_investigated_again_only_when_it_turns_fraud(scanner):
     assert scanner.store.needs_investigation("boseuae.test", "fraud")
     assert not scanner.store.needs_investigation("boseuae.test", "suspicious")
 
+
+def test_sweep_finds_outside_the_uae_focus_wait_and_their_cases_are_parked(scanner):
+    store = scanner.store
+    away = scanner.scan("kuwait-bose-store.test", ScanOptions(source="storefronts"))
+    home = scanner.scan("boseuae.test", ScanOptions(source="storefronts"))
+    by_hand = scanner.scan("kuwait-jbl-store.test")
+    assert [store.get_investigation(r.id)["status"] for r in (away, home, by_hand)] == ["parked", "queued", "queued"]
+    for host, source in [("kuwait-bose-store.test", "storefronts"), ("boseuae.test", "storefronts"),
+                         ("garden-tools.test", "maps")]:
+        enqueue_host(store, host, source)
+    assert [store.claim_candidate()["domain"] for _ in range(3)] == [
+        "boseuae.test", "garden-tools.test", "kuwait-bose-store.test"]
+
+
+def test_refocus_applies_the_uae_focus_to_what_is_already_waiting(scanner):
+    store = scanner.store
+    for host in ("kuwait-bose-store.test", "boseuae.test"):
+        store.enqueue(f"https://{host}/", host, "storefronts")
+        row = store.claim_candidate()
+        store.finish_candidate(row["id"], "done", scanner.scan(row["url"]).id)
+    store.enqueue("https://kuwait-jbl-store.test/", "kuwait-jbl-store.test", "storefronts")
+    counts = {"links_first": 0, "links_later": 1, "cases_queued": 1, "cases_parked": 1}
+    assert focus.refocus(store) == counts and focus.refocus(store) == counts
+    assert store.investigation_queue() == {"suspicious": 1}

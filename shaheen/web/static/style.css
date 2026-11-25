@@ -153,7 +153,7 @@ main { max-width: var(--max); margin: 0 auto; padding-block: 26px 56px; }
 .state.running { background: var(--ink); color: #fff; }
 .state.waiting, .state.queued { border-color: var(--ink); border-inline-start-width: 4px; }
 .state.idle, .state.done { padding-inline: 0; }
-.state.off { padding-inline: 0; color: var(--muted); }
+.state.off, .state.parked { padding-inline: 0; color: var(--muted); }
 .state.failed { border-color: var(--ink); border-style: dashed; }
 
 .label:lang(ar), .mark:lang(ar), .stamp:lang(ar), .state:lang(ar), .who:lang(ar), .verdict-label:lang(ar) {

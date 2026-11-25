@@ -11,11 +11,11 @@ from pathlib import Path
 
 import uvicorn
 
-from shaheen import (__version__, agents, batch, demo, evidence, hunter, investigator, mcp_server, summary, themes,
-                     up, watch)
+from shaheen import (__version__, agents, batch, demo, evidence, focus, hunter, investigator, mcp_server, summary,
+                     themes, up, watch)
 from shaheen.capture import CaptureError
 from shaheen.config import load_settings
-from shaheen.domains import normalize_url, registrable_domain
+from shaheen.domains import host_of, normalize_url, registrable_domain
 from shaheen.models import ScanOptions, ScanResult
 from shaheen.pipeline import Scanner
 from shaheen.store import Store
@@ -126,9 +126,18 @@ def cmd_enqueue(args: argparse.Namespace) -> int:
     added = 0
     for target in targets:
         url = normalize_url(target)
-        added += store.enqueue(url, registrable_domain(url), args.source)
+        added += store.enqueue(url, registrable_domain(url), args.source,
+                               priority=focus.priority(host_of(url), args.source))
     known = len(targets) - added
     print(f"queued {added} of {len(targets)}" + (f" ({known} already queued or scanned)" if known else ""))
+    return 0
+
+
+def cmd_refocus(args: argparse.Namespace) -> int:
+    counts = focus.refocus(Store(load_settings().db_path))
+    print(f"queued links: {counts['links_first']} in the UAE focus first, {counts['links_later']} after them")
+    print(f"waiting investigations: {counts['cases_queued']} queued for the AI, "
+          f"{counts['cases_parked']} parked outside the UAE focus")
     return 0
 
 
@@ -416,6 +425,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("target", help="a URL, or a text file (one per line) or CSV with a url column")
     p.add_argument("--source", default="manual", help="source label (default: manual)")
     p.set_defaults(func=cmd_enqueue)
+
+    p = sub.add_parser("refocus", help="put the queued links and cases of the UAE focus first, park the rest")
+    p.set_defaults(func=cmd_refocus)
     add_dashboard_commands(sub)
 
     _add_agent_commands(sub)

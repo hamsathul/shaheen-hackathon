@@ -156,7 +156,7 @@ def run_collectors(store: Store, specs: dict[str, Collector], names: list[str], 
 
 def _scan_one(scanner: Scanner, store: Store, row: Any, options: ScanOptions) -> None:
     try:
-        result = scanner.scan(row["url"], options)
+        result = scanner.scan(row["url"], replace(options, source=row["source"]))
     except Exception:  # noqa: BLE001 - one scan never stops the loop
         log.exception("scan failed: %s [%s]", defang_text(row["url"]), row["source"])
         store.finish_candidate(row["id"], "error")

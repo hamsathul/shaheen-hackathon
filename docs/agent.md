@@ -1,6 +1,6 @@
 # The investigator
 
-After the deterministic scorer flags a case (`fraud` or `suspicious`), the pipeline queues it for investigation. A local model, driven by the [pi](https://pi.dev) agent harness, then works the case like an analyst: it reads the stored evidence, browses the suspect site, checks the domain, looks for related domains, proposes new candidates and files a structured report. Nothing goes to an AI cloud: the model is the OpenAI-compatible endpoint in `LLM_BASE_URL` (on the demo box, llama.cpp `llama-server` on `127.0.0.1:8080`).
+After the deterministic scorer flags a case (`fraud` or `suspicious`), the pipeline queues it for investigation, or parks it when it is outside the UAE focus (README, UAE focus); a parked case goes to the queue from its case page. A local model, driven by the [pi](https://pi.dev) agent harness, then works the case like an analyst: it reads the stored evidence, browses the suspect site, checks the domain, looks for related domains, proposes new candidates and files a structured report. Nothing goes to an AI cloud: the model is the OpenAI-compatible endpoint in `LLM_BASE_URL` (on the demo box, llama.cpp `llama-server` on `127.0.0.1:8080`).
 
 ```sh
 uv run shaheen investigate <case-id>                 # auto: pi if available, else one-shot

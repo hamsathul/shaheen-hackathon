@@ -45,6 +45,7 @@ class ScanOptions:
     storefront: bool = True
     write_evidence: bool = True
     capture_dir: Path | None = None
+    source: str | None = None  # the collector that queued the link; None for a link scanned by hand
 
 
 @dataclass

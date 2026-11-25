@@ -21,7 +21,7 @@ from typing import TypeVar
 import dns.exception
 import dns.resolver
 
-from shaheen import brands, signals
+from shaheen import brands, focus, signals
 from shaheen.brands import Brand
 from shaheen.domains import registrable_domain
 from shaheen.store import Store
@@ -94,8 +94,9 @@ def is_registered(domain: str, resolver: dns.resolver.Resolver) -> bool | None:
 
 
 def enqueue_host(store: Store, host: str, source: str, note: str = "") -> bool:
-    """Queue `https://<host>/` once; False when it was already queued or scanned."""
-    return store.enqueue(f"https://{host}/", registrable_domain(host), source, note)
+    """Queue `https://<host>/` once, behind the links in the UAE focus when it is
+    outside it; False when it was already queued or scanned."""
+    return store.enqueue(f"https://{host}/", registrable_domain(host), source, note, focus.priority(host, source))
 
 
 def rotation(store: Store, key: str, items: Sequence[T], limits: Limits) -> Iterator[T]:

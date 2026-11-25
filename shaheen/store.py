@@ -42,9 +42,9 @@ CREATE TABLE IF NOT EXISTS candidates (
     status TEXT NOT NULL DEFAULT 'queued',
     added_at TEXT NOT NULL,
     scanned_at TEXT,
-    scan_id TEXT
+    scan_id TEXT,
+    priority INTEGER NOT NULL DEFAULT 0
 );
-CREATE INDEX IF NOT EXISTS candidates_status ON candidates(status, id);
 
 CREATE TABLE IF NOT EXISTS investigations (
     scan_id TEXT PRIMARY KEY,
@@ -141,6 +141,16 @@ class Store:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self._conn() as db:
             db.executescript(SCHEMA)
+            self._migrate(db)
+
+    @staticmethod
+    def _migrate(db: sqlite3.Connection) -> None:
+        """Bring a store made by an earlier version up to this schema: candidates gained
+        a priority, and the watcher claims them by status, priority and age."""
+        if "priority" not in {row["name"] for row in db.execute("PRAGMA table_info(candidates)")}:
+            db.execute("ALTER TABLE candidates ADD COLUMN priority INTEGER NOT NULL DEFAULT 0")
+        db.execute("DROP INDEX IF EXISTS candidates_status")
+        db.execute("CREATE INDEX IF NOT EXISTS candidates_claim ON candidates(status, priority, id)")
 
     @contextmanager
     def _conn(self) -> Iterator[sqlite3.Connection]:
@@ -214,14 +224,15 @@ class Store:
 
     # candidate queue
 
-    def enqueue(self, url: str, domain: str, source: str, note: str = "") -> bool:
-        """Queue a URL; returns False when it is already queued, or was checked too
-        recently to check again (`RECHECK_AFTER`), or was found fraud or confirmed."""
+    def enqueue(self, url: str, domain: str, source: str, note: str = "", priority: int = 0) -> bool:
+        """Queue a URL, to be scanned after every queued URL of a lower `priority`
+        (`focus.priority`); returns False when it is already queued, or was checked
+        too recently to check again (`RECHECK_AFTER`), or was found fraud or confirmed."""
         now = datetime.now(timezone.utc)
         with self._conn() as db:
             cur = db.execute(
-                "INSERT OR IGNORE INTO candidates (url, domain, source, note, added_at) VALUES (?,?,?,?,?)",
-                (url, domain, source, note, now.isoformat(timespec="seconds")),
+                "INSERT OR IGNORE INTO candidates (url, domain, source, note, added_at, priority) VALUES (?,?,?,?,?,?)",
+                (url, domain, source, note, now.isoformat(timespec="seconds"), priority),
             )
             if cur.rowcount == 1:
                 return True
@@ -235,15 +246,16 @@ class Store:
                     or now - datetime.fromisoformat(row["scanned_at"]) < RECHECK_AFTER[row["verdict"]]):
                 return False
             db.execute(
-                "UPDATE candidates SET status = 'queued', source = ?, note = ?, added_at = ? WHERE id = ?",
-                (source, note, now.isoformat(timespec="seconds"), row["id"]),
+                "UPDATE candidates SET status = 'queued', source = ?, note = ?, added_at = ?, priority = ?"
+                " WHERE id = ?",
+                (source, note, now.isoformat(timespec="seconds"), priority, row["id"]),
             )
         return True
 
     def claim_candidate(self) -> sqlite3.Row | None:
         with self._conn() as db:
             row = db.execute(
-                "SELECT * FROM candidates WHERE status = 'queued' ORDER BY id LIMIT 1"
+                "SELECT * FROM candidates WHERE status = 'queued' ORDER BY priority, id LIMIT 1"
             ).fetchone()
             if row is None:
                 return None
@@ -256,6 +268,16 @@ class Store:
                 "UPDATE candidates SET status = ?, scan_id = ?, scanned_at = ? WHERE id = ?",
                 (status, scan_id, utcnow(), candidate_id),
             )
+
+    def queued_candidates(self) -> list[sqlite3.Row]:
+        with self._conn() as db:
+            return db.execute("SELECT id, url, source, priority FROM candidates WHERE status = 'queued'").fetchall()
+
+    def set_priorities(self, priorities: dict[int, int]) -> None:
+        """Change the priority of these candidates (by id) that are still queued."""
+        with self._conn() as db:
+            db.executemany("UPDATE candidates SET priority = ? WHERE id = ? AND status = 'queued'",
+                           [(p, i) for i, p in priorities.items()])
 
     def requeue_stale(self) -> int:
         """Return candidates left 'scanning' by a crashed run to the queue."""
@@ -338,25 +360,41 @@ class Store:
 
     # investigations
 
-    def queue_investigation(self, scan_id: str) -> bool:
+    def queue_investigation(self, scan_id: str, parked: bool = False) -> bool:
+        """Queue a case for the investigator, or park it (outside the UAE focus) until
+        an analyst sends it on from the case page."""
         with self._conn() as db:
             cur = db.execute(
-                "INSERT OR IGNORE INTO investigations (scan_id, status, queued_at) VALUES (?, 'queued', ?)",
-                (scan_id, utcnow()),
+                "INSERT OR IGNORE INTO investigations (scan_id, status, queued_at) VALUES (?, ?, ?)",
+                (scan_id, "parked" if parked else "queued", utcnow()),
             )
         return cur.rowcount == 1
+
+    def waiting_investigations(self) -> dict[str, str]:
+        """The status, queued or parked, of each investigation not started yet."""
+        with self._conn() as db:
+            rows = db.execute(
+                "SELECT scan_id, status FROM investigations WHERE status IN ('queued', 'parked')").fetchall()
+        return {r["scan_id"]: r["status"] for r in rows}
+
+    def move_investigations(self, states: dict[str, str]) -> None:
+        """Queue or park these investigations (scan id to status) that are still waiting."""
+        with self._conn() as db:
+            db.executemany(
+                "UPDATE investigations SET status = ? WHERE scan_id = ? AND status IN ('queued', 'parked')",
+                [(s, i) for i, s in states.items()])
 
     def needs_investigation(self, domain: str, verdict: str) -> bool:
         """Whether a new case on this domain should be investigated: when no case on
         it was, or when this one is fraud and every earlier investigation of the
-        domain is finished and was of a case that was not fraud."""
+        domain is finished or parked and was of a case that was not fraud."""
         with self._conn() as db:
             rows = db.execute(
                 "SELECT i.status, s.verdict FROM investigations i JOIN scans s ON s.id = i.scan_id WHERE s.domain = ?",
                 (domain,),
             ).fetchall()
         return not rows or (verdict == "fraud" and all(
-            r["status"] in ("done", "failed") and r["verdict"] != "fraud" for r in rows))
+            r["status"] in ("done", "failed", "parked") and r["verdict"] != "fraud" for r in rows))
 
     def claim_investigation(self) -> str | None:
         """Take the next queued case, fraud before suspicious, oldest first, and mark

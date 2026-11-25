@@ -109,7 +109,7 @@ def _figures(h: dict[str, int], ai: dict[str, Any], names: dict[str, str], flagg
     def item(label: str, value: Any, tone: str = "") -> dict[str, Any]:
         return {"label": label, "value": f"{value:,}" if isinstance(value, int) else value, "tone": tone}
 
-    ai_items = [item(said(f"stats_ai_{s}"), ai["counts"][s]) for s in ("done", "running", "queued")]
+    ai_items = [item(said(f"stats_ai_{s}"), ai["counts"][s]) for s in ("done", "running", "queued", "parked")]
     if ai["runs"]:
         ai_items += [item(said("stats_ai_minutes"), ai["minutes"]), item(said("stats_ai_calls"), ai["calls"])]
     return [

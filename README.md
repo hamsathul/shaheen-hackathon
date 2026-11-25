@@ -121,6 +121,8 @@ Weights and the EN/AR reason text are in `shaheen/score.py` and `shaheen/reasons
 
 **Re-checks.** A link already checked goes back to the queue when a collector meets it again: a day after a `suspicious` verdict or a failed check, a week after a `legitimate` one, never once it is `fraud` or analyst-confirmed. A domain whose re-check comes out `fraud` gets a fresh investigation when its earlier ones were of a case that was not fraud.
 
+**UAE focus.** The sweeps (lookalikes, certificate logs, new domains, the storefront sweep, and the domains the investigator proposes) find names by pattern, wherever they point. A link they queue is in focus when its host carries a UAE place name, ends in `-ae` or `.ae`, or names or imitates a UAE brand or government body (`shaheen/focus.py`). Links from an officer, the Google Maps watch or an AI hunt are always in focus. The watcher scans the links in focus first and the rest after them. A flagged case outside the focus (a Bose shop for Kuwait, a global phishing page) is parked instead of queued for the AI investigator, so the local model spends its time on cases aimed at the UAE. A parked case is kept with its evidence, counted on the Statistics page, and sent to the AI from its case page. `shaheen refocus` applies the rule to the links and cases already waiting.
+
 **Investigator.** For each flagged case, Shaheen writes a private pi configuration that declares only two MCP servers: Shaheen's own case tools (`get_case`, `get_page_text`, `domain_intel`, `find_related`, `scan_url`, `propose_candidates`, `submit_report`) and a headless Playwright browser in a throwaway profile. After the run Shaheen checks the tool list pi actually sent the model, audits every browser action, and adds the trace and browser session to the evidence pack. Details: [docs/agent.md](docs/agent.md).
 
 **Hunter.** A hunt gets Shaheen's MCP server in hunt mode and no browser: `list_themes`, `search_certificates` (crt.sh, 4 per hunt), `search_new_domains` (yesterday's WhoisDS list, downloaded once per hunt), `known_domains` (the store), plus `domain_intel`, `get_page_text`, `scan_url` and `propose_candidates` with the investigator's limits, and `submit_hunt_report`. Every domain it scans or queues is recorded with the hunt, so the hunt's page shows each one with its latest verdict as the watcher gets to it. Suspects the model names that no tool result mentions are dropped from the report. Details: [docs/agent.md](docs/agent.md#hunts).
@@ -168,6 +170,7 @@ uv run shaheen batch links.txt --out results.csv
 # Hunt 24/7: collectors plus 4 scanning workers; --once for one round
 uv run shaheen watch
 uv run shaheen enqueue suspects.txt --source tip-line
+uv run shaheen refocus                      # UAE-focus links first; park the waiting cases outside the focus
 
 # Investigate flagged cases with the local model
 uv run shaheen investigate <case-id>
@@ -320,6 +323,7 @@ shaheen/web/        dashboard (FastAPI, server-rendered; no external assets but 
 shaheen/watch.py    collectors and the 24/7 loop
 shaheen/investigator.py, shaheen/hunter.py, shaheen/agents.py, shaheen/mcp_server.py, agent/   the local-model investigator and hunter, and their queue
 shaheen/themes.py   UAE scam themes (data/themes_uae.yaml)
+shaheen/focus.py    the UAE focus of the scan and investigation queues
 data/            brand allowlists, gateways, TLDs, wording (EN/AR), Tranco top 100k
 eval/            labelled sets, set builder, results
 demo/cases/      fixed cases for the demo: one real official site plus synthetic captures of invented .test domains

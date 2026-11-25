@@ -25,7 +25,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from shaheen import brands, intel, page, reasons, score, signals, storefront
+from shaheen import brands, focus, intel, page, reasons, score, signals, storefront
 from shaheen.capture import Capture
 from shaheen.config import Settings, load_settings
 from shaheen.domains import host_of, normalize_url, registrable_domain
@@ -254,10 +254,11 @@ class Scanner:
         self.store.save_scan(result, ctx.features["final_domain"])
         # One investigation per domain, and one more if a re-check finds it has become
         # fraud. The investigator's own scan_url calls re-scan the domain it is working
-        # on while its investigation runs, so they never queue it again.
+        # on while its investigation runs, so they never queue it again. A case outside
+        # the UAE focus is parked instead of queued.
         if (result.verdict in ("fraud", "suspicious") and not ctx.options.capture_dir
                 and self.store.needs_investigation(ctx.features["final_domain"], result.verdict)):
-            self.store.queue_investigation(result.id)
+            self.store.queue_investigation(result.id, parked=not focus.case_in_focus(result, ctx.options.source))
         return result
 
     def _verdict(self, ctx: ScanContext) -> ScanResult:

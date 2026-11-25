@@ -25,7 +25,7 @@ from typing import Any
 import httpx
 from mcp.server.mcpserver import MCPServer
 
-from shaheen import brands, hunter, investigator, themes
+from shaheen import brands, focus, hunter, investigator, themes
 from shaheen.collectors import Throttle, ctlogs, excluded, newdomains
 from shaheen.config import Settings, load_settings
 from shaheen.domains import host_of, is_ip, normalize_url, public_suffix, refang, registrable_domain
@@ -145,7 +145,7 @@ def build_server(settings: Settings | None = None, case_id: str | None = None,
         used["scans"] += 1
         try:
             with Scanner(settings, store) as scanner:
-                result = scanner.scan(target, ScanOptions(render=False))
+                result = scanner.scan(target, ScanOptions(render=False, source=source))
         except Exception as exc:  # noqa: BLE001 - report the failure to the model
             return f"Error: the scan failed ({type(exc).__name__})."
         if hunt_id is not None:
@@ -172,7 +172,8 @@ def build_server(settings: Settings | None = None, case_id: str | None = None,
                 continue
             used["proposed"] += 1
             url = normalize_url(domain)
-            if store.enqueue(url, registrable_domain(domain), source, str(reason)[:300]):
+            if store.enqueue(url, registrable_domain(domain), source, str(reason)[:300],
+                             focus.priority(domain, source)):
                 accepted += 1
             else:
                 known += 1
