@@ -537,9 +537,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             report = row["report"] if isinstance(row["report"], dict) else {}
             summary = (lang == "ar" and report.get("summary_ar")) or report.get("summary_en")
             kind = report.get("fraud_type") if isinstance(report.get("fraud_type"), str) else row["fraud_type"]
+            case = case_row(row, lang)
             found.append((row["finished_at"], {
-                **case_row(row, lang), "kind": "ai",
-                "text": i18n.label(i18n.FRAUD_TYPES, lang, kind) if kind else "",
+                **case, "kind": "ai",
+                "text": i18n.label(i18n.FRAUD_TYPES, lang, kind) if kind and case["verdict"] != "legitimate" else "",
                 "summary": _defang(investigator.first_sentence(str(summary or ""))),
             }))
         for row in store.recent_contacts(EVENTS):

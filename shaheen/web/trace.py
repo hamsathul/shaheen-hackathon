@@ -107,7 +107,7 @@ def _said(tool: str, text: str, error: bool) -> str:
     if not said:
         lines = [line.strip("# ").strip() for line in text.splitlines()]
         said = next((line for line in lines if line and line not in ("Error", "Result")), "")
-        said = re.sub(r"^Error:\s*(browserBackend\.callTool:\s*)?", "", said)
+        said = re.sub(r"^(\w*Error:\s*)?(browserBackend\.callTool:\s*)?", "", said)
     return _clip(" ".join(said.split()), MAX_SAID)
 
 

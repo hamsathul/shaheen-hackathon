@@ -240,10 +240,7 @@
     var block = el("article", "run hunting");
     var head = el("header", "run-head");
     head.appendChild(el("span", "label", T.live_hunt + " " + h.id));
-    var link = el("a", "hunt-mission", h.mission);
-    link.href = "/hunts/" + encodeURIComponent(h.id);
-    link.dir = "auto";
-    head.appendChild(link);
+    head.appendChild(huntLink(h));
     block.appendChild(head);
     var meta = elapsedMeta(h);
     if (h.theme) meta.appendChild(el("span", null, h.theme));
@@ -285,7 +282,7 @@
   }
 
   function huntLink(h) {
-    var link = el("a", "domain", h.mission);
+    var link = el("a", "hunt-mission", h.mission);
     link.href = "/hunts/" + encodeURIComponent(h.id);
     link.dir = "auto";
     return link;
