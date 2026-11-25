@@ -54,7 +54,10 @@ REPORT_FONTS = (
     ("IBM Plex Sans Arabic", "400", "ibm-plex-sans-arabic-400-arabic.woff2"),
 )
 _SCHEME = re.compile(r"\bhttp(s?)(?=://)", re.I)
-_HOST = re.compile(r"\b(?:[a-z0-9-]+\.)+[a-z][a-z0-9-]*[a-z]\b|\b\d{1,3}(?:\.\d{1,3}){3}\b", re.I)
+# ASCII edges instead of \b: Arabic text glues words such as "و" (and) to a domain,
+# and \b counts Arabic letters as part of the word.
+_HOST = re.compile(r"(?<![a-z0-9-])(?:[a-z0-9-]+\.)+[a-z][a-z0-9-]*[a-z](?![a-z0-9-])"
+                   r"|(?<![0-9.])\d{1,3}(?:\.\d{1,3}){3}(?![0-9])", re.I)
 
 _templates = Environment(
     loader=FileSystemLoader(PACKAGE_DIR / "web" / "templates"),

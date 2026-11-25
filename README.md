@@ -21,6 +21,7 @@ Three roles share one pipeline, `scan(url)`.
 | **Scorer** | `shaheen scan <url>` | Scores a link 0 to 100 with reasons in English and Arabic and writes a hashed evidence pack. Deterministic; no AI involved. |
 | **Watcher** | `shaheen watch` | Runs 24/7. Five collectors (brand lookalikes, Certificate Transparency, newly registered domains, a brand × country storefront sweep, Google Maps listings) feed candidates to the scorer. |
 | **Investigator** | `shaheen investigate` | A local model, driven by the [pi](https://pi.dev) agent harness, works each flagged case with Shaheen's read-only case tools and a headless browser, then files a report that separates proven facts from inferences. |
+| **Hunter** | `shaheen hunt "<mission>"` | The same local model, sent by an officer after one kind of scam ("fake visa renewal sites"). It searches certificate logs, yesterday's new domains and the store with Shaheen's own tools, scans the likeliest finds and queues the rest. It finds; the scorer still decides. |
 
 Officers and analysts work the results in the dashboard (`shaheen dashboard`), in English or Arabic. It opens in Simple mode; "Analyst" in the header shows the full detail:
 
@@ -30,8 +31,9 @@ Officers and analysts work the results in the dashboard (`shaheen dashboard`), i
 - **Statistics:** a top row of headline figures (links checked, distinct domains, each verdict, brands targeted, scans and fraud in the last hour and day, operator links between sites, the AI investigator's queue and median run, Google Maps searches and leads), then scans per hour by verdict, the most impersonated brands, which collector found them and fraud types, all computed from the store.
 - **Reports:** every case's evidence report with filters, and a threat summary for the police (today, 24 hours or 7 days) that prints on A4; `shaheen summary` writes the same report as one file.
 - **Maps leads:** Google Maps listings that use a brand's name with an off-brand website or a fake helpline number.
+- **Hunts:** a box that sends the AI hunter on a mission, optionally narrowed to one UAE scam theme, and a page per hunt with its report, every domain it found with Shaheen's latest check, and its tool calls.
 
-`shaheen up` runs all of it in one process: the watcher finds and scores candidates, two investigators work the flagged cases in parallel (fraud first), and the dashboard shows each investigation's tool calls as they happen. If the model goes away, the investigators wait for it and claim nothing; a run cut off by a lost connection goes back in the queue.
+`shaheen up` runs all of it in one process: the watcher finds and scores candidates, two AI workers take queued hunts first and then the flagged cases (fraud first), and the dashboard shows each investigation's tool calls as they happen. If the model goes away, the investigators wait for it and claim nothing; a run cut off by a lost connection goes back in the queue.
 
 ### Design rules
 
@@ -70,7 +72,7 @@ Every suspect address is defanged (`hxxps://example[.]com`) and none is clickabl
 ## How it works
 
 ```text
-collectors: lookalikes | CT logs | new domains | storefront sweep        shaheen enqueue <url|file>
+collectors: lookalikes | CT logs | new domains | storefront sweep        shaheen enqueue <url|file> | AI hunts
                  \                                                      /
                   -> candidate queue (SQLite) <------------------------
                   -> scan(url): resolve -> allowlist -> intel -> render -> page + storefront signals
@@ -83,6 +85,8 @@ collectors: lookalikes | CT logs | new domains | storefront sweep        shaheen
 **Resolve.** Follows HTTP, meta-refresh and JavaScript redirects (10 hops) and URL shorteners, and records the chain. It also fetches the page as an Arabic-language mobile visitor, a desktop visitor and a search-engine crawler, to catch sites that show each a different page.
 
 **Allowlist.** 58 brands: 27 UAE government bodies, banks and services, 11 brands seen in the skimmer network, and 20 global brands, each with official domains checked on the organisation's own site (`data/brands_*.yaml`). A link is official only if every hop is official, a government namespace, a shortener or the same brand. Hosting platforms are never allowlisted, and an open redirect blocks the allowlist.
+
+**UAE scam themes.** `data/themes_uae.yaml` lists ten kinds of scam aimed at people in the UAE: traffic fines and tolls; visas, residency and Emirates ID; job offers; parcel delivery; bank account updates and OTP; investment and crypto; holiday rentals; charity and zakat appeals; loans; prizes and draws. Each has its domain words and certificate search terms. A host matches a theme when it carries a UAE marker (a place name, a name ending in `-ae`, or `.ae`) and one of the theme's words, as in `dubai-traffic-fines` or `uaevisa-renew`. The new-domain collector queues themed names after branded ones and before other UAE names, the certificate collector rotates the theme terms with the brand keywords, and the scorer adds `THEME_UAE_DOMAIN` (+10) to a host that matches a theme and names no brand. A domain name is not page evidence, so a theme never makes `fraud` by itself.
 
 **Intel.** RDAP/WHOIS creation date and registrar, DNS, hosting network and the TLS certificate.
 
@@ -105,7 +109,7 @@ collectors: lookalikes | CT logs | new domains | storefront sweep        shaheen
 | +20 | Most sampled products discounted by more than 70% |
 | +20 | Bare IP address instead of a domain |
 | +15 | Brand name in a non-official domain; doorway page; cloaking; form posting to another domain; generic gateway seen alongside skimmer gateways; `@` in the link |
-| +10 | Many subdomain levels; very long link; new TLS certificate; free hosting; abused TLD; urgency wording; deceptive domain words |
+| +10 | Many subdomain levels; very long link; new TLS certificate; free hosting; abused TLD; urgency wording; deceptive domain words; UAE scam-theme words with a UAE place name |
 | −15 | Domain registered for years |
 | −25 | Among the most visited sites on the web (Tranco top 100k) |
 
@@ -115,7 +119,11 @@ Weights and the EN/AR reason text are in `shaheen/score.py` and `shaheen/reasons
 
 **Reports.** The dashboard's Reports page lists every case's evidence report, newest first, filtered by verdict, brand, scan date and domain, with links to the case, its `report.html` and its zip. It also opens the threat summary for the police, for today, the last 24 hours or the last 7 days (UAE days), in English or Arabic, printable on A4. The summary covers the links checked and flagged, the new fraud sites with the AI investigator's one-line summary, the brands hit, and the sites that share an administrator account, a product catalogue or a skimmer gateway. It also lists suggested takedowns grouped by registrar, and the Google Maps leads. `shaheen summary` writes the same report as one self-contained HTML file to email.
 
+**Re-checks.** A link already checked goes back to the queue when a collector meets it again: a day after a `suspicious` verdict or a failed check, a week after a `legitimate` one, never once it is `fraud` or analyst-confirmed. A domain whose re-check comes out `fraud` gets a fresh investigation when its earlier ones were of a case that was not fraud.
+
 **Investigator.** For each flagged case, Shaheen writes a private pi configuration that declares only two MCP servers: Shaheen's own case tools (`get_case`, `get_page_text`, `domain_intel`, `find_related`, `scan_url`, `propose_candidates`, `submit_report`) and a headless Playwright browser in a throwaway profile. After the run Shaheen checks the tool list pi actually sent the model, audits every browser action, and adds the trace and browser session to the evidence pack. Details: [docs/agent.md](docs/agent.md).
+
+**Hunter.** A hunt gets Shaheen's MCP server in hunt mode and no browser: `list_themes`, `search_certificates` (crt.sh, 4 per hunt), `search_new_domains` (yesterday's WhoisDS list, downloaded once per hunt), `known_domains` (the store), plus `domain_intel`, `get_page_text`, `scan_url` and `propose_candidates` with the investigator's limits, and `submit_hunt_report`. Every domain it scans or queues is recorded with the hunt, so the hunt's page shows each one with its latest verdict as the watcher gets to it. Suspects the model names that no tool result mentions are dropped from the report. Details: [docs/agent.md](docs/agent.md#hunts).
 
 ## Run it
 
@@ -163,7 +171,11 @@ uv run shaheen enqueue suspects.txt --source tip-line
 
 # Investigate flagged cases with the local model
 uv run shaheen investigate <case-id>
-uv run shaheen investigate --queue --loop --workers 2
+uv run shaheen investigate --queue --loop --workers 2    # queued hunts first, then cases
+
+# Send the local model to hunt on a mission (also from the dashboard's Hunts page)
+uv run shaheen hunt "fake traffic-fine payment sites aimed at UAE drivers" --theme traffic_fines
+uv run shaheen hunt "fake visa renewal sites" --queue    # for the AI workers of shaheen up
 uv run shaheen investigate --bench          # tokens per second of the model endpoint
 
 # Analyst workflow
@@ -288,6 +300,7 @@ Certificate Transparency (crt.sh) barely answered that day and contributed none.
 - Geo-cloaking that shows the scam only to UAE visitors needs a UAE network exit. Shaheen fetches from wherever it runs.
 - The browser policy (never type, submit, download or log in) is enforced by the prompt and audited after every run, not technically blocked. A click on a submit button is not flagged by itself; it is visible in the trace.
 - Search-engine coverage needs an API key we did not have. The Google Maps collector checks phone numbers only for the 7 brands with verified numbers in the brand data. It finds a brand by the name in a listing, so brands named with an everyday word (noon, du, Marshall, Beats) go unmatched, and Emirates matches only by its Arabic name. Google's terms let Shaheen keep a place ID indefinitely but other listing content only where expressly permitted; the leads table keeps the name, address and phone of flagged listings as evidence, so a police deployment needs Google's agreement for that, or a fresh Place Details lookup when an analyst opens a lead.
+- A hunt searches certificate logs, yesterday's new-domain list (generic TLDs only, not `.ae`) and the store; it has no search engine. Theme words are hand-picked and match domain names, not pages, and the hunter's choice of what to scan is the model's.
 - The evaluation sets are small and were collected on one day. Phishing pages die within hours, so most feed links were dead by scan time.
 
 ## Roadmap to a police pilot
@@ -305,7 +318,8 @@ Certificate Transparency (crt.sh) barely answered that day and contributed none.
 shaheen/            pipeline: resolve, intel, render, page, storefront, signals, score, reasons, evidence, store
 shaheen/web/        dashboard (FastAPI, server-rendered; no external assets but Google's map script, with its key)
 shaheen/watch.py    collectors and the 24/7 loop
-shaheen/investigator.py, shaheen/mcp_server.py, agent/   the local-model investigator
+shaheen/investigator.py, shaheen/hunter.py, shaheen/agents.py, shaheen/mcp_server.py, agent/   the local-model investigator and hunter, and their queue
+shaheen/themes.py   UAE scam themes (data/themes_uae.yaml)
 data/            brand allowlists, gateways, TLDs, wording (EN/AR), Tranco top 100k
 eval/            labelled sets, set builder, results
 demo/cases/      fixed cases for the demo: one real official site plus synthetic captures of invented .test domains

@@ -39,6 +39,7 @@ WEIGHTS: dict[str, int] = {
     "RISKY_TLD": 10,
     "URGENCY_WORDING": 10,
     "DECEPTIVE_DOMAIN_WORDS": 10,
+    "THEME_UAE_DOMAIN": 10,
     "TOP_SITE": -25,
     "NO_PAGE_EVIDENCE": 0,
     "DOMAIN_OLD": -15,

@@ -1,6 +1,6 @@
-"""SQLite storage: scan results, the candidate queue, investigations,
-fingerprints for linking cases, an intel cache, and the Google Maps listings
-seen with the leads among them."""
+"""SQLite storage: scan results, the candidate queue, investigations, AI hunts
+with the domains each one found, fingerprints for linking cases, an intel
+cache, and the Google Maps listings seen with the leads among them."""
 
 from __future__ import annotations
 
@@ -57,6 +57,28 @@ CREATE TABLE IF NOT EXISTS investigations (
     error TEXT
 );
 
+CREATE TABLE IF NOT EXISTS hunts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    mission TEXT NOT NULL,
+    theme TEXT,
+    status TEXT NOT NULL,
+    queued_at TEXT NOT NULL,
+    started_at TEXT,
+    finished_at TEXT,
+    report_json TEXT,
+    error TEXT
+);
+
+CREATE TABLE IF NOT EXISTS hunt_finds (
+    hunt_id INTEGER NOT NULL,
+    url TEXT NOT NULL,
+    domain TEXT NOT NULL,
+    reason TEXT NOT NULL,
+    scan_id TEXT,
+    found_at TEXT NOT NULL,
+    PRIMARY KEY (hunt_id, url)
+);
+
 CREATE TABLE IF NOT EXISTS fingerprints (
     scan_id TEXT NOT NULL,
     domain TEXT NOT NULL,
@@ -99,6 +121,14 @@ CREATE TABLE IF NOT EXISTS meta (
     value TEXT NOT NULL
 );
 """
+
+
+# How long after its last check a URL may be queued again, by the verdict of
+# that check (None: the check failed). Fraud and analyst-confirmed cases are
+# never re-queued.
+RECHECK_AFTER: dict[str | None, timedelta] = {
+    "suspicious": timedelta(days=1), "legitimate": timedelta(days=7), None: timedelta(days=1),
+}
 
 
 def utcnow() -> str:
@@ -185,13 +215,30 @@ class Store:
     # candidate queue
 
     def enqueue(self, url: str, domain: str, source: str, note: str = "") -> bool:
-        """Queue a URL once; returns False when it was already queued or scanned."""
+        """Queue a URL; returns False when it is already queued, or was checked too
+        recently to check again (`RECHECK_AFTER`), or was found fraud or confirmed."""
+        now = datetime.now(timezone.utc)
         with self._conn() as db:
             cur = db.execute(
                 "INSERT OR IGNORE INTO candidates (url, domain, source, note, added_at) VALUES (?,?,?,?,?)",
-                (url, domain, source, note, utcnow()),
+                (url, domain, source, note, now.isoformat(timespec="seconds")),
             )
-        return cur.rowcount == 1
+            if cur.rowcount == 1:
+                return True
+            row = db.execute(
+                """SELECT c.id, c.status, c.scanned_at, s.verdict, s.analyst_confirmed
+                   FROM candidates c LEFT JOIN scans s ON s.id = c.scan_id WHERE c.url = ?""",
+                (url,),
+            ).fetchone()
+            if (row["status"] not in ("done", "error") or row["analyst_confirmed"] or row["verdict"] == "fraud"
+                    or not row["scanned_at"]
+                    or now - datetime.fromisoformat(row["scanned_at"]) < RECHECK_AFTER[row["verdict"]]):
+                return False
+            db.execute(
+                "UPDATE candidates SET status = 'queued', source = ?, note = ?, added_at = ? WHERE id = ?",
+                (source, note, now.isoformat(timespec="seconds"), row["id"]),
+            )
+        return True
 
     def claim_candidate(self) -> sqlite3.Row | None:
         with self._conn() as db:
@@ -299,14 +346,17 @@ class Store:
             )
         return cur.rowcount == 1
 
-    def domain_investigated(self, domain: str) -> bool:
-        """Whether a case on this domain is already queued, under way or investigated."""
+    def needs_investigation(self, domain: str, verdict: str) -> bool:
+        """Whether a new case on this domain should be investigated: when no case on
+        it was, or when this one is fraud and every earlier investigation of the
+        domain is finished and was of a case that was not fraud."""
         with self._conn() as db:
-            row = db.execute(
-                "SELECT 1 FROM investigations i JOIN scans s ON s.id = i.scan_id WHERE s.domain = ? LIMIT 1",
+            rows = db.execute(
+                "SELECT i.status, s.verdict FROM investigations i JOIN scans s ON s.id = i.scan_id WHERE s.domain = ?",
                 (domain,),
-            ).fetchone()
-        return row is not None
+            ).fetchall()
+        return not rows or (verdict == "fraud" and all(
+            r["status"] in ("done", "failed") and r["verdict"] != "fraud" for r in rows))
 
     def claim_investigation(self) -> str | None:
         """Take the next queued case, fraud before suspicious, oldest first, and mark
@@ -412,6 +462,103 @@ class Store:
         data = dict(row)
         data["report"] = json.loads(data.pop("report_json")) if data.get("report_json") else None
         return data
+
+    # AI hunts
+
+    def add_hunt(self, mission: str, theme: str | None, status: str = "queued") -> int:
+        """Store a hunt: queued for the workers, or 'running' for one run in the foreground."""
+        with self._conn() as db:
+            cur = db.execute("INSERT INTO hunts (mission, theme, status, queued_at) VALUES (?, ?, ?, ?)",
+                             (mission, theme, status, utcnow()))
+        return int(cur.lastrowid)
+
+    def claim_hunt(self) -> int | None:
+        """Take the oldest queued hunt and mark it running, in one UPDATE (as `claim_investigation`)."""
+        with self._conn() as db:
+            rows = db.execute(
+                """UPDATE hunts SET status = 'running', started_at = ?, finished_at = NULL, error = NULL
+                   WHERE id = (SELECT id FROM hunts WHERE status = 'queued' ORDER BY id LIMIT 1)
+                   RETURNING id""",
+                (utcnow(),),
+            ).fetchall()
+        return rows[0]["id"] if rows else None
+
+    def set_hunt(self, hunt_id: int, **fields: Any) -> None:
+        if fields.get("status") in ("done", "failed"):
+            fields.setdefault("finished_at", utcnow())
+        if fields.get("report_json") is not None and not isinstance(fields["report_json"], str):
+            fields["report_json"] = json.dumps(fields["report_json"], ensure_ascii=False)
+        sets = ", ".join(f"{k} = ?" for k in fields)
+        with self._conn() as db:
+            db.execute(f"UPDATE hunts SET {sets} WHERE id = ?", [*fields.values(), hunt_id])
+
+    def get_hunt(self, hunt_id: int) -> dict[str, Any] | None:
+        with self._conn() as db:
+            row = db.execute("SELECT * FROM hunts WHERE id = ?", (hunt_id,)).fetchone()
+        if row is None:
+            return None
+        data = dict(row)
+        data["report"] = json.loads(data.pop("report_json")) if data.get("report_json") else None
+        return data
+
+    def list_hunts(self, limit: int = 50) -> list[dict[str, Any]]:
+        """The latest hunts, newest first, with how many domains each one found."""
+        with self._conn() as db:
+            rows = db.execute(
+                """SELECT h.id, h.mission, h.theme, h.status, h.queued_at, h.finished_at,
+                          (SELECT COUNT(*) FROM hunt_finds f WHERE f.hunt_id = h.id) AS finds
+                   FROM hunts h ORDER BY h.id DESC LIMIT ?""",
+                (limit,),
+            ).fetchall()
+        return [dict(r) for r in rows]
+
+    def requeue_running_hunts(self) -> int:
+        """Return hunts left 'running' by a stopped or crashed run to the queue."""
+        with self._conn() as db:
+            cur = db.execute("UPDATE hunts SET status = 'queued' WHERE status = 'running'")
+        return cur.rowcount
+
+    def add_hunt_find(self, hunt_id: int, url: str, domain: str, reason: str, scan_id: str | None = None) -> None:
+        with self._conn() as db:
+            db.execute(
+                """INSERT INTO hunt_finds (hunt_id, url, domain, reason, scan_id, found_at) VALUES (?,?,?,?,?,?)
+                   ON CONFLICT (hunt_id, url) DO UPDATE SET scan_id = COALESCE(excluded.scan_id, scan_id)""",
+                (hunt_id, url, domain, reason, scan_id, utcnow()),
+            )
+
+    def hunt_finds(self, hunt_id: int) -> list[dict[str, Any]]:
+        """The domains a hunt found, in the order found, each with its latest check:
+        the hunter's own scan, else the watcher's scan of the queued URL."""
+        with self._conn() as db:
+            rows = db.execute(
+                """SELECT f.url, f.domain, f.reason, f.found_at, c.status AS queue_status,
+                          s.id AS scan_id, s.verdict, s.risk_score
+                   FROM hunt_finds f LEFT JOIN candidates c ON c.url = f.url
+                   LEFT JOIN scans s ON s.id = COALESCE(f.scan_id, c.scan_id)
+                   WHERE f.hunt_id = ? ORDER BY f.found_at, f.rowid""",
+                (hunt_id,),
+            ).fetchall()
+        return [dict(r) for r in rows]
+
+    def known_domains(self, words: list[str], limit: int = 50) -> list[dict[str, Any]]:
+        """Domains already in the store whose name contains one of `words`, with the
+        latest verdict of each, or the queue status of those not scanned yet."""
+        found: dict[str, dict[str, Any]] = {}
+        with self._conn() as db:
+            for word in words:
+                for row in db.execute(
+                    """SELECT domain, id, verdict, risk_score FROM scans WHERE instr(domain, ?) > 0
+                       ORDER BY scanned_at DESC LIMIT ?""",
+                    (word, limit),
+                ):
+                    found.setdefault(row["domain"], {"domain": row["domain"], "case_id": row["id"],
+                                                     "verdict": row["verdict"], "risk_score": row["risk_score"]})
+                for row in db.execute(
+                    "SELECT domain, status FROM candidates WHERE instr(domain, ?) > 0 AND scan_id IS NULL LIMIT ?",
+                    (word, limit),
+                ):
+                    found.setdefault(row["domain"], {"domain": row["domain"], "queue_status": row["status"]})
+        return list(found.values())[:limit]
 
     # Google Maps listings: the place IDs seen, and the leads among them
 

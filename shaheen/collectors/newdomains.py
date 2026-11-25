@@ -1,5 +1,6 @@
 """Newly registered domains: WhoisDS's free daily list (one zip per day of
-gTLD registrations), filtered for the watched brands and UAE place names.
+gTLD registrations), filtered for the watched brands, the UAE scam themes
+(`data/themes_uae.yaml`) and UAE place names.
 
 One download a day: the list of the previous UTC day, fetched once (the date
 done is kept in meta). WhoisDS allows the free download and forbids only
@@ -11,14 +12,13 @@ from __future__ import annotations
 import base64
 import io
 import logging
-import re
 import zipfile
 from collections.abc import Iterable
 from datetime import date, datetime, timedelta, timezone
 
 import httpx
 
-from shaheen import brands
+from shaheen import brands, themes
 from shaheen.collectors import Limits, brand_terms, enqueue_host, excluded, watched_brands
 from shaheen.store import Store
 
@@ -27,10 +27,6 @@ DONE_KEY = "newdomains:last_date"
 LIST_URL = "https://www.whoisds.com/whois-database/newly-registered-domains/{}/nrd"
 TIMEOUT = 60.0
 MAX_ZIP_BYTES = 20_000_000
-UAE_TERMS = ("uae", "dubai", "abudhabi", "emirates", "sharjah", "ajman")
-# Words that contain a UAE term by accident (baidu + baike spells "dubai").
-NOT_UAE = ("baidu",)
-_UAE_SUFFIX = re.compile(r"(?:-ae|\.ae)$")
 
 log = logging.getLogger(__name__)
 
@@ -48,11 +44,12 @@ def domains_in(zip_bytes: bytes) -> list[str]:
 def matches(domains: Iterable[str]) -> list[tuple[str, str]]:
     """(domain, why) for domains imitating a watched brand or pairing it with a
     place (as the scorer reads host names; a bare mention of a short brand
-    token such as `du` is too common to count), then for domains carrying a
-    UAE place name or an `ae` ending."""
+    token such as `du` is too common to count), then for domains matching a UAE
+    scam theme, then for the other domains with a UAE marker (a place name or
+    an `ae` ending)."""
     watched = {b.id for b in watched_brands()}
     terms = {t for b in watched_brands() for t in brand_terms(b)}
-    branded, local = [], []
+    branded, themed, local = [], [], []
     for domain in domains:
         if excluded(domain):
             continue
@@ -61,12 +58,14 @@ def matches(domains: Iterable[str]) -> list[tuple[str, str]]:
             if found:
                 branded.append((domain, f"new domain naming {found[0].name_en}"))
                 continue
-        name = domain.rsplit(".", 1)[0]
-        for word in NOT_UAE:
-            name = name.replace(word, "")
-        if any(t in name for t in UAE_TERMS) or _UAE_SUFFIX.search(name) or domain.endswith(".ae"):
+        if themes.uae_marker(domain) is None:
+            continue
+        theme = next(iter(themes.match(domain)), None)
+        if theme:
+            themed.append((domain, f"new domain matching the UAE scam theme {theme.theme.name_en}"))
+        else:
             local.append((domain, "new domain with a UAE name"))
-    return branded + local
+    return branded + themed + local
 
 
 def collect(store: Store, limits: Limits) -> int:

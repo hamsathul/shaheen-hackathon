@@ -6,6 +6,7 @@
 <meta name="referrer" content="{{ referrer | default('same-origin') }}">
 <title>{% block title %}Shaheen{% endblock %}</title>
 <link rel="stylesheet" href="/static/style.css">
+{% block head %}{% endblock %}
 </head>
 <body>
 <header class="top">
@@ -19,6 +20,7 @@
     <a href="/maps"{% if here == "/maps" %} aria-current="page"{% endif %}>{{ t.maps }}</a>
     <a href="/stats"{% if here == "/stats" %} aria-current="page"{% endif %}>{{ t.stats }}</a>
     <a href="/reports"{% if here == "/reports" %} aria-current="page"{% endif %}>{{ t.rep_nav }}</a>
+    <a href="/hunts"{% if here.startswith("/hunts") %} aria-current="page"{% endif %}>{{ t.hunt_nav }}</a>
     <span class="modes" role="group" aria-label="{{ t.mode_label }}">{% for m in ("simple", "analyst") %}<a href="/mode/{{ m }}?next={{ here | urlencode }}"{% if mode == m %} aria-current="true"{% endif %}>{{ t["mode_" ~ m] }}</a>{% endfor %}</span>
     <a class="switch" lang="{{ 'en' if lang == 'ar' else 'ar' }}" href="/lang/{{ 'en' if lang == 'ar' else 'ar' }}?next={{ here | urlencode }}">{{ t.switch }}</a>
   </nav>

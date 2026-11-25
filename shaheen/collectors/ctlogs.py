@@ -1,5 +1,7 @@
 """Certificate Transparency: recently issued certificates whose names contain
-a watched brand keyword, found through crt.sh.
+a watched brand keyword or a UAE scam-theme term (`ct_terms` in
+data/themes_uae.yaml, kept only when the name matches the theme), found
+through crt.sh.
 
 crt.sh is a free public service and often slow or overloaded, so each run
 sends at most a few searches (one keyword each, rotating through the
@@ -17,6 +19,7 @@ from typing import Any
 
 import httpx
 
+from shaheen import themes
 from shaheen.collectors import Limits, Throttle, enqueue_host, excluded, rotation, watched_brands
 from shaheen.domains import registrable_domain, split_host
 from shaheen.store import Store
@@ -35,7 +38,8 @@ log = logging.getLogger(__name__)
 
 
 def keywords() -> list[str]:
-    return sorted({k for b in watched_brands() for k in b.keywords if len(k) >= MIN_KEYWORD})
+    brand_words = {k for b in watched_brands() for k in b.keywords if len(k) >= MIN_KEYWORD}
+    return sorted(brand_words | set(themes.ct_terms()))
 
 
 def _issued(entry: dict[str, Any]) -> datetime | None:
@@ -100,6 +104,8 @@ def collect(store: Store, limits: Limits) -> int:
                     log.info("ctlogs: crt.sh is not answering; trying again next run")
                     break
                 hosts = recent_hosts(entries, keyword, datetime.now(timezone.utc))
+                if keyword in themes.ct_terms():
+                    hosts = [h for h in hosts if themes.match(h)]
                 for host in dict.fromkeys(candidate_host(h, keyword) for h in hosts):
                     if added >= limits.max_per_run:
                         break

@@ -7,8 +7,9 @@ tokens joined to every country name, short form and ISO code
 The Gulf comes first, then the rest of the world; .com first, then the other
 TLDs in `SHAHEEN_STOREFRONT_TLDS`. A name is checked in DNS first (an NS
 record), so an unregistered name costs no HTTP request, and a registered
-domain is queued at most once a day. The position in the sweep is kept in
-meta, so it continues across restarts.
+domain is offered to the queue at most once a day; the queue takes it again
+only when its last check is old enough (`Store.enqueue`). The position in the
+sweep is kept in meta, so it continues across restarts.
 """
 
 from __future__ import annotations

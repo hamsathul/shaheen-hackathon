@@ -1,0 +1,26 @@
+{# The tool-call timeline of an agent run (case and hunt pages). #}
+{% if trace %}
+<ol class="log" dir="ltr">
+  {% for s in trace %}
+  {% if s.kind == "tool" %}
+  <li class="step tool{{ ' err' if s.error }}">
+    <div class="call">
+      <span class="server">{{ s.server }}</span>
+      <code class="tool">{{ s.tool }}</code>
+      {% if s.error %}<span class="stamp dashed">{{ t.error }}</span>{% endif %}
+      {% if s.ms is not none %}<span class="ms">{{ s.ms | round | int }} ms</span>{% endif %}
+    </div>
+    <code class="args">{{ s.args | defang }}</code>
+    {% if s.result %}<pre class="result">{{ s.result | defang }}</pre>{% endif %}
+  </li>
+  {% else %}
+  <li class="step model{{ ' final' if s.final }}">
+    <span class="who">{{ t.final if s.final else t.model }}</span>
+    <p dir="auto">{{ s.text | defang }}</p>
+  </li>
+  {% endif %}
+  {% endfor %}
+</ol>
+{% else %}
+<p class="muted no-trace">{{ t.no_trace }}</p>
+{% endif %}

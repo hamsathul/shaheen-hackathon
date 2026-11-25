@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from shaheen import themes
 from shaheen.models import Finding, Reason
 from shaheen.score import weight_of
 
@@ -118,6 +119,10 @@ TEMPLATES: dict[str, tuple[str, str]] = {
         "The domain uses words meant to look official or urgent: {words}.",
         "النطاق يستخدم كلمات توحي بأنه رسمي أو عاجل: {words}.",
     ),
+    "THEME_UAE_DOMAIN": (
+        "The domain pairs a UAE name ({marker}) with words used in common local scams: {words}. Theme: {themes}.",
+        "النطاق يقرن اسمًا إماراتيًا ({marker}) بكلمات تُستخدم في عمليات احتيال محلية شائعة: {words}. النوع: {themes}.",
+    ),
     "TOP_SITE": (
         "{domain} is among the most visited sites on the web (rank {rank}).",
         "{domain} من أكثر المواقع زيارة على الإنترنت (الترتيب {rank}).",
@@ -156,6 +161,7 @@ LABELS: dict[str, tuple[str, str]] = {
     "mobile_ar": ("mobile, Arabic", "جوال، عربي"),
     "desktop": ("desktop", "حاسوب"),
     "crawler": ("search crawler", "زاحف محرك بحث"),
+    **themes.labels(),
 }
 
 _AR_LIST_SEP = " و"

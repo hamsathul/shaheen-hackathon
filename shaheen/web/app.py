@@ -16,7 +16,8 @@ The only outside links are Google Maps listing links on google.com.
 A header switch, kept in a cookie like the language, picks the Analyst view
 (all of the above) or the Simple view: headline numbers, the likely scams with
 one plain sentence each in English and Arabic, and case pages without scores,
-hashes or tool calls. /stats charts the store in either view's words.
+hashes or tool calls. /stats charts the store in either view's words, and
+/hunts sends the AI hunter on a mission (see `shaheen.web.hunts`).
 """
 
 from __future__ import annotations
@@ -38,7 +39,7 @@ from fastapi.templating import Jinja2Templates
 from jinja2 import Environment, FileSystemLoader
 from starlette.concurrency import run_in_threadpool
 
-from shaheen import evidence, investigator, watch
+from shaheen import agents, evidence, investigator, watch
 from shaheen.collectors import maps
 from shaheen.config import PACKAGE_DIR, Settings, load_settings
 from shaheen.domains import host_of
@@ -46,7 +47,7 @@ from shaheen.evidence import GST, defang_text
 from shaheen.models import ScanResult
 from shaheen.pipeline import Scanner
 from shaheen.store import Store, utcnow
-from shaheen.web import charts, i18n, reports, stats
+from shaheen.web import charts, hunts, i18n, reports, stats
 from shaheen.web.trace import read_trace
 
 WEB_DIR = PACKAGE_DIR / "web"
@@ -55,7 +56,7 @@ FEED_LIMIT = 60
 TRACE = "agent_trace.jsonl"
 LIVE_TOOLS = 12  # tool calls shown per running investigation, newest last
 RECENT = 5  # finished investigations shown in the live panel
-ALIVE_S = 4 * investigator.HEARTBEAT_S  # an older queue heartbeat means the investigator is off
+ALIVE_S = 4 * agents.HEARTBEAT_S  # an older queue heartbeat means the investigator is off
 FILTERS = ("fraud", "suspicious", "legitimate")
 SIGNAL_KEYS = (
     "final_domain", "title", "domain_age_days", "registrar", "hosting_country", "asn", "cert_age_days",
@@ -426,7 +427,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     def investigator_alive() -> bool:
         """Whether the investigator's queue heartbeat is fresh."""
-        beat = _age_s(store.get_meta(investigator.HEARTBEAT_KEY))
+        beat = _age_s(store.get_meta(agents.HEARTBEAT_KEY))
         return beat is not None and beat <= ALIVE_S
 
     def activity(lang: str) -> dict[str, Any]:
@@ -434,7 +435,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         far, the queue by verdict and the latest finished investigations. Runs count only
         while the queue's heartbeat is fresh, so a killed investigator shows as off."""
         alive = investigator_alive()
-        model_down = alive and bool(store.get_meta(investigator.MODEL_DOWN_KEY))
+        model_down = alive and bool(store.get_meta(agents.MODEL_DOWN_KEY))
         running = []
         for run in store.running_investigations() if alive else []:
             tools = [s for s in read_trace(settings.evidence_dir / run["scan_id"] / TRACE) if s["kind"] == "tool"]
@@ -626,4 +627,5 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return response
 
     reports.add_routes(app, store, settings, page, get_case)
+    hunts.add_routes(app, store, settings, page, investigator_alive)
     return app

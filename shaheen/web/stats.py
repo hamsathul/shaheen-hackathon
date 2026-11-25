@@ -15,7 +15,7 @@ from typing import Any
 
 HOURS = 24
 VERDICTS = ("fraud", "suspicious", "legitimate")
-SOURCES = ("lookalikes", "storefronts", "newdomains", "ctlogs", "maps", "investigator", "manual")
+SOURCES = ("lookalikes", "storefronts", "newdomains", "ctlogs", "maps", "investigator", "hunt", "manual")
 INVESTIGATION_STATES = ("done", "running", "queued", "failed")
 TOP_BRANDS = 10
 

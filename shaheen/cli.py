@@ -11,7 +11,8 @@ from pathlib import Path
 
 import uvicorn
 
-from shaheen import __version__, batch, demo, evidence, investigator, mcp_server, summary, up, watch
+from shaheen import (__version__, agents, batch, demo, evidence, hunter, investigator, mcp_server, summary, themes,
+                     up, watch)
 from shaheen.capture import CaptureError
 from shaheen.config import load_settings
 from shaheen.domains import normalize_url, registrable_domain
@@ -209,7 +210,7 @@ def cmd_investigate(args: argparse.Namespace) -> int:
             logging.basicConfig(level=logging.INFO, format="%(asctime)s %(threadName)s %(message)s",
                                 datefmt="%Y-%m-%d %H:%M:%S", stream=sys.stdout)
             logging.getLogger("httpx").setLevel(logging.WARNING)
-            investigator.work_queue(args.loop, args.timeout, args.mode,
+            agents.work_queue(args.loop, args.timeout, args.mode,
                                     args.workers or load_settings().investigators, on_record=_print_investigation)
             return 0
         if not args.id:
@@ -231,19 +232,71 @@ def cmd_mcp(args: argparse.Namespace) -> int:
     return 0
 
 
+def _print_hunt(hunt_id: int, record: dict, store: Store) -> None:
+    run = record["run"]
+    calls = run["pi"].get("tool_calls") or []
+    print(f"{run['status'].upper()}  hunt {hunt_id}  {run.get('wall_s', '?')} s  {len(calls)} tool calls")
+    if run.get("error"):
+        print(f"  error: {run['error']}")
+    if calls:
+        print(f"  tool calls: {', '.join(c['tool'] for c in calls)}")
+    for search in record.get("searches") or []:
+        print(f"  searched: {evidence.defang_text(search)}")
+    for suspect in record.get("suspects") or []:
+        print(f"  suspect: {evidence.defang_text(suspect['domain'])}  {evidence.defang_text(suspect['reason'])}")
+    finds = store.hunt_finds(hunt_id)
+    scanned = [f for f in finds if f["verdict"]]
+    print(f"  found {len(finds)} domains: {len(scanned)} scanned "
+          f"({sum(f['verdict'] == 'fraud' for f in scanned)} fraud, "
+          f"{sum(f['verdict'] == 'suspicious' for f in scanned)} suspicious), the rest queued for the watcher")
+    if record.get("summary_en"):
+        print(f"  {evidence.defang_text(record['summary_en'])}")
+
+
+def cmd_hunt(args: argparse.Namespace) -> int:
+    store = Store(load_settings().db_path)
+    mission = hunter.clean_mission(args.mission)
+    if not mission:
+        print("shaheen hunt: give a mission, for example \"fake visa services for UAE residents\"", file=sys.stderr)
+        return 2
+    if args.queue:
+        hunt_id = store.add_hunt(mission, args.theme)
+        print(f"hunt {hunt_id} queued: the AI workers of `shaheen up` take it before the next case")
+        return 0
+    hunt_id = store.add_hunt(mission, args.theme, status="running")
+    try:
+        record = hunter.hunt(hunt_id, args.timeout, store=store)
+    except (LookupError, RuntimeError) as exc:
+        print(f"shaheen hunt: {exc}", file=sys.stderr)
+        return 2
+    except KeyboardInterrupt:
+        store.set_hunt(hunt_id, status="queued")
+        print(f"shaheen hunt: stopped; hunt {hunt_id} is back in the queue", file=sys.stderr)
+        return 130
+    _print_hunt(hunt_id, record, store)
+    return 0 if record["run"]["status"] == "done" else 1
+
+
 def _add_agent_commands(sub: argparse._SubParsersAction) -> None:
     p = sub.add_parser("investigate", help="have the local model investigate a flagged case")
     p.add_argument("id", nargs="?", help="case (scan) id")
     p.add_argument("--mode", choices=("auto", "pi", "oneshot"), default="auto")
     p.add_argument("--timeout", type=float, default=900, help="seconds per case (default 900)")
-    p.add_argument("--queue", action="store_true", help="work the investigation queue")
-    p.add_argument("--loop", action="store_true", help="with --queue: keep waiting for new cases")
+    p.add_argument("--queue", action="store_true", help="work the queue: hunts first, then flagged cases")
+    p.add_argument("--loop", action="store_true", help="with --queue: keep waiting for new work")
     p.add_argument("--workers", type=int,
                    help="with --queue: parallel investigations (default: SHAHEEN_INVESTIGATORS, else 2)")
     p.add_argument("--bench", action="store_true", help="measure the model's tokens per second")
     p.set_defaults(func=cmd_investigate)
 
-    p = sub.add_parser("mcp", help="serve the investigator's tools over stdio (used by pi)")
+    p = sub.add_parser("hunt", help="send the local model to hunt for scam sites on a mission")
+    p.add_argument("mission", help='what to look for, e.g. "fake traffic-fine payment sites"')
+    p.add_argument("--theme", choices=[t.id for t in themes.load_themes()], help="a UAE scam theme to focus on")
+    p.add_argument("--queue", action="store_true", help="queue it for the AI workers of `shaheen up` instead")
+    p.add_argument("--timeout", type=float, default=hunter.TIMEOUT_S, help="seconds (default 900)")
+    p.set_defaults(func=cmd_hunt)
+
+    p = sub.add_parser("mcp", help="serve the AI agents' tools over stdio (used by pi)")
     p.set_defaults(func=cmd_mcp)
 
 

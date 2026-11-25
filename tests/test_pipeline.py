@@ -1,4 +1,6 @@
 import json
+import sqlite3
+from datetime import datetime, timedelta, timezone
 
 import pytest
 import yaml
@@ -9,7 +11,7 @@ from shaheen.domains import registrable_domain
 from shaheen.pipeline import Scanner
 from shaheen.reasons import LABELS
 from shaheen.resolve import SHORTENERS, Hop, Resolution
-from shaheen.score import TLD_SWAP_WEIGHT
+from shaheen.score import TLD_SWAP_WEIGHT, WEIGHTS
 from shaheen.store import Store
 
 # Scam-looking hosts here are made up, mostly under the reserved .test TLD.
@@ -163,3 +165,42 @@ def test_intel_is_written_to_the_evidence_pack(scanner):
     intel_features = {"domain_age_days", "registrar", "asn", "hosting_country", "cert_age_days", "nxdomain"}
     assert intel_features <= set(result.signals)
     assert scanner.store.get_scan(result.id).verdict == result.verdict
+
+
+def test_a_uae_scam_theme_counts_only_on_a_domain_naming_no_brand(scanner):
+    themed = scanner.scan("dubai-traffic-fines.test")
+    assert themed.risk_score == WEIGHTS["THEME_UAE_DOMAIN"] + WEIGHTS["DECEPTIVE_DOMAIN_WORDS"]
+    assert themed.verdict == "legitimate"
+    assert "THEME_UAE_DOMAIN" not in codes(scanner.scan("adcb-uae-bank.test"))
+
+
+def _checked(store, url, scan_id, days_ago):
+    store.enqueue(url, registrable_domain(url), "ctlogs")
+    store.finish_candidate(store.claim_candidate()["id"], "done", scan_id)
+    when = (datetime.now(timezone.utc) - timedelta(days=days_ago)).isoformat(timespec="seconds")
+    with sqlite3.connect(store.path) as db:
+        db.execute("UPDATE candidates SET scanned_at = ? WHERE url = ?", (when, url))
+
+
+def test_a_checked_url_is_queued_again_once_its_check_is_old_enough(scanner):
+    store = scanner.store
+    legit, suspicious = scanner.scan("https://dubai-cafe.test/"), scanner.scan("https://boseuae.test/")
+    _checked(store, legit.url, legit.id, 6)
+    _checked(store, suspicious.url, suspicious.id, 2)
+    assert not store.enqueue(legit.url, "dubai-cafe.test", "ctlogs")
+    assert store.enqueue(suspicious.url, "boseuae.test", "storefronts")
+    with sqlite3.connect(store.path) as db:
+        db.execute("UPDATE scans SET verdict = 'fraud' WHERE id = ?", (legit.id,))
+        db.execute("UPDATE candidates SET scanned_at = '2026-01-01T00:00:00+00:00'")
+    assert not store.enqueue(legit.url, "dubai-cafe.test", "ctlogs")
+
+
+def test_a_domain_is_investigated_again_only_when_it_turns_fraud(scanner):
+    first = scanner.scan("boseuae.test")
+    assert scanner.store.get_investigation(first.id)["status"] == "queued"
+    assert scanner.store.get_investigation(scanner.scan("boseuae.test").id) is None
+    assert not scanner.store.needs_investigation("boseuae.test", "fraud")
+    scanner.store.set_investigation(first.id, "done")
+    assert scanner.store.needs_investigation("boseuae.test", "fraud")
+    assert not scanner.store.needs_investigation("boseuae.test", "suspicious")
+

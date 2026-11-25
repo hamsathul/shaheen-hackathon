@@ -753,3 +753,22 @@ details.numbers > :not(summary) { margin-block-start: 10px; }
 .rep-links a + a { margin-inline-start: 14px; }
 .pager { display: flex; align-items: baseline; gap: 22px; margin-block-start: 14px; color: var(--muted); font-size: 14px; font-variant-numeric: tabular-nums; }
 .pager a { color: var(--ink); font-weight: 600; }
+
+/* hunts: the mission box in the margin column, the list of hunts, one page per hunt */
+
+.hunt-form textarea, .hunt-form select {
+  width: 100%;
+  border: 1px solid var(--ink);
+  border-radius: 0;
+  background: #fff;
+  color: var(--ink);
+  font: 400 14.5px/1.4 var(--sans);
+}
+.hunt-form textarea { min-height: 7.5em; padding: 8px 10px; resize: vertical; }
+.hunt-form select { height: 38px; padding: 0 8px; }
+.hunt-form textarea:focus-visible, .hunt-form select:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.hunt-intro { margin-block-start: 22px; }
+.hunt-table td.mission { max-width: 34rem; }
+.case-head h1.hunt-mission { font: 600 28px/1.25 var(--sans); word-break: normal; }
+.hunt-finds td.domain { word-break: break-all; }
+.hunt-finds td:last-child { white-space: nowrap; }

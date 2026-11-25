@@ -1,0 +1,81 @@
+# Kinds of scam aimed at people in the UAE, and the domain words that mark them.
+#
+# A host matches a theme when it carries a UAE marker (one of `markers` anywhere
+# in its name, a name ending in -ae, or the .ae suffix) and one of the theme's
+# `words`. Words of five letters or more also count inside a longer token;
+# shorter ones count as a whole token or once a marker is cut from the start or
+# end of a token (uaevisa, jobsdubai). Brand names are not theme words: the brand
+# files cover them (salik, emiratespost, aramex).
+#
+# `ct_terms` are the certificate-name searches the ctlogs collector rotates
+# through (crt.sh, `%term%`); each already contains a marker.
+#
+# Theme ids contain an underscore so they can never be mistaken for a domain word
+# when reason text is translated.
+
+markers: [uae, dubai, abudhabi, emirates, emirati, sharjah, ajman, fujairah, rasalkhaimah, ummalquwain]
+
+# Words that contain a marker by accident (baidu + baike spells "dubai").
+not_markers: [baidu]
+
+themes:
+  - id: traffic_fines
+    name_en: Traffic fines and tolls
+    name_ar: المخالفات المرورية ورسوم الطرق
+    words: [fine, fines, traffic, violation, violations, toll, tolls, parking, penalty, penalties]
+    ct_terms: [uaefine, dubaifine, abudhabifine, uae-fine]
+
+  - id: visa_residency
+    name_en: Visas, residency and Emirates ID
+    name_ar: التأشيرات والإقامة والهوية الإماراتية
+    words: [visa, visas, evisa, residency, resident, permit, emiratesid, goldenvisa, immigration]
+    ct_terms: [uaevisa, dubaivisa, emiratesid, uae-visa]
+
+  - id: job_offers
+    name_en: Job offers and recruitment
+    name_ar: عروض العمل والتوظيف
+    words: [job, jobs, career, careers, hiring, vacancy, vacancies, recruit, recruitment, employment]
+    ct_terms: [uaejobs, dubaijobs, uae-jobs]
+
+  - id: parcel_delivery
+    name_en: Parcel delivery and customs
+    name_ar: توصيل الطرود والجمارك
+    words: [parcel, parcels, delivery, shipment, shipping, courier, tracking, customs, package, redelivery]
+    ct_terms: [uaeparcel, uaedelivery, dubaiparcel]
+
+  - id: bank_updates
+    name_en: Bank account updates and OTP
+    name_ar: تحديث الحسابات المصرفية ورموز التحقق
+    words: [bank, banking, otp, kyc, cards, account, verify, update, unblock, blocked]
+    ct_terms: [uaebank, uae-bank, uaekyc]
+
+  - id: investment_schemes
+    name_en: Investment and crypto schemes
+    name_ar: مخططات الاستثمار والعملات المشفّرة
+    words: [invest, investment, crypto, trading, forex, bitcoin, profit, profits, stocks]
+    ct_terms: [uaecrypto, dubaicrypto, uaeinvest, dubaiinvest]
+
+  - id: holiday_rentals
+    name_en: Holiday homes and property rentals
+    name_ar: بيوت العطلات وتأجير العقارات
+    words: [holiday, rental, rentals, rent, property, properties, apartment, apartments, villa, villas,
+            realestate, tenancy]
+    ct_terms: [dubaiholiday, dubairental, dubaiproperty]
+
+  - id: charity_appeals
+    name_en: Charity and zakat appeals
+    name_ar: التبرعات والزكاة
+    words: [zakat, donate, donation, donations, charity, sadaqah, iftar, ramadan, relief]
+    ct_terms: [uaezakat, uaecharity, uaedonate]
+
+  - id: loan_offers
+    name_en: Loans and credit
+    name_ar: القروض والتمويل
+    words: [loan, loans, credit, finance, financing, cash, lending, mortgage]
+    ct_terms: [uaeloan, dubailoan, uaefinance]
+
+  - id: prize_draws
+    name_en: Prizes, draws and giveaways
+    name_ar: الجوائز والسحوبات والهدايا
+    words: [prize, prizes, winner, winners, lucky, draw, raffle, giveaway, reward, rewards, gift, jackpot, lottery]
+    ct_terms: [uaeprize, uaewinner, uaelucky]

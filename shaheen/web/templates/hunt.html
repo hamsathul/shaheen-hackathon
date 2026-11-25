@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block head %}{% if live %}<meta http-equiv="refresh" content="10">{% endif %}{% endblock %}
+{% block title %}Shaheen | {{ t.hunt_heading }} {{ hunt.id }}{% endblock %}
+{% block main %}
+<p class="crumbs"><a href="/hunts">{{ t.hunt_back }}</a></p>
+{% set theme = theme_names.get(hunt.theme) %}
+
+<div class="frame case hunt">
+  <header class="row case-head">
+    <div class="side">
+      <h2 class="label">{{ t.hunt_status }}</h2>
+      <p><span class="state {{ hunt.status }}">{{ hunt.status }}</span></p>
+      {% if live %}<p class="side-note">{{ t.hunt_live }}</p>{% endif %}
+      {% if live and not alive %}<p class="note">{{ t.hunt_agent_off }}</p>{% endif %}
+    </div>
+    <div class="work">
+      <p class="caseid"><span class="label">{{ t.hunt_heading }}</span> <span class="mono" dir="ltr">{{ hunt.id }}</span></p>
+      <h1 class="hunt-mission" dir="auto">{{ hunt.mission }}</h1>
+      <dl class="facts">
+        <div><dt>{{ t.hunt_theme }}</dt><dd>{{ (theme[1] if lang == "ar" else theme[0]) if theme else t.hunt_any_theme }}</dd></div>
+        <div><dt>{{ t.hunt_queued_at }}</dt><dd><bdi dir="ltr">{{ hunt.queued_at | gst }} GST</bdi></dd></div>
+        {% if hunt.finished_at %}<div><dt>{{ t.hunt_finished_at }}</dt><dd><bdi dir="ltr">{{ hunt.finished_at | gst }} GST</bdi></dd></div>{% endif %}
+        {% if run.wall_s %}<div><dt>{{ t.hunt_wall }}</dt><dd><bdi dir="ltr">{{ run.wall_s | round | int }} s</bdi></dd></div>{% endif %}
+      </dl>
+    </div>
+  </header>
+
+  <section class="row">
+    <div class="side"><h2 class="label">{{ t.hunt_report }}</h2></div>
+    <div class="work">
+      {% if hunt.error %}<p class="error">{{ hunt.error }}</p>{% endif %}
+      {% if report.summary_en or report.summary_ar %}
+      <div class="summary">
+        <div lang="en" dir="ltr"><h3 class="label">Summary</h3><p>{{ report.summary_en | defang }}</p></div>
+        <div lang="ar" dir="rtl"><h3 class="label">الملخص</h3><p>{{ report.summary_ar | defang }}</p></div>
+      </div>
+      {% elif not hunt.error %}
+      <p class="muted">{{ t.hunt_no_report }}</p>
+      {% endif %}
+      <h3 class="label">{{ t.hunt_suspects }}</h3>
+      <ol class="claim-list" dir="auto">{% for s in report.suspects or [] %}<li><span class="claim-n" dir="ltr">S{{ loop.index }}</span><span><bdi class="mono" dir="ltr">{{ s.domain | defang }}</bdi> {{ s.reason | defang }}</span></li>{% else %}<li class="muted">{{ t.none }}</li>{% endfor %}</ol>
+      {% if run.unverified_suspects %}<p class="note">{{ t.hunt_unverified }}: <bdi class="mono" dir="ltr">{{ run.unverified_suspects | join(", ") | defang }}</bdi></p>{% endif %}
+      <div class="followup">
+        <div><h3 class="label">{{ t.hunt_searches }}</h3>
+          <ul class="plain mono" dir="ltr">{% for x in report.searches or [] %}<li>{{ x | defang }}</li>{% else %}<li class="muted">{{ t.none }}</li>{% endfor %}</ul></div>
+        <div><h3 class="label">{{ t.hunt_next }}</h3>
+          <ol class="numbered" dir="auto">{% for x in report.next_steps or [] %}<li>{{ x | defang }}</li>{% else %}<li class="muted">{{ t.none }}</li>{% endfor %}</ol></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="row">
+    <div class="side">
+      <h2 class="label">{{ t.hunt_found }}</h2>
+      <p class="side-numeral">{{ finds | length }}</p>
+      <p class="side-note">{{ t.hunt_found_note }}</p>
+    </div>
+    <div class="work">
+      <table class="ledger scans-table hunt-finds">
+        <thead><tr><th>{{ t.domain }}</th><th>{{ t.hunt_reason }}</th><th>{{ t.hunt_check }}</th></tr></thead>
+        <tbody>
+          {% for f in finds %}
+          <tr>
+            <td class="domain" dir="ltr">{% if f.scan_id %}<a href="/case/{{ f.scan_id }}">{{ f.host | defang }}</a>{% else %}{{ f.host | defang }}{% endif %}</td>
+            <td dir="auto">{{ f.reason | defang }}</td>
+            <td>{% if f.verdict %}<span class="mark {{ f.verdict }}">{{ verdicts[f.verdict] }}</span> <b>{{ f.risk_score }}</b>{% else %}<span class="muted">{{ t.hunt_waiting }}</span>{% endif %}</td>
+          </tr>
+          {% else %}
+          <tr class="empty"><td colspan="3">{{ t.none }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="row trace">
+    <div class="side">
+      <h2 class="label">{{ t.trace }}</h2>
+      {% if trace %}
+      <p class="side-numeral">{{ trace | selectattr("kind", "equalto", "tool") | list | length }}</p>
+      <p class="side-note">{{ t.live_calls }}</p>
+      {% endif %}
+    </div>
+    <div class="work">
+      {% include "trace_log.html" %}
+    </div>
+  </section>
+</div>
+{% endblock %}

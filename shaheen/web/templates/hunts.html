@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Shaheen | {{ t.hunt_title }}{% endblock %}
+{% block main %}
+<div class="frame feed hunts">
+  <aside class="side">
+    <dl class="tally">
+      <div class="tally-row"><dt>{{ t.hunt_count }}</dt><dd>{{ hunts | length }}</dd></div>
+    </dl>
+    <form method="post" action="/hunts" class="check hunt-form">
+      <label class="label" for="hunt-mission">{{ t.hunt_mission }}</label>
+      <textarea id="hunt-mission" name="mission" maxlength="500" dir="auto" placeholder="{{ t.hunt_placeholder }}"></textarea>
+      <label class="label" for="hunt-theme">{{ t.hunt_theme }}</label>
+      <select id="hunt-theme" name="theme">
+        <option value="">{{ t.hunt_any_theme }}</option>
+        {% for id, names in theme_names.items() %}<option value="{{ id }}">{{ names[1] if lang == "ar" else names[0] }}</option>{% endfor %}
+      </select>
+      <button type="submit">{{ t.hunt_start }}</button>
+      {% if error %}<p class="error">{{ t.hunt_error }}</p>{% endif %}
+      {% if not alive %}<p class="note">{{ t.hunt_agent_off }}</p>{% endif %}
+    </form>
+    <p class="note hunt-intro">{{ t.hunt_intro }}</p>
+  </aside>
+
+  <div class="work">
+    <h1 class="leads-title">{{ t.hunt_title }}</h1>
+    <table class="ledger scans-table hunt-table">
+      <thead>
+        <tr><th class="num">#</th><th>{{ t.hunt_queued_at }}</th><th>{{ t.hunt_mission }}</th><th>{{ t.hunt_theme }}</th><th>{{ t.hunt_status }}</th><th class="num">{{ t.hunt_finds }}</th></tr>
+      </thead>
+      <tbody>
+        {% for h in hunts %}
+        <tr>
+          <td class="num"><a href="/hunts/{{ h.id }}">{{ h.id }}</a></td>
+          <td class="time" dir="ltr">{{ h.queued_at | gst }}</td>
+          <td class="mission"><a href="/hunts/{{ h.id }}" dir="auto">{{ h.mission }}</a></td>
+          <td>{% if h.theme in theme_names %}{{ theme_names[h.theme][1] if lang == "ar" else theme_names[h.theme][0] }}{% endif %}</td>
+          <td><span class="state {{ h.status }}">{{ h.status }}</span></td>
+          <td class="num score">{{ h.finds }}</td>
+        </tr>
+        {% else %}
+        <tr class="empty"><td colspan="6">{{ t.hunt_none }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

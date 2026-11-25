@@ -8,9 +8,10 @@ uv run shaheen investigate <case-id> --mode oneshot  # no tool calling
 uv run shaheen investigate --queue [--loop] [--workers N]  # work the queue, fraud before suspicious
 uv run shaheen investigate --bench                   # tokens per second of the endpoint
 uv run shaheen up                                    # autonomous mode: watcher, investigator queue and dashboard
+uv run shaheen hunt "<mission>" [--theme <id>] [--queue]  # an AI hunt (see Hunts below)
 ```
 
-**The queue.** `--queue` (and `shaheen up`) runs `--workers` investigations in parallel (default `SHAHEEN_INVESTIGATORS`, else 2), each with its own pi process, `shaheen mcp` server, browser, pi config directory and evidence folder; give `llama-server` as many slots (`-np`). A worker takes a case with one SQLite `UPDATE … RETURNING`, so two workers never take the same case. Before taking a case, a worker checks that the model answers `GET {LLM_BASE_URL}/models`; while it does not, no case is taken (waits of 10 s doubling to 60 s, one log line when the endpoint goes down and one when it is back, and the dashboard says "Waiting for the model"). A run that fails with a connection error (`ConnectError`, `ConnectTimeout`, `ReadError`, `RemoteProtocolError`) goes back to the queue instead of staying failed. When the queue starts, it re-queues investigations left `running` by a stopped process and those that failed with a connection error. Ctrl-C (or stopping `shaheen up`) kills the pi runs in flight with everything they started and puts their cases back in the queue. While it runs, the queue writes a heartbeat to the store's meta table; the dashboard's live panel shows the investigator as off when the heartbeat is more than a minute old.
+**The queue.** `--queue` (and `shaheen up`) runs `--workers` investigations in parallel (default `SHAHEEN_INVESTIGATORS`, else 2), each with its own pi process, `shaheen mcp` server, browser, pi config directory and evidence folder; give `llama-server` as many slots (`-np`). A worker takes a queued hunt first, else a case, each with one SQLite `UPDATE … RETURNING`, so two workers never take the same one. Before taking a case, a worker checks that the model answers `GET {LLM_BASE_URL}/models`; while it does not, no case is taken (waits of 10 s doubling to 60 s, one log line when the endpoint goes down and one when it is back, and the dashboard says "Waiting for the model"). A run that fails with a connection error (`ConnectError`, `ConnectTimeout`, `ReadError`, `RemoteProtocolError`) goes back to the queue instead of staying failed. When the queue starts, it re-queues investigations left `running` by a stopped process and those that failed with a connection error. Ctrl-C (or stopping `shaheen up`) kills the pi runs in flight with everything they started and puts their cases back in the queue. While it runs, the queue writes a heartbeat to the store's meta table; the dashboard's live panel shows the investigator as off when the heartbeat is more than a minute old.
 
 Each run writes into `evidence/<id>/`:
 
@@ -108,6 +109,28 @@ Used when `LLM_TOOL_CALLING=off`, when pi is not installed, or as the fallback. 
 | `needs_human_review` | True unless the evidence is clear-cut |
 
 A human still confirms a case (`shaheen confirm <id>`) before it is called confirmed.
+
+## Hunts
+
+An officer gives the hunter a mission in the dashboard's Hunts page or with `shaheen hunt "<mission>"`, optionally with one of the UAE scam themes of `data/themes_uae.yaml`. The mission is stored in the `hunts` table. `shaheen hunt` runs it at once; the dashboard (and `--queue`) leaves it for the queue workers, which take hunts before cases.
+
+A hunt is a pi run like an investigation, with three differences:
+
+- **No browser.** Its pi config (`var/pi/hunt-<id>/`) declares only Shaheen's MCP server, and pi runs with `--tools 'mcp__shaheen__*'`. A declared tool outside `mcp__shaheen__` fails the run.
+- **Hunt tools.** `shaheen mcp` with `SHAHEEN_HUNT_ID` serves the tools below instead of the case tools.
+- **The task.** pi gets `agent/hunter.md` as the system prompt and `Hunt <id>. Mission: <mission>` as the task, on one line and at most 500 characters. The task starts with a fixed word, so a mission can never be read as one of pi's options.
+
+| Tool | Does | Limits |
+|---|---|---|
+| `list_themes()` | The themes: id, name, domain words, certificate search terms, and the UAE markers | read-only |
+| `search_certificates(term)` | Host names on certificates issued in the last 30 days that contain the term (crt.sh), each with the themes it matches | 6 or more letters, digits or hyphens; 4 per hunt; 45 s per try |
+| `search_new_domains(words)` | Domains registered yesterday (WhoisDS daily list) containing any of the words, with their themes | up to 5 words of 3 or more letters; the list is downloaded once per hunt and kept in memory |
+| `known_domains(words)` | Domains already in the store containing the words, with their latest verdict or queue status | read-only |
+| `domain_intel`, `get_page_text`, `scan_url` | As for cases | as for cases |
+| `propose_candidates(domains, reason)` | Queues domains for the watcher (`source="hunt"`) | as for cases |
+| `submit_hunt_report(id, report)` | Validates the hunt report and saves it | only for the hunt being run, once |
+
+Every domain the hunter scans or queues is recorded in `hunt_finds` with its reason, so the hunt's page lists each one with Shaheen's latest check: the hunter's own scan, or the watcher's scan of the queued link once it runs. The report has `summary_en`, `summary_ar`, `searches`, `suspects` (domain and reason) and `next_steps`. A suspect that no tool result of the run mentions is dropped and listed in `run.unverified_suspects`. The record and pi's trace are kept in the store and in `var/hunts/<id>/`. The hunter never sets a verdict: suspects stay suspects until the deterministic scorer has seen them.
 
 ## Running pi by hand
 

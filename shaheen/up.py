@@ -17,7 +17,7 @@ import threading
 
 import uvicorn
 
-from shaheen import investigator, watch
+from shaheen import agents, investigator, watch
 from shaheen.config import load_settings
 from shaheen.store import Store
 from shaheen.web.app import create_app
@@ -26,7 +26,7 @@ log = logging.getLogger("shaheen.up")
 
 # Log prefix of each component, by logger name.
 COMPONENTS = {"shaheen.watch": "watch", "shaheen.collectors": "watch", "shaheen.investigator": "agent",
-              "uvicorn": "web", "shaheen.up": "up"}
+              "shaheen.agents": "agent", "shaheen.hunter": "agent", "uvicorn": "web", "shaheen.up": "up"}
 INVESTIGATOR_STOP_S = 30.0  # killing the pi runs takes a second or two; a one-shot request may not stop
 WATCHER_STOP_S = 120.0  # a rendered scan in flight can take a minute
 
@@ -52,7 +52,7 @@ def _setup_logging() -> None:
 
 def _investigate(stop: threading.Event, workers: int) -> None:
     try:
-        investigator.work_queue(loop=True, workers=workers, stop=stop)
+        agents.work_queue(loop=True, workers=workers, stop=stop)
     except Exception:  # noqa: BLE001 - the watcher and the dashboard go on
         log.exception("the investigator stopped")
 

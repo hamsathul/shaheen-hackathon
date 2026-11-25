@@ -1,5 +1,5 @@
 """URL and domain signals: lexical checks on every hop of the redirect chain,
-brand and lookalike matching, risky TLDs and hosting platforms, plus the
+brand and lookalike matching, UAE scam themes, risky TLDs and hosting platforms, plus the
 registration, certificate and popularity facts of the landing domain. Page
 signals: brands the page presents itself as, the sensitive fields it asks
 for, where its forms send data, urgency wording, doorways and cloaking.
@@ -19,7 +19,7 @@ from urllib.parse import urlsplit
 
 import yaml
 
-from shaheen import brands
+from shaheen import brands, themes
 from shaheen.config import DATA_DIR
 from shaheen.domains import host_of, is_ip, registrable_domain, split_host
 from shaheen.models import Finding, ScanContext
@@ -84,6 +84,19 @@ def lexical_findings(url: str, evidence: str) -> list[Finding]:
     if words:
         found.append(Finding("DECEPTIVE_DOMAIN_WORDS", evidence, {"words": words}))
     return found
+
+
+def theme_findings(host: str, evidence: str) -> list[Finding]:
+    """THEME_UAE_DOMAIN: a UAE marker with the words of common UAE scams
+    (data/themes_uae.yaml). Never for an official domain or a government namespace."""
+    if brands.official_brand(host) or brands.gov_namespace(host):
+        return []
+    found = themes.match(host)
+    if not found:
+        return []
+    words = list(dict.fromkeys(w for m in found for w in m.words))
+    return [Finding("THEME_UAE_DOMAIN", evidence,
+                    {"marker": found[0].marker, "words": words, "themes": [m.theme.id for m in found]})]
 
 
 def domain_findings(url: str, evidence: str) -> list[Finding]:
@@ -188,8 +201,9 @@ def _lands_without_detour(chain: list[str], final: str) -> bool:
 def url_signals(ctx: ScanContext, intel_by_domain: dict[str, dict[str, Any]]) -> None:
     """Add the URL and domain findings of a scan to `ctx`, with raw features.
 
-    Lexical and brand signals look at every hop (brand and domain signals skip
-    URL shorteners); registration, certificate and popularity signals look at
+    Lexical, brand and theme signals look at every hop (brand, theme and domain
+    signals skip URL shorteners, and a theme counts only on a hop that names no
+    brand); registration, certificate and popularity signals look at
     the landing domain, aged from when the facts were collected
     (`ctx.as_of`). The landing domain only vouches for the link (TOP_SITE,
     DOMAIN_OLD) when it is not a URL shortener, no hop is on a hosting
@@ -204,7 +218,10 @@ def url_signals(ctx: ScanContext, intel_by_domain: dict[str, dict[str, Any]]) ->
         if registrable_domain(url) in SHORTENERS:
             continue
         found += [(f, None) for f in domain_findings(url, evidence)]
-        found += brand_findings(host_of(url), evidence)
+        branded = brand_findings(host_of(url), evidence)
+        found += branded
+        if not branded:  # the brand findings already say what a branded name imitates
+            found += [(f, None) for f in theme_findings(host_of(url), evidence)]
 
     final = registrable_domain(ctx.final_url)
     platform = next((p for p in map(brands.hosting_platform, chain) if p), None)

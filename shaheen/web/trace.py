@@ -22,7 +22,7 @@ MAX_RESULT = 700
 MAX_MESSAGE = 2000
 MAX_TARGET = 90
 # The argument that best names what a tool call works on, in order of preference.
-TARGET_KEYS = ("url", "domain", "domains", "element", "text", "regex", "filter", "key", "id")
+TARGET_KEYS = ("url", "domain", "domains", "term", "words", "element", "text", "regex", "filter", "key", "id")
 # Terminal colour codes that tool errors (Playwright's call log) carry.
 ANSI = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
 

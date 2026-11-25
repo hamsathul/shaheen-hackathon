@@ -1,4 +1,5 @@
 from shaheen.domains import defang, normalize_url, refang, registrable_domain
+from shaheen.evidence import defang_text
 
 
 def test_refang_and_defang_round_trip():
@@ -16,3 +17,8 @@ def test_registrable_domain_respects_multi_part_and_private_suffixes():
     assert registrable_domain("someone.github.io") == "someone.github.io"
     assert registrable_domain("https://login.tamm.abudhabi/") == "tamm.abudhabi"
     assert registrable_domain("http://192.168.1.10/login") == "192.168.1.10"
+
+
+def test_defang_text_catches_a_domain_glued_to_arabic():
+    assert defang_text("وuaecfc.com، و10.1.2.3") == "وuaecfc[.]com، و10[.]1[.]2[.]3"
+
