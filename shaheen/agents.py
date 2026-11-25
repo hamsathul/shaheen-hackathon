@@ -1,7 +1,8 @@
 """The AI agents' queue: parallel workers that take a queued hunt first
-(`shaheen.hunter`), else the next flagged case (`shaheen.investigator`),
-fraud before suspicious. All of them share one view of the model endpoint and
-claim nothing while it does not answer.
+(`shaheen.hunter`), else a queued contacts read (`shaheen.contacts`, one quick
+model call), else the next flagged case (`shaheen.investigator`), fraud before
+suspicious. All of them share one view of the model endpoint and claim nothing
+while it does not answer.
 """
 
 from __future__ import annotations
@@ -12,7 +13,7 @@ import time
 from collections.abc import Callable
 from typing import Any
 
-from shaheen import evidence, hunter
+from shaheen import contacts, evidence, hunter
 from shaheen.config import Settings, load_settings
 from shaheen.domains import host_of
 from shaheen.investigator import POLL, Stopped, first_sentence, investigate, model_answers
@@ -81,6 +82,21 @@ def _work_hunt(settings: Settings, store: Store, hunt_id: int, timeout_s: float,
              len(run["pi"].get("tool_calls") or []), len(store.hunt_finds(hunt_id)), evidence.defang_text(outcome))
 
 
+def _work_contacts(settings: Settings, store: Store, scan_id: str) -> None:
+    try:
+        record = contacts.read(scan_id, settings, store)
+    except Exception as exc:  # noqa: BLE001 - one bad page must not stop the queue
+        store.set_contacts(scan_id, "failed", error=f"{type(exc).__name__}: {exc}"[:300])
+        log.warning("contacts of %s failed: %s", scan_id, f"{type(exc).__name__}: {exc}"[:200])
+        return
+    if record["status"] == "failed" and str(record.get("error") or "").startswith(CONNECTION_ERRORS):
+        store.set_contacts(scan_id, "queued")
+        log.warning("contacts of %s did not reach the model: back in the queue", scan_id)
+        return
+    found = sum(len(record.get(field) or []) for field in contacts.IDENTIFIERS)
+    log.info("contacts %s %s: %d numbers, addresses or accounts", record["status"], scan_id, found)
+
+
 def _queue_worker(settings: Settings, store: Store, gate: ModelGate, loop: bool, timeout_s: float, mode: str,
                   stop: threading.Event, on_record: Callable[[dict[str, Any]], None]) -> None:
     while not stop.is_set():
@@ -93,6 +109,10 @@ def _queue_worker(settings: Settings, store: Store, gate: ModelGate, loop: bool,
             except Stopped:
                 log.info("stopped hunt %d: its run was ended and the hunt is back in the queue", hunt_id)
                 return
+            continue
+        read_id = store.claim_contacts()
+        if read_id is not None:
+            _work_contacts(settings, store, read_id)
             continue
         scan_id = store.claim_investigation()
         if scan_id is None:
@@ -145,6 +165,8 @@ def work_queue(loop: bool = False, timeout_s: float = 900, mode: str = "auto", w
         log.info("requeued %d investigations that failed because the model did not answer", requeued)
     if requeued := store.requeue_running_hunts():
         log.info("requeued %d hunts left running by an earlier run", requeued)
+    if requeued := store.requeue_running_contacts():
+        log.info("requeued %d contacts reads left running by an earlier run", requeued)
     store.set_meta(MODEL_DOWN_KEY, "")
     gate = ModelGate(settings, store)
     lock = threading.Lock()

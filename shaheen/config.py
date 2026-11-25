@@ -47,6 +47,7 @@ class Settings:
     google_maps_api_base: str = GOOGLE_MAPS_API_BASE
     google_maps_browser_key: str = ""  # Maps JavaScript API, for the dashboard's map; empty shows the log alone
     maps_interval_hours: float = 6.0  # hours between Maps collector runs
+    proxy_url: str = ""  # an exit the operator controls, for the second look at blocked pages; empty: the box's own
 
     @property
     def llm_enabled(self) -> bool:
@@ -73,5 +74,6 @@ def load_settings() -> Settings:
         google_maps_api_key=os.environ.get("GOOGLE_MAPS_API_KEY", "").strip(),
         google_maps_api_base=(os.environ.get("GOOGLE_MAPS_API_BASE") or GOOGLE_MAPS_API_BASE).rstrip("/"),
         google_maps_browser_key=os.environ.get("GOOGLE_MAPS_BROWSER_KEY", "").strip(),
+        proxy_url=os.environ.get("SHAHEEN_PROXY", "").strip(),
         maps_interval_hours=float(os.environ.get("SHAHEEN_MAPS_INTERVAL_HOURS") or 6),
     )

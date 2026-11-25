@@ -22,10 +22,11 @@ from collections.abc import Callable
 from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import replace
 from datetime import datetime, timezone
+from functools import cached_property
 from pathlib import Path
 from typing import Any
 
-from shaheen import brands, focus, intel, page, reasons, score, signals, storefront
+from shaheen import brands, focus, intel, page, reasons, score, signals, stealth, storefront
 from shaheen.capture import Capture
 from shaheen.config import Settings, load_settings
 from shaheen.domains import host_of, normalize_url, registrable_domain
@@ -50,9 +51,20 @@ class Scanner:
             self.settings.user_agent, self.settings.http_timeout
         )
 
+    @cached_property
+    def chrome_clients(self) -> tuple[stealth.ChromeClient, stealth.ChromeClient]:
+        """Clients with Chrome's network fingerprint, for the second look at a blocked fetch."""
+        return stealth.chrome_clients(self.settings.http_timeout, self.settings.proxy_url)
+
     def close(self) -> None:
         self.client.close()
         self.insecure_client.close()
+        for client in self.__dict__.get("chrome_clients", ()):
+            client.close()
+
+    def _second_look(self, ctx: ScanContext, step: str, outcome: str) -> None:
+        look = ctx.features.setdefault("second_look", {"via": "proxy" if self.settings.proxy_url else "own address"})
+        look[step] = outcome
 
     def __enter__(self) -> Scanner:
         return self
@@ -119,7 +131,16 @@ class Scanner:
             ctx.features["stage_seconds"][name] = round(time.monotonic() - start, 1)
 
     def _resolve(self, ctx: ScanContext) -> None:
-        res = ctx.capture.resolution() if ctx.capture else resolve(ctx.url, self.client, self.insecure_client)
+        """Follow the link; a fetch turned away by a bot check is tried once more as Chrome."""
+        if ctx.capture:
+            res = ctx.capture.resolution()
+        else:
+            res = resolve(ctx.url, self.client, self.insecure_client)
+            if stealth.blocked(res.status_code, res.html):
+                second = resolve(ctx.url, *self.chrome_clients)
+                through = second.fetch_status == "ok" and not stealth.blocked(second.status_code, second.html)
+                self._second_look(ctx, "fetch", "ok" if through else "blocked")
+                res = second if through else res
         ctx.final_url = res.final_url
         ctx.redirect_chain = res.chain
         ctx.fetch_status = res.fetch_status
@@ -158,10 +179,19 @@ class Scanner:
 
     def _render(self, ctx: ScanContext) -> None:
         """Render the landing page in the browser: its DOM replaces the fetched
-        HTML, and a JavaScript redirect to another site extends the chain."""
+        HTML, and a JavaScript redirect to another site extends the chain. A render
+        turned away by a bot check is tried once more in Chrome."""
         if not ctx.options.render or ctx.fetch_status == "dead":
             return
         rendered, error = ctx.capture.rendered(ctx.final_url) if ctx.capture else render(ctx.final_url)
+        if rendered is not None and not ctx.capture and stealth.blocked(rendered.status, rendered.html):
+            if stealth.address_blocked(rendered.html) and not self.settings.proxy_url:
+                self._second_look(ctx, "render", "address blocked")
+            else:
+                second, _ = render(ctx.final_url, as_chrome=True, proxy=self.settings.proxy_url)
+                through = second is not None and not stealth.blocked(second.status, second.html)
+                self._second_look(ctx, "render", "ok" if through else "blocked")
+                rendered = second if through else rendered
         if rendered is None:
             ctx.features["render_error"] = error
             return
@@ -255,10 +285,13 @@ class Scanner:
         # One investigation per domain, and one more if a re-check finds it has become
         # fraud. The investigator's own scan_url calls re-scan the domain it is working
         # on while its investigation runs, so they never queue it again. A case outside
-        # the UAE focus is parked instead of queued.
+        # the UAE focus is parked instead of queued; a queued one gets a contacts read too.
         if (result.verdict in ("fraud", "suspicious") and not ctx.options.capture_dir
                 and self.store.needs_investigation(ctx.features["final_domain"], result.verdict)):
-            self.store.queue_investigation(result.id, parked=not focus.case_in_focus(result, ctx.options.source))
+            parked = not focus.case_in_focus(result, ctx.options.source)
+            self.store.queue_investigation(result.id, parked=parked)
+            if not parked:
+                self.store.queue_contacts(result.id)
         return result
 
     def _verdict(self, ctx: ScanContext) -> ScanResult:

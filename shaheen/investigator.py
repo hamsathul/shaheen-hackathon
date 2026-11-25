@@ -579,7 +579,7 @@ def parse_reply(content: str) -> Any:
     return json.loads(text[start:end + 1])
 
 
-def _chat(settings: Settings, body: dict[str, Any], timeout_s: float) -> dict[str, Any]:
+def chat(settings: Settings, body: dict[str, Any], timeout_s: float) -> dict[str, Any]:
     resp = httpx.post(f"{settings.llm_base_url}/chat/completions", json=body, timeout=timeout_s,
                       headers={"Authorization": f"Bearer {settings.llm_api_key}"})
     resp.raise_for_status()
@@ -598,7 +598,7 @@ def run_oneshot(settings: Settings, messages: list[dict[str, str]], folder: Path
                 **ONESHOT_OPTIONS}
         _append_jsonl(trace, {"type": "oneshot_request", "attempt": attempt, "at": utcnow(), "body": body})
         try:
-            data = _chat(settings, body, max(10.0, deadline - time.monotonic()))
+            data = chat(settings, body, max(10.0, deadline - time.monotonic()))
         except (httpx.HTTPError, ValueError) as exc:
             error = f"{type(exc).__name__}: {exc}"[:300]
             _append_jsonl(trace, {"type": "oneshot_error", "attempt": attempt, "error": error})
@@ -752,7 +752,7 @@ def bench(settings: Settings | None = None) -> dict[str, Any]:
             "messages": [{"role": "user", "content": "In about 120 words, explain how a phishing "
                                                      "site imitates a government payment page."}]}
     started = time.monotonic()
-    data = _chat(settings, body, 600)
+    data = chat(settings, body, 600)
     wall = time.monotonic() - started
     usage, timings = data.get("usage") or {}, data.get("timings") or {}
     completion = usage.get("completion_tokens") or 0

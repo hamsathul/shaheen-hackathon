@@ -1,6 +1,7 @@
-"""SQLite storage: scan results, the candidate queue, investigations, AI hunts
-with the domains each one found, fingerprints for linking cases, an intel
-cache, and the Google Maps listings seen with the leads among them."""
+"""SQLite storage: scan results, the candidate queue, investigations, the
+contacts read from flagged pages, AI hunts with the domains each one found,
+fingerprints for linking cases, an intel cache, and the Google Maps listings
+seen with the leads among them."""
 
 from __future__ import annotations
 
@@ -54,6 +55,15 @@ CREATE TABLE IF NOT EXISTS investigations (
     started_at TEXT,
     finished_at TEXT,
     report_json TEXT,
+    error TEXT
+);
+
+CREATE TABLE IF NOT EXISTS contact_reads (
+    scan_id TEXT PRIMARY KEY,
+    status TEXT NOT NULL,
+    queued_at TEXT NOT NULL,
+    finished_at TEXT,
+    result_json TEXT,
     error TEXT
 );
 
@@ -500,6 +510,57 @@ class Store:
         data = dict(row)
         data["report"] = json.loads(data.pop("report_json")) if data.get("report_json") else None
         return data
+
+    # contacts read from flagged pages (shaheen.contacts)
+
+    def queue_contacts(self, scan_id: str) -> bool:
+        with self._conn() as db:
+            cur = db.execute("INSERT OR IGNORE INTO contact_reads (scan_id, status, queued_at) VALUES (?, 'queued', ?)",
+                             (scan_id, utcnow()))
+        return cur.rowcount == 1
+
+    def queue_missing_contacts(self) -> int:
+        """Queue a contacts read for every case sent to the investigator (queued, running
+        or done) that has none yet."""
+        with self._conn() as db:
+            cur = db.execute(
+                """INSERT OR IGNORE INTO contact_reads (scan_id, status, queued_at)
+                   SELECT scan_id, 'queued', ? FROM investigations WHERE status IN ('queued', 'running', 'done')""",
+                (utcnow(),))
+        return cur.rowcount
+
+    def claim_contacts(self) -> str | None:
+        """Take the oldest queued contacts read, fraud first, and mark it running."""
+        with self._conn() as db:
+            rows = db.execute(
+                """UPDATE contact_reads SET status = 'running'
+                   WHERE scan_id = (SELECT c.scan_id FROM contact_reads c JOIN scans s ON s.id = c.scan_id
+                                    WHERE c.status = 'queued'
+                                    ORDER BY CASE s.verdict WHEN 'fraud' THEN 0 ELSE 1 END, c.queued_at LIMIT 1)
+                   RETURNING scan_id""").fetchall()
+        return rows[0]["scan_id"] if rows else None
+
+    def set_contacts(self, scan_id: str, status: str, result_json: Any = None, error: str | None = None) -> None:
+        with self._conn() as db:
+            db.execute(
+                "UPDATE contact_reads SET status = ?, finished_at = ?, result_json = ?, error = ? WHERE scan_id = ?",
+                (status, utcnow() if status != "queued" else None,
+                 json.dumps(result_json, ensure_ascii=False) if result_json is not None else None, error, scan_id))
+
+    def get_contacts(self, scan_id: str) -> dict[str, Any] | None:
+        with self._conn() as db:
+            row = db.execute("SELECT * FROM contact_reads WHERE scan_id = ?", (scan_id,)).fetchone()
+        if row is None:
+            return None
+        data = dict(row)
+        data["result"] = json.loads(data.pop("result_json")) if data.get("result_json") else None
+        return data
+
+    def requeue_running_contacts(self) -> int:
+        """Return contacts reads left 'running' by a stopped run to the queue."""
+        with self._conn() as db:
+            cur = db.execute("UPDATE contact_reads SET status = 'queued' WHERE status = 'running'")
+        return cur.rowcount
 
     # AI hunts
 

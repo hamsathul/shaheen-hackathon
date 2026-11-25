@@ -16,6 +16,7 @@ import base64
 import hashlib
 import json
 import re
+import threading
 import zipfile
 from datetime import datetime, timedelta, timezone
 from functools import cache
@@ -31,6 +32,8 @@ from shaheen.models import ScanContext, ScanResult
 from shaheen.store import Store
 
 MANIFEST = "manifest.json"
+# Agents in parallel threads add their files to the same pack: one rewrite at a time.
+_MANIFEST_LOCK = threading.Lock()
 REPORT_HTML = "report.html"
 CONFIRMATION = "confirmation.json"
 TAKEDOWN = "takedown_request.md"
@@ -264,13 +267,14 @@ def manifest_sha256(folder: Path) -> str:
 def add_to_manifest(folder: Path, names: list[str]) -> None:
     """List files added to a pack after its scan (confirmation, investigation)
     in the manifest. Entries of other files stay exactly as they were."""
-    manifest = _manifest(folder)
-    entries = {item["name"]: item for item in manifest["files"]}
-    for name in names:
-        entries[name] = _entry(folder, name)
-    manifest["files"] = sorted(entries.values(), key=lambda e: e["name"])
-    manifest["updated_at"] = stamp(datetime.now(timezone.utc))
-    _write(folder / MANIFEST, manifest)
+    with _MANIFEST_LOCK:
+        manifest = _manifest(folder)
+        entries = {item["name"]: item for item in manifest["files"]}
+        for name in names:
+            entries[name] = _entry(folder, name)
+        manifest["files"] = sorted(entries.values(), key=lambda e: e["name"])
+        manifest["updated_at"] = stamp(datetime.now(timezone.utc))
+        _write(folder / MANIFEST, manifest)
 
 
 def pack_folder(scan_id_or_path: str | Path, settings: Settings | None = None) -> Path:

@@ -40,7 +40,7 @@ Officers and analysts work the results in the dashboard (`shaheen dashboard`), i
 - **Deterministic first, AI second.** Weighted signals decide the verdict. The model explains, links cases and proposes new candidates. It may move a `suspicious` score by at most 20 points; it never changes a `fraud` or `legitimate` verdict and never overrides the official-domain allowlist.
 - **Always a verdict.** When a page cannot be fetched, Shaheen scores from the URL and domain alone and says so (`fetch_status`).
 - **Web content is untrusted.** Page text reaches the model only inside delimiters, as data. The model has no shell and no file access.
-- **Non-intrusive.** Shaheen reads public pages and endpoints with unauthenticated GET requests. It never submits a form, enters a credential or probes for weaknesses.
+- **Non-intrusive.** Shaheen reads public pages and endpoints with unauthenticated GET requests. It never submits a form, enters a credential or probes for weaknesses. When a bot check turns it away, it looks once more as an ordinary Chrome browser would, to see what a victim sees; it never solves a CAPTCHA or clicks through a warning.
 - **A human confirms.** Only an analyst-confirmed case gets a takedown request.
 
 ## Screenshots
@@ -123,6 +123,10 @@ Weights and the EN/AR reason text are in `shaheen/score.py` and `shaheen/reasons
 
 **UAE focus.** The sweeps (lookalikes, certificate logs, new domains, the storefront sweep, and the domains the investigator proposes) find names by pattern, wherever they point. A link they queue is in focus when its host carries a UAE place name, ends in `-ae` or `.ae`, or names or imitates a UAE brand or government body (`shaheen/focus.py`). Links from an officer, the Google Maps watch or an AI hunt are always in focus. The watcher scans the links in focus first and the rest after them. A flagged case outside the focus (a Bose shop for Kuwait, a global phishing page) is parked instead of queued for the AI investigator, so the local model spends its time on cases aimed at the UAE. A parked case is kept with its evidence, counted on the Statistics page, and sent to the AI from its case page. `shaheen refocus` applies the rule to the links and cases already waiting.
 
+**Second look.** Scam sites often sit behind bot checks that turn away scripts but let a victim's browser in. When the first fetch or render is blocked (a 401, 403, 429 or 503, or a Cloudflare, Incapsula or similar check page), Shaheen tries once more (`shaheen/stealth.py`): an HTTP request with Chrome's network fingerprint ([curl_cffi](https://github.com/lexiforest/curl_cffi)), then the page in Google Chrome driven by [patchright](https://github.com/Kaliiiiiiiiii-Vinyzu/patchright-python), which does not announce the automation. The window sits off the screen, and a check that clears by itself gets 15 seconds. Each scan records the outcome in `second_look` (`fetch`, `render`: `ok` or `blocked`). A site that blocks the box's own address, such as a Cloudflare firewall rule on its country or network ("Sorry, you have been blocked", errors 1005 to 1020), needs another exit: without one the browser retry is skipped (`address blocked`); set `SHAHEEN_PROXY` to a proxy you control or pay for, and the second look goes through it. A check that wants a human to click stays unsolved.
+
+**Contacts.** Every case sent to the investigator also gets a contacts read (`shaheen/contacts.py`, prompt `agent/contacts.md`): one call to the local model lists the phone and WhatsApp numbers, emails, bank accounts and wallets the saved page shows, with how it takes payment, what it claims to be and what it asks the visitor for. That takes one call where an investigation takes many, so the AI workers do these first. Shaheen keeps only the numbers, addresses and accounts that are written in the page, adds `contacts.json` to the evidence pack's manifest, and records each one as a fingerprint, so the case page lists the other domains showing the same number or account. Contacts never change a score. `shaheen contacts --backfill` queues a read for every case already sent to the investigator.
+
 **Investigator.** For each flagged case, Shaheen writes a private pi configuration that declares only two MCP servers: Shaheen's own case tools (`get_case`, `get_page_text`, `domain_intel`, `find_related`, `scan_url`, `propose_candidates`, `submit_report`) and a headless Playwright browser in a throwaway profile. After the run Shaheen checks the tool list pi actually sent the model, audits every browser action, and adds the trace and browser session to the evidence pack. Details: [docs/agent.md](docs/agent.md).
 
 **Hunter.** A hunt gets Shaheen's MCP server in hunt mode and no browser: `list_themes`, `search_certificates` (crt.sh, 4 per hunt), `search_new_domains` (yesterday's WhoisDS list, downloaded once per hunt), `known_domains` (the store), plus `domain_intel`, `get_page_text`, `scan_url` and `propose_candidates` with the investigator's limits, and `submit_hunt_report`. Every domain it scans or queues is recorded with the hunt, so the hunt's page shows each one with its latest verdict as the watcher gets to it. Suspects the model names that no tool result mentions are dropped from the report. Details: [docs/agent.md](docs/agent.md#hunts).
@@ -138,6 +142,8 @@ uv sync
 uv run playwright install chromium
 copy .env.example .env          # cp on macOS/Linux
 ```
+
+The second look at blocked pages uses Google Chrome when it is installed; without it, run `uv run patchright install chromium` once.
 
 The scorer, watcher, dashboard and evaluation need nothing else. For the investigator:
 
@@ -180,6 +186,8 @@ uv run shaheen investigate --queue --loop --workers 2    # queued hunts first, t
 uv run shaheen hunt "fake traffic-fine payment sites aimed at UAE drivers" --theme traffic_fines
 uv run shaheen hunt "fake visa renewal sites" --queue    # for the AI workers of shaheen up
 uv run shaheen investigate --bench          # tokens per second of the model endpoint
+uv run shaheen contacts <case-id>           # read a flagged page's phone, WhatsApp, email and payment details
+uv run shaheen contacts --backfill          # queue a read for every case sent to the investigator
 
 # Analyst workflow
 uv run shaheen dashboard                    # http://127.0.0.1:8000/
@@ -324,6 +332,7 @@ shaheen/watch.py    collectors and the 24/7 loop
 shaheen/investigator.py, shaheen/hunter.py, shaheen/agents.py, shaheen/mcp_server.py, agent/   the local-model investigator and hunter, and their queue
 shaheen/themes.py   UAE scam themes (data/themes_uae.yaml)
 shaheen/focus.py    the UAE focus of the scan and investigation queues
+shaheen/stealth.py, shaheen/contacts.py   the second look at blocked pages; contacts read from flagged pages
 data/            brand allowlists, gateways, TLDs, wording (EN/AR), Tranco top 100k
 eval/            labelled sets, set builder, results
 demo/cases/      fixed cases for the demo: one real official site plus synthetic captures of invented .test domains

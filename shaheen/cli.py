@@ -11,8 +11,8 @@ from pathlib import Path
 
 import uvicorn
 
-from shaheen import (__version__, agents, batch, demo, evidence, focus, hunter, investigator, mcp_server, summary,
-                     themes, up, watch)
+from shaheen import (__version__, agents, batch, contacts, demo, evidence, focus, hunter, investigator, mcp_server,
+                     summary, themes, up, watch)
 from shaheen.capture import CaptureError
 from shaheen.config import load_settings
 from shaheen.domains import host_of, normalize_url, registrable_domain
@@ -286,6 +286,31 @@ def cmd_hunt(args: argparse.Namespace) -> int:
     return 0 if record["run"]["status"] == "done" else 1
 
 
+def cmd_contacts(args: argparse.Namespace) -> int:
+    settings = load_settings()
+    store = Store(settings.db_path)
+    if args.backfill:
+        print(f"queued {store.queue_missing_contacts()} contacts reads for the AI workers of `shaheen up`")
+        return 0
+    if not args.id:
+        print("shaheen contacts: give a case id, or --backfill", file=sys.stderr)
+        return 2
+    if not settings.llm_enabled:
+        print("shaheen contacts: set LLM_BASE_URL and LLM_MODEL", file=sys.stderr)
+        return 2
+    store.queue_contacts(args.id)
+    record = contacts.read(args.id, settings, store)
+    print(f"{record['status'].upper()}  {args.id}" + (f"  {record['error']}" if record.get("error") else ""))
+    for field in (*contacts.IDENTIFIERS, "payment_methods", "asks_for"):
+        if record.get(field):
+            print(f"  {field}: {', '.join(evidence.defang_text(v) for v in record[field])}")
+    if record.get("claims_to_be"):
+        print(f"  claims_to_be: {evidence.defang_text(record['claims_to_be'])}")
+    if record.get("dropped_not_on_page"):
+        print(f"  dropped (not written in the page): {len(record['dropped_not_on_page'])}")
+    return 0 if record["status"] in ("done", "skipped") else 1
+
+
 def _add_agent_commands(sub: argparse._SubParsersAction) -> None:
     p = sub.add_parser("investigate", help="have the local model investigate a flagged case")
     p.add_argument("id", nargs="?", help="case (scan) id")
@@ -304,6 +329,12 @@ def _add_agent_commands(sub: argparse._SubParsersAction) -> None:
     p.add_argument("--queue", action="store_true", help="queue it for the AI workers of `shaheen up` instead")
     p.add_argument("--timeout", type=float, default=hunter.TIMEOUT_S, help="seconds (default 900)")
     p.set_defaults(func=cmd_hunt)
+
+    p = sub.add_parser("contacts", help="read a flagged page's phone, WhatsApp, email and payment details")
+    p.add_argument("id", nargs="?", help="case (scan) id")
+    p.add_argument("--backfill", action="store_true",
+                   help="queue a read for every case sent to the investigator that has none")
+    p.set_defaults(func=cmd_contacts)
 
     p = sub.add_parser("mcp", help="serve the AI agents' tools over stdio (used by pi)")
     p.set_defaults(func=cmd_mcp)

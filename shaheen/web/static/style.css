@@ -153,7 +153,7 @@ main { max-width: var(--max); margin: 0 auto; padding-block: 26px 56px; }
 .state.running { background: var(--ink); color: #fff; }
 .state.waiting, .state.queued { border-color: var(--ink); border-inline-start-width: 4px; }
 .state.idle, .state.done { padding-inline: 0; }
-.state.off, .state.parked { padding-inline: 0; color: var(--muted); }
+.state.off, .state.parked, .state.skipped { padding-inline: 0; color: var(--muted); }
 .state.failed { border-color: var(--ink); border-style: dashed; }
 
 .label:lang(ar), .mark:lang(ar), .stamp:lang(ar), .state:lang(ar), .who:lang(ar), .verdict-label:lang(ar) {
@@ -479,6 +479,11 @@ html[dir="rtl"] td[dir="ltr"] { text-align: right; }
 .side-facts { margin: 0; }
 .side-facts > div { padding-block: 8px; border-block-end: 1px solid var(--rule); }
 .side-facts dt { color: var(--muted); font-size: 12.5px; }
+.contacts-read { margin: 16px 0 0; }
+.contacts-read > div { display: grid; grid-template-columns: 13rem 1fr; gap: 12px; padding-block: 6px;
+  border-block-end: 1px solid var(--rule); }
+.contacts-read dt { color: var(--muted); font-size: 13px; }
+.contacts-read dd { margin: 0; }
 .side-facts dd { margin: 2px 0 0; }
 .side-facts .side-numeral { margin-block-start: 4px; }
 .investigation .work > .note, .investigation .work > .error, .alarm { margin-block-end: 14px; }

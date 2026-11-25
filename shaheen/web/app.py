@@ -39,10 +39,10 @@ from fastapi.templating import Jinja2Templates
 from jinja2 import Environment, FileSystemLoader
 from starlette.concurrency import run_in_threadpool
 
-from shaheen import agents, evidence, investigator, watch
+from shaheen import agents, contacts, evidence, investigator, watch
 from shaheen.collectors import maps
 from shaheen.config import PACKAGE_DIR, Settings, load_settings
-from shaheen.domains import host_of
+from shaheen.domains import host_of, registrable_domain
 from shaheen.evidence import GST, defang_text
 from shaheen.models import ScanResult
 from shaheen.pipeline import Scanner
@@ -61,7 +61,8 @@ FILTERS = ("fraud", "suspicious", "legitimate")
 SIGNAL_KEYS = (
     "final_domain", "title", "domain_age_days", "registrar", "hosting_country", "asn", "cert_age_days",
     "tls_verified", "status_code", "rendered", "brands_on_page", "sensitive_fields", "form_targets",
-    "top_site_rank", "hosting_platform", "embedded_targets", "nxdomain", "render_error", "stage_errors",
+    "top_site_rank", "hosting_platform", "embedded_targets", "nxdomain", "second_look", "render_error",
+    "stage_errors",
 )
 STOREFRONT_KEYS = ("site_name", "payment_methods", "gateways", "checkout", "prices", "catalogue",
                    "admin_clusters", "shared_with_fraud")
@@ -466,6 +467,27 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "recent": recent,
         }
 
+    def contacts_view(result: ScanResult) -> dict[str, Any] | None:
+        """The case's contacts read, each number, address or account with the other
+        domains showing it and their latest case."""
+        row = store.get_contacts(result.id)
+        if row is None:
+            return None
+        found = row["result"] or {}
+        own = registrable_domain(result.final_url or result.url)
+        rows = []
+        for field in contacts.IDENTIFIERS:
+            for value in found.get(field) or []:
+                also = []
+                for domain in store.domains_sharing(*contacts.fingerprint(field, value), exclude_domain=own):
+                    latest = store.latest_scan_for(domain)
+                    also.append({"domain": defang_text(domain), "case": latest.id if latest else None})
+                rows.append({"field": field, "value": value, "also": also})
+        return {"status": row["status"], "error": row["error"], "rows": rows,
+                "claims_to_be": found.get("claims_to_be") or "",
+                "payment_methods": found.get("payment_methods") or [], "asks_for": found.get("asks_for") or [],
+                "dropped": len(found.get("dropped_not_on_page") or [])}
+
     def investigation(case_id: str, folder: Path) -> dict[str, Any] | None:
         row = store.get_investigation(case_id)
         report = _read_json(folder / "investigation.json")
@@ -562,6 +584,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             confirmation=_read_json(folder / evidence.CONFIRMATION),
             takedown=takedown.read_text(encoding="utf-8") if takedown.is_file() else None,
             inv=inv,
+            contacts=contacts_view(result),
             run_files_pending=running,
             trace=read_trace(folder / TRACE),
             listings=[_lead_view(lead, lang_of(request)) for lead in leads],
@@ -618,6 +641,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             store.queue_investigation(case_id)
         elif current["status"] != "running":  # a running case is never queued twice
             store.set_investigation(case_id, "queued", queued_at=utcnow(), error=None)
+        store.queue_contacts(case_id)
         return RedirectResponse(f"/case/{case_id}?notice=queued", status_code=303)
 
     @app.get("/lang/{code}")

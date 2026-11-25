@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 import pytest
 import yaml
 
-from shaheen import focus, intel, pipeline
+from shaheen import contacts, focus, intel, pipeline, stealth
 from shaheen.collectors import enqueue_host
 from shaheen.config import DATA_DIR, Settings
 from shaheen.domains import registrable_domain
@@ -230,3 +230,39 @@ def test_refocus_applies_the_uae_focus_to_what_is_already_waiting(scanner):
     counts = {"links_first": 0, "links_later": 1, "cases_queued": 1, "cases_parked": 1}
     assert focus.refocus(store) == counts and focus.refocus(store) == counts
     assert store.investigation_queue() == {"suspicious": 1}
+
+
+PAGE = ("<html><head><title>Traffic fine</title></head><body><p>Pay your fine today. Call +971 50 123 4567 or "
+        '<a href="https://wa.me/971501234567">message us</a>. Transfer to AE07 0331 2345 6789 0123 456. '
+        "Email help@fines-uae.test</p>" + "<p>Official notice.</p>" * 30 + "</body></html>")
+
+
+def test_contacts_keep_what_the_page_shows_and_link_the_cases_sharing_it(scanner, monkeypatch):
+    reply = {"phones": ["+971 50 123 4567", "+971 50 999 0000"], "whatsapp": ["wa.me/971501234567"],
+             "emails": ["help@fines-uae.test"], "bank_accounts": ["AE07 0331 2345 6789 0123 456 (Example Bank)"],
+             "payment_methods": ["bank transfer"], "claims_to_be": "Dubai Police"}
+    monkeypatch.setattr(contacts, "chat", lambda *args: {"choices": [{"message": {"content": json.dumps(reply)}}]})
+    for url in ("https://dubai-fines-pay.test/", "https://uae-fine-portal.test/"):
+        case = scanner.scan(url)
+        folder = scanner.settings.evidence_dir / case.id
+        (folder / "page.html").write_text(PAGE, encoding="utf-8")
+        record = contacts.read(case.id, scanner.settings, scanner.store)
+    assert record["phones"] == ["+971 50 123 4567"] and record["dropped_not_on_page"] == ["+971 50 999 0000"]
+    assert record["whatsapp"] and record["emails"] and record["bank_accounts"]
+    assert "contacts.json" in [f["name"] for f in json.loads((folder / "manifest.json").read_text("utf-8"))["files"]]
+    shared = scanner.store.domains_sharing(*contacts.fingerprint("bank_accounts", record["bank_accounts"][0]),
+                                           exclude_domain="uae-fine-portal.test")
+    assert shared == ["dubai-fines-pay.test"]
+
+
+def test_a_fetch_blocked_by_a_bot_check_gets_a_second_look_as_chrome(scanner, monkeypatch):
+    def fake_resolve(url, client, insecure_client=None, headers=None):
+        if isinstance(client, stealth.ChromeClient):
+            return Resolution(final_url=url, fetch_status="ok", hops=[Hop(url, 200, "start")], status_code=200,
+                              html=PAGE)
+        return Resolution(final_url=url, fetch_status="blocked", hops=[Hop(url, 403, "start")], status_code=403,
+                          html="<title>Just a moment...</title>")
+
+    monkeypatch.setattr(pipeline, "resolve", fake_resolve)
+    result = scanner.scan("https://dubai-fines-pay.test/", ScanOptions(render=False, storefront=False))
+    assert result.fetch_status == "ok" and result.signals["second_look"] == {"via": "own address", "fetch": "ok"}

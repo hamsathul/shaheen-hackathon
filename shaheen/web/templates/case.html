@@ -104,6 +104,40 @@
     </div>
   </section>
 
+  {% if contacts %}
+  <section class="row contacts" id="contacts">
+    <div class="side">
+      <h2 class="label">{{ t.contacts }}</h2>
+      <dl class="side-facts">
+        <div><dt>{{ t.inv_status }}</dt><dd><span class="state {{ contacts.status }}">{{ contacts.status }}</span></dd></div>
+      </dl>
+      <p class="side-note">{{ t.contacts_note }}</p>
+    </div>
+    <div class="work">
+      {% if contacts.error %}<p class="muted">{{ contacts.error }}</p>{% endif %}
+      {% if contacts.status == "done" %}
+      {% if contacts.rows %}
+      <table class="ledger data contacts-found">
+        <thead><tr><th>{{ t.contacts_kind }}</th><th>{{ t.contacts_value }}</th><th>{{ t.contacts_also }}</th></tr></thead>
+        {% for row in contacts.rows %}
+        <tr><td>{{ t["contacts_" ~ row.field] }}</td><td class="mono" dir="ltr">{{ row.value | defang }}</td>
+          <td dir="ltr">{% for d in row.also %}{% if d.case %}<a href="/case/{{ d.case }}">{{ d.domain }}</a>{% else %}{{ d.domain }}{% endif %}{% if not loop.last %}, {% endif %}{% else %}<span class="muted">{{ t.none }}</span>{% endfor %}</td></tr>
+        {% endfor %}
+      </table>
+      {% else %}
+      <p class="muted">{{ t.contacts_none }}</p>
+      {% endif %}
+      <dl class="contacts-read">
+        {% if contacts.claims_to_be %}<div><dt>{{ t.contacts_claims_to_be }}</dt><dd dir="auto">{{ contacts.claims_to_be | defang }}</dd></div>{% endif %}
+        {% if contacts.payment_methods %}<div><dt>{{ t.contacts_payment_methods }}</dt><dd dir="auto">{{ contacts.payment_methods | join(", ") | defang }}</dd></div>{% endif %}
+        {% if contacts.asks_for %}<div><dt>{{ t.contacts_asks_for }}</dt><dd dir="auto">{{ contacts.asks_for | join(", ") | defang }}</dd></div>{% endif %}
+      </dl>
+      {% if contacts.dropped %}<p class="note">{{ t.contacts_dropped.format(n=contacts.dropped) }}</p>{% endif %}
+      {% endif %}
+    </div>
+  </section>
+  {% endif %}
+
   <section class="row investigation" id="investigation">
     <div class="side">
       <h2 class="label">{{ t.ai }}</h2>
