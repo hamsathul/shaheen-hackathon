@@ -27,8 +27,8 @@ from typing import Any
 import httpx
 from mcp.server.mcpserver import MCPServer
 
-from shaheen import brands, focus, hunter, intel, investigator, themes
-from shaheen.collectors import Throttle, ctlogs, excluded, newdomains
+from shaheen import brands, focus, hunter, investigator, themes
+from shaheen.collectors import Throttle, ctlogs, excluded, is_registered, make_resolver, newdomains
 from shaheen.config import Settings, load_settings
 from shaheen.domains import host_of, is_ip, normalize_url, public_suffix, refang, registrable_domain
 from shaheen.hunter import HuntReport
@@ -174,8 +174,9 @@ def build_server(settings: Settings | None = None, case_id: str | None = None,
         rejected = len(domains) - len(valid[:room])
         valid = valid[:room]
         used["proposed"] += len(valid)
+        resolver = make_resolver()
         with ThreadPoolExecutor(max_workers=DNS_WORKERS) as pool:
-            exists = list(pool.map(lambda d: intel.in_dns(registrable_domain(d)), valid))
+            exists = list(pool.map(lambda d: is_registered(registrable_domain(d), resolver) is True, valid))
         accepted = known = 0
         for domain in (d for d, found in zip(valid, exists, strict=True) if found):
             url = normalize_url(domain)

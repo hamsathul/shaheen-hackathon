@@ -289,7 +289,10 @@ class Scanner:
         # fraud. The investigator's own scan_url calls re-scan the domain it is working
         # on while its investigation runs, so they never queue it again. A case outside
         # the UAE focus is parked instead of queued; a queued one gets a contacts read too.
+        # A host that does not exist in DNS leaves the AI nothing to look at; a re-check
+        # after someone registers it queues it then.
         if (result.verdict in ("fraud", "suspicious") and not ctx.options.capture_dir
+                and not ctx.features.get("nxdomain")
                 and self.store.needs_investigation(ctx.features["final_domain"], result.verdict)):
             parked = not focus.case_in_focus(result, ctx.options.source)
             self.store.queue_investigation(result.id, parked=parked)

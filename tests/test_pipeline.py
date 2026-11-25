@@ -221,6 +221,18 @@ def test_sweep_finds_outside_the_uae_focus_wait_and_their_cases_are_parked(scann
         "boseuae.test", "garden-tools.test", "kuwait-bose-store.test"]
 
 
+def test_a_flagged_link_whose_host_does_not_exist_is_not_sent_to_the_ai(scanner, monkeypatch):
+    found = intel.gather
+
+    def unregistered(domain, store, host=None):
+        facts = found(domain, store, host)
+        return {**facts, "dns": {**facts["dns"], "nxdomain": True}}
+
+    monkeypatch.setattr(intel, "gather", unregistered)
+    result = scanner.scan("rakbnak.test")
+    assert result.verdict == "suspicious" and scanner.store.get_investigation(result.id) is None
+
+
 def test_refocus_applies_the_uae_focus_to_what_is_already_waiting(scanner):
     store = scanner.store
     for host in ("kuwait-bose-store.test", "boseuae.test"):
